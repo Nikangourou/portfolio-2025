@@ -1,0 +1,84 @@
+{
+  "projects": [
+    {
+      "id": 1,
+      "title": "Portfolio 3D",
+      "description": "Un portfolio interactif en 3D utilisant Three.js et React",
+      "technologies": ["React", "Three.js", "TypeScript", "Framer Motion"],
+      "link": "https://github.com/yourusername/portfolio-2025",
+      "image": "/images/portfolio.png"
+    },
+    {
+      "id": 2,
+      "title": "Application Web",
+      "description": "Une application web moderne avec authentification et base de données",
+      "technologies": ["Node.js", "Express", "MongoDB", "React"],
+      "link": "https://github.com/yourusername/project-name",
+      "image": "/images/webapp.png"
+    },
+    {
+      "id": 3,
+      "title": "Jeu Mobile",
+      "description": "Un jeu mobile captivant développé avec Unity",
+      "technologies": ["Unity", "C#", "Blender"],
+      "link": "https://github.com/yourusername/game",
+      "image": "/images/game.png"
+    },
+    {
+      "id": 4,
+      "title": "Jeu Mobile",
+      "description": "Un jeu mobile captivant développé avec Unity",
+      "technologies": ["Unity", "C#", "Blender"],
+      "link": "https://github.com/yourusername/game",
+      "image": "/images/game.png"
+    },
+    {
+      "id": 5,
+      "title": "Jeu Mobile",
+      "description": "Un jeu mobile captivant développé avec Unity",
+      "technologies": ["Unity", "C#", "Blender"],
+      "link": "https://github.com/yourusername/game",
+      "image": "/images/game.png"
+    },
+    {
+      "id": 6,
+      "title": "Jeu Mobile",
+      "description": "Un jeu mobile captivant développé avec Unity",
+      "technologies": ["Unity", "C#", "Blender"],
+      "link": "https://github.com/yourusername/game",
+      "image": "/images/game.png"
+    },
+    {
+      "id": 7,
+      "title": "Jeu Mobile",
+      "description": "Un jeu mobile captivant développé avec Unity",
+      "technologies": ["Unity", "C#", "Blender"],
+      "link": "https://github.com/yourusername/game",
+      "image": "/images/game.png"
+    },
+    {
+      "id": 8,
+      "title": "Jeu Mobile",
+      "description": "Un jeu mobile captivant développé avec Unity",
+      "technologies": ["Unity", "C#", "Blender"],
+      "link": "https://github.com/yourusername/game",
+      "image": "/images/game.png"
+    },
+    {
+      "id": 9,
+      "title": "Jeu Mobile",
+      "description": "Un jeu mobile captivant développé avec Unity",
+      "technologies": ["Unity", "C#", "Blender"],
+      "link": "https://github.com/yourusername/game",
+      "image": "/images/game.png"
+    },
+    {
+      "id": 10,
+      "title": "Jeu Mobile",
+      "description": "Un jeu mobile captivant développé avec Unity",
+      "technologies": ["Unity", "C#", "Blender"],
+      "link": "https://github.com/yourusername/game",
+      "image": "/images/game.png"
+    }
+  ]
+}
