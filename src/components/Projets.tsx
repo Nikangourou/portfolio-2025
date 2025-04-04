@@ -6,7 +6,7 @@ import projectsData from '../data/projects.json';
 
 export default function Projets() {
   return (
-    <ScrollControls pages={3} damping={0.25} children={<ProjetsContent />} />
+    <ScrollControls pages={projectsData.projects.length} damping={0.25} children={<ProjetsContent />} />
   );
 }
 
@@ -39,18 +39,20 @@ function ProjetsContent() {
   });
 
   return (
-    <group ref={groupRef}>
-      {projectPositions.map(({ position, rotation, project }) => (
-        <Projet
-          key={project.id}
-          position={position}
-          rotation={rotation}
-          title={project.title}
-          description={project.description}
-          technologies={project.technologies}
-          link={project.link}
-        />
-      ))}
+    <group position={[2, 0, 0]} rotation={[0, 0, .25]}>
+      <group ref={groupRef}>
+        {projectPositions.map(({ position, rotation, project }) => (
+          <Projet
+            key={project.id}
+            position={position}
+            rotation={rotation}
+            title={project.title}
+            description={project.description}
+            technologies={project.technologies}
+            link={project.link}
+          />
+        ))}
+      </group>
     </group>
   );
 } 
