@@ -39,7 +39,7 @@ function ProjetsContent() {
   });
 
   return (
-    <group position={[2, 0, 0]} rotation={[0, 0, .25]}>
+    <group position={[2, 0, 0]}>
       <group ref={groupRef}>
         {projectPositions.map(({ position, rotation, project }) => (
           <Projet
