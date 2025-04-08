@@ -1,6 +1,6 @@
 import { Physics } from '@react-three/rapier'
 import Lights from './Lights.jsx'
-import Projets from './components/Projets.tsx'
+import Projets from './components/Projets.jsx'
 
 export default function Experience()
 {

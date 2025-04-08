@@ -12,7 +12,7 @@ export default function Projets() {
 
 function ProjetsContent() {
   const data = useScroll();
-  const groupRef = useRef();
+  const groupRef = useRef(null);
   
   const projectPositions = useMemo(() => {
     const radius = 1;
@@ -25,8 +25,8 @@ function ProjetsContent() {
       const rotationY = -angle;
       
       return {
-        position: [x, 0, z] as [number, number, number],
-        rotation: [0, rotationY, 0] as [number, number, number],
+        position: [x, 0, z],
+        rotation: [0, rotationY, 0],
         project
       };
     });
