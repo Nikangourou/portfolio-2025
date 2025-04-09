@@ -8,7 +8,7 @@ export default function Projet({ position, rotation, title, description, technol
   return (
     <group position={position} rotation={rotation}>
       <mesh ref={meshRef}>
-        <boxGeometry args={[1, 1.8, 0.25]} />
+        <boxGeometry args={[1.8, 0.25, 1]} />
         <meshStandardMaterial color="#333" />
       </mesh>
     </group>

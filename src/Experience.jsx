@@ -9,7 +9,7 @@ export default function Experience() {
 
       <Physics debug={false}>
         <Lights />
-        <group rotation={[Math.PI / 2, 0, 0]}>
+        <group rotation={[0, 0, 0]}>
           <Projets />
           <Reader />
         </group>
