@@ -4,6 +4,13 @@ import { useFrame } from '@react-three/fiber';
 import Projet from './Projet';
 import projectsData from '../data/projects.json';
 
+const getRandomColor = () => {
+  const hue = Math.random() * 360;
+  const saturation = 70 + Math.random() * 30; // 70-100%
+  const lightness = 40 + Math.random() * 20; // 40-60%
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+};
+
 export default function Projets() {
   return (
     <ScrollControls pages={projectsData.projects.length} damping={0.25} children={<ProjetsContent />} />
@@ -15,7 +22,7 @@ function ProjetsContent() {
   const groupRef = useRef(null);
   
   const projectPositions = useMemo(() => {
-    const radius = 1;
+    const radius = 1.5;
     const totalProjects = projectsData.projects.length;
     
     return projectsData.projects.map((project, index) => {
@@ -28,8 +35,9 @@ function ProjetsContent() {
       
       return {
         position: [x, y, z],
-        rotation: [rotationX, 0, 0],
-        project
+        rotation: [rotationX, 0.8, 1],
+        project,
+        color: getRandomColor()
       };
     });
   }, []);
@@ -41,9 +49,9 @@ function ProjetsContent() {
   });
 
   return (
-    <group position={[0, 0, 2]}>
+    <group position={[0, 0, 0]} rotation={[0, -1.5, -0.5]}>
       <group ref={groupRef}>
-        {projectPositions.map(({ position, rotation, project }) => (
+        {projectPositions.map(({ position, rotation, project, color }) => (
           <Projet
             key={project.id}
             position={position}
@@ -52,6 +60,7 @@ function ProjetsContent() {
             description={project.description}
             technologies={project.technologies}
             link={project.link}
+            color={color}
           />
         ))}
       </group>
