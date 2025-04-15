@@ -12,10 +12,8 @@ export default function Experience() {
       <Debug />
       <Physics debug={false}>
         <Lights />
-        <group rotation={[0, 0, 0]}>
-          <Projets />
-        </group>
-      </Physics>
+        <Projets />
+      </Physics> 
     </>
   )
 }
