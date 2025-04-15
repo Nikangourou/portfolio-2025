@@ -19,23 +19,23 @@ function ProjetsContent() {
   const groupRef = useRef(null);
   const { camera } = useThree();
   
-  // Calculer les limites du frustum de la caméra
-  const fov = camera.fov * (Math.PI / 180); // Convertir en radians
-  const aspect = window.innerWidth / window.innerHeight;
-  
-  // Ajuster la distance pour que les projets soient plus proches et plus grands
-  const distance = -5; // Distance négative pour placer devant la caméra
-  
-  // Calculer les limites horizontales et verticales à cette distance
-  const height = 2 * Math.tan(fov / 2) * Math.abs(distance);
-  const width = height * aspect;
-  
   const projectPositions = useMemo(() => {
     const totalProjects = projectsData.projects.length;
     
+    // Calculer les limites du frustum de la caméra
+    const fov = camera.fov * (Math.PI / 180); // Convertir en radians
+    const aspect = window.innerWidth / window.innerHeight;
+    
+    // Ajuster la distance pour que les projets soient plus proches et plus grands
+    const distance = -5; // Distance négative pour placer devant la caméra
+    
+    // Calculer les limites horizontales et verticales à cette distance
+    const height = 2 * Math.tan(fov / 2) * Math.abs(distance);
+    const width = height * aspect;
+    
     // Définir les limites de la zone de placement (plus proche de la caméra)
-    const xRange = [-width/3, width/3];
-    const yRange = [-height/3, height/3];
+    const xRange = [-width/4, width/4];
+    const yRange = [-height/4, height/4];
     const zRange = [distance - 2, distance + 2];
     
     // Distance minimale entre les projets (réduite pour permettre plus de projets)
@@ -93,22 +93,11 @@ function ProjetsContent() {
         color: getRandomColor()
       };
     });
-  }, [camera, width, height, distance]);
+  }, [camera]);
 
-  return (
+  return (  
     <group position={[0, 0, 0]} rotation={[0, 0, 0]}>
-      <group ref={groupRef}>
-        {/* Cube de debug pour visualiser les limites */}
-        <mesh position={[0, 0, distance]}>
-          <boxGeometry args={[width/3 * 2, height/3 * 2, 4]} />
-          <meshBasicMaterial 
-            color="red" 
-            wireframe={true} 
-            transparent={true} 
-            opacity={0.3}
-          />
-        </mesh>
-        
+      <group ref={groupRef}>  
         {projectPositions.map(({ position, rotation, project, color }) => (
           <Projet
             key={project.id}
