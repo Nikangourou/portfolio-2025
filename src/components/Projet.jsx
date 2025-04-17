@@ -19,6 +19,9 @@ const Projet = forwardRef(function Projet({ position, rotation, title, descripti
     }
   }));
 
+  // Utiliser la taille calculée ou une taille par défaut
+  const projectSize = window.projectSize || { width: 1, height: 1 };
+
   return (
     <group position={position} rotation={rotation}>
       <RigidBody
@@ -30,7 +33,7 @@ const Projet = forwardRef(function Projet({ position, rotation, title, descripti
         friction={0.8}
       >
         <mesh ref={meshRef} onClick={onAnyClick} castShadow receiveShadow>
-          <boxGeometry args={[1, 1, 0.05]} />
+          <boxGeometry args={[projectSize.width, projectSize.height, 0.05]} />
           <meshStandardMaterial color={color} />
         </mesh>
       </RigidBody>
