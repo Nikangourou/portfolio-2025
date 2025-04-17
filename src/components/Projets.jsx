@@ -1,8 +1,9 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useThree } from '@react-three/fiber';
 import Projet from './Projet';
 import projectsData from '../data/projects.json';
+import { RigidBody } from '@react-three/rapier';
 
 const getRandomColor = () => {
   const hue = Math.random() * 360;
@@ -18,21 +19,16 @@ export default function Projets() {
 function ProjetsContent() {
   const groupRef = useRef(null);
   const { camera } = useThree();
-  
+  const projectRefs = useRef([]);
+  const distance = -5; // Distance négative pour placer devant la caméra
+  const fov = camera.fov * (Math.PI / 180); // Convertir en radians
+  const aspect = window.innerWidth / window.innerHeight;
+  const height = 2 * Math.tan(fov / 2) * Math.abs(distance);
+  const width = height * aspect;
+
   const projectPositions = useMemo(() => {
     const totalProjects = projectsData.projects.length;
-    
-    // Calculer les limites du frustum de la caméra
-    const fov = camera.fov * (Math.PI / 180); // Convertir en radians
-    const aspect = window.innerWidth / window.innerHeight;
-    
-    // Ajuster la distance pour que les projets soient plus proches et plus grands
-    const distance = -5; // Distance négative pour placer devant la caméra
-    
-    // Calculer les limites horizontales et verticales à cette distance
-    const height = 2 * Math.tan(fov / 2) * Math.abs(distance);
-    const width = height * aspect;
-    
+        
     // Définir les limites de la zone de placement (plus proche de la caméra)
     const xRange = [-width/4, width/4];
     const yRange = [-height/4, height/4];
@@ -95,12 +91,26 @@ function ProjetsContent() {
     });
   }, [camera]);
 
+  // Handler pour 'puncher' uniquement le projet cliqué
+  const handleProjectClick = (index) => {
+    const ref = projectRefs.current[index];
+    if (ref && ref.setDynamic) ref.setDynamic();
+  };
+
   return (  
     <group position={[0, 0, 0]} rotation={[0, 0, 0]}>
+      {/* Cube invisible pour faire rebondir les projets */}
+      <RigidBody type="fixed" colliders="trimesh" restitution={0.4} friction={0.8}>
+        <mesh position={[0, 0, distance]}>
+          <boxGeometry args={[width/3 * 2, height/3 * 2, 4]} />
+          <meshBasicMaterial transparent opacity={0} side={THREE.DoubleSide} />
+        </mesh>
+      </RigidBody>
       <group ref={groupRef}>  
-        {projectPositions.map(({ position, rotation, project, color }) => (
+        {projectPositions.map(({ position, rotation, project, color }, i) => (
           <Projet
             key={project.id}
+            ref={el => projectRefs.current[i] = el}
             position={position}
             rotation={rotation}
             title={project.title}
@@ -108,6 +118,9 @@ function ProjetsContent() {
             technologies={project.technologies}
             link={project.link}
             color={color}
+            isDynamic={false}
+            onAnyClick={() => handleProjectClick(i)}
+            camera={camera}
           />
         ))}
       </group>

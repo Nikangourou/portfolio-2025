@@ -22,9 +22,10 @@ root.render(
             } }
         >
             <color args={['#ffffff']} attach="background" />
+            {/* Sol */}
             <Grid
-                position={[0, -4, 0]}
-                args={[100, 100]}
+                position={[0, -5, -5]}
+                args={[20, 20]}
                 cellSize={1}
                 cellThickness={0.7}
                 cellColor="#6f6f6f"
@@ -36,10 +37,11 @@ root.render(
                 followCamera={false}
                 infiniteGrid={false}
             />
+            {/* Mur devant */}
             <Grid
-                position={[0, 0, -50]}
+                position={[0, 2.5, -15]}
                 rotation={[Math.PI / 2, 0, 0]}
-                args={[100, 100]}
+                args={[20, 15]}
                 cellSize={1}
                 cellThickness={0.7}
                 cellColor="#6f6f6f"
@@ -49,7 +51,71 @@ root.render(
                 fadeDistance={100}
                 fadeStrength={1}
                 followCamera={false}
-                infiniteGrid={true}
+                infiniteGrid={false}
+            />
+             {/* Mur arrière */}
+             <Grid
+                position={[0, 2.5, 5]}
+                rotation={[Math.PI / 2, 0, Math.PI]}
+                args={[20, 15]}
+                cellSize={1}
+                cellThickness={0.7}
+                cellColor="#6f6f6f"
+                sectionSize={0}
+                sectionThickness={1}
+                sectionColor="#6f6f6f"
+                fadeDistance={100}
+                fadeStrength={1}
+                followCamera={false}
+                infiniteGrid={false}
+            />
+            {/* Mur gauche */}
+            <Grid
+                position={[-10, 2.5, -5]}
+                rotation={[0, Math.PI , Math.PI / 2]}
+                args={[15, 20]}
+                cellSize={1}
+                cellThickness={0.7}
+                cellColor="#6f6f6f"
+                sectionSize={0}
+                sectionThickness={1}
+                sectionColor="#6f6f6f"
+                fadeDistance={50}
+                fadeStrength={1}
+                followCamera={false}
+                infiniteGrid={false}
+            />
+            {/* Mur droit */}
+            <Grid
+                position={[10, 2.5, -5]}
+                rotation={[0, 0, Math.PI / 2]}
+                args={[15, 20]}
+                cellSize={1}
+                cellThickness={0.7}
+                cellColor="#6f6f6f"
+                sectionSize={0}
+                sectionThickness={1}
+                sectionColor="#6f6f6f"
+                fadeDistance={100}
+                fadeStrength={1}
+                followCamera={false}
+                infiniteGrid={false}
+            />
+             {/* Toit */}
+             <Grid
+                position={[0, 10, -5]}
+                rotation={[Math.PI, 0, 0]}
+                args={[20, 20]}
+                cellSize={1}
+                cellThickness={0.7}
+                cellColor="#6f6f6f"
+                sectionSize={0}
+                sectionThickness={1}
+                sectionColor="#6f6f6f"
+                fadeDistance={1000}
+                fadeStrength={1}
+                followCamera={false}
+                infiniteGrid={false}
             />
             <Experience />
         </Canvas>
