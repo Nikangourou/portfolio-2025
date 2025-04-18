@@ -4,14 +4,14 @@ import { Canvas } from '@react-three/fiber'
 import { Grid } from '@react-three/drei'
 import Experience from './Experience.jsx'
 import { Leva } from 'leva'
-
+import Interface from './components/Interface.jsx'
 
 const root = ReactDOM.createRoot(document.querySelector('#root'))
-
 
 root.render(
     <>
         <Leva />
+        <Interface />
         <Canvas
             shadows
             camera={ {
