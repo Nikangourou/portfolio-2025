@@ -11,7 +11,6 @@ const root = ReactDOM.createRoot(document.querySelector('#root'))
 root.render(
     <>
         <Leva />
-        <Interface />
         <Canvas
             shadows
             camera={ {
@@ -119,5 +118,6 @@ root.render(
             />
             <Experience />
         </Canvas>
+        <Interface />
     </>
 )

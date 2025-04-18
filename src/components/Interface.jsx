@@ -1,4 +1,6 @@
-const Cross = () => {
+export default function Interface()
+{
+
     return (
         <div className="cross">
             <div className="cross-line horizontal"></div>
@@ -6,11 +8,3 @@ const Cross = () => {
         </div>
     )
 }
-
-const Interface = () => {
-    return (
-        <Cross />
-    )
-}
-
-export default Interface
