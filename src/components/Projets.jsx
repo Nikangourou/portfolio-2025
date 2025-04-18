@@ -1,9 +1,10 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { useThree } from '@react-three/fiber';
 import Projet from './Projet';
 import projectsData from '../data/projects.json';
 import { useFrame } from '@react-three/fiber';
+import { useStore } from '../stores/store';
 
 const getRandomColor = () => {
   const hue = Math.random() * 360;
@@ -19,8 +20,11 @@ export default function Projets() {
 function ProjetsContent() {
   const groupRef = useRef(null);
   const { camera } = useThree();
-  const [isArranged, setIsArranged] = useState(false);
+  const isProjectsArranged = useStore((state) => state.isProjectsArranged);
+  const setProjectsArranged = useStore((state) => state.setProjectsArranged);
   const [projectStates, setProjectStates] = useState([]);
+  const [targetStates, setTargetStates] = useState([]);
+  const [minDistance, setMinDistance] = useState(2.0); // Distance minimale entre les projets
   const distance = -5; // Distance pour l'état initial
   const fov = camera.fov * (Math.PI / 180);
   
@@ -28,13 +32,13 @@ function ProjetsContent() {
   const width = 2 * Math.tan(fov / 2) * Math.abs(distance);
   const height = width;
 
-  const arrangedDistance = -width / (3.8 * Math.tan(fov / 2))
+  const arrangedDistance = -width / (3 * Math.tan(fov / 2))
 
   // Positions prédéfinies pour l'arrangement
   const predefinedPositions = useMemo(() => {
     const positions = [];
     const totalProjects = projectsData.projects.length;
-    const rows = 2;
+    const rows = 3;
     const cols = 5;
     
     // Calculer la taille des projets en fonction de la hauteur de l'écran
@@ -54,7 +58,7 @@ function ProjetsContent() {
       const col = i % cols;
       const x = (col * (projectWidth + gap)) - (adjustedTotalWidth / 2) + (projectWidth / 2);
       const y = (row * (projectHeight + gap)) - (adjustedTotalHeight / 2) + (projectHeight / 2);
-      positions.push([x, y, distance]);
+      positions.push([x, y, arrangedDistance]);
     }
     
     // Stocker la taille des projets pour l'utiliser dans le composant Projet
@@ -63,23 +67,89 @@ function ProjetsContent() {
     return positions;
   }, [distance, height, width]);
 
-  // Animation pour déplacer les projets vers leurs positions cibles
+  const checkCollision = (pos1, pos2) => {
+    const dx = pos1[0] - pos2[0];
+    const dy = pos1[1] - pos2[1];
+    const dz = pos1[2] - pos2[2];
+    return Math.sqrt(dx * dx + dy * dy + dz * dz) < minDistance;
+  };
+
+  const findValidPosition = (positions, maxAttempts = 100) => {
+    const xRange = [-width/4, width/4];
+    const yRange = [-height/4, height/4];
+    const zRange = [distance - 2, distance + 2];
+    
+    let attempts = 0;
+    let position;
+    let currentMinDistance = minDistance;
+    
+    do {
+      position = [
+        Math.random() * (xRange[1] - xRange[0]) + xRange[0],
+        Math.random() * (yRange[1] - yRange[0]) + yRange[0],
+        Math.random() * (zRange[1] - zRange[0]) + zRange[0]
+      ];
+      attempts++;
+      
+      if (attempts > maxAttempts) {
+        // Si on n'a pas trouvé de position valide après plusieurs tentatives,
+        // on augmente légèrement la distance minimale
+        currentMinDistance *= 0.9;
+        setMinDistance(currentMinDistance);
+        attempts = 0;
+      }
+    } while (positions.some(existingPos => {
+      const dx = position[0] - existingPos[0];
+      const dy = position[1] - existingPos[1];
+      const dz = position[2] - existingPos[2];
+      return Math.sqrt(dx * dx + dy * dy + dz * dz) < currentMinDistance;
+    }));
+    
+    return position;
+  };
+
+  useEffect(() => {
+    if (!isProjectsArranged) {
+      const newPositions = [];
+      const newTargetStates = projectStates.map(state => {
+        const newPosition = findValidPosition(newPositions);
+        newPositions.push(newPosition);
+        
+        return {
+          ...state,
+          position: newPosition,
+          rotation: [
+            Math.random() * Math.PI * 2,
+            Math.random() * Math.PI * 2,
+            Math.random() * Math.PI * 2
+          ]
+        };
+      });
+      setTargetStates(newTargetStates);
+    } else {
+      setTargetStates(predefinedPositions.map((pos, index) => ({
+        ...projectStates[index],
+        position: pos,
+        rotation: [0, 0, 0]
+      })));
+    }
+  }, [isProjectsArranged]);
+
   useFrame(() => {
-    if (isArranged && projectStates.length > 0) {
+    if (projectStates.length > 0 && targetStates.length > 0) {
       setProjectStates(prevStates => {
         return prevStates.map((state, index) => {
-          const target = predefinedPositions[index];
-          const currentPos = state.position;
+          const target = targetStates[index];
           
-          // Interpolation linéaire pour la position
-          const newX = THREE.MathUtils.lerp(currentPos[0], target[0], 0.1);
-          const newY = THREE.MathUtils.lerp(currentPos[1], target[1], 0.1);
-          const newZ = THREE.MathUtils.lerp(currentPos[2], arrangedDistance, 0.1);
+          // Interpolation linéaire pour la position avec un facteur de 0.05 pour une transition plus douce
+          const newX = THREE.MathUtils.lerp(state.position[0], target.position[0], 0.05);
+          const newY = THREE.MathUtils.lerp(state.position[1], target.position[1], 0.05);
+          const newZ = THREE.MathUtils.lerp(state.position[2], target.position[2], 0.05);
           
           // Interpolation linéaire pour la rotation
-          const newRotX = THREE.MathUtils.lerp(state.rotation[0], 0, 0.1);
-          const newRotY = THREE.MathUtils.lerp(state.rotation[1], 0, 0.1);
-          const newRotZ = THREE.MathUtils.lerp(state.rotation[2], 0, 0.1);
+          const newRotX = THREE.MathUtils.lerp(state.rotation[0], target.rotation[0], 0.05);
+          const newRotY = THREE.MathUtils.lerp(state.rotation[1], target.rotation[1], 0.05);
+          const newRotZ = THREE.MathUtils.lerp(state.rotation[2], target.rotation[2], 0.05);
           
           return {
             ...state,
@@ -110,7 +180,7 @@ function ProjetsContent() {
         return distance < minDistance;
       });
     };
-    
+
     const positions = [];
     const maxAttempts = 100;
     
@@ -156,7 +226,7 @@ function ProjetsContent() {
   }, [camera]);
 
   const handleProjectClick = (index) => {
-    setIsArranged(!isArranged);
+    setProjectsArranged(!isProjectsArranged);
   };
 
   return (  
@@ -175,6 +245,7 @@ function ProjetsContent() {
             isDynamic={false}
             onAnyClick={() => handleProjectClick(i)}
             camera={camera}
+            image={state.project.image}
           />
         ))}
       </group>

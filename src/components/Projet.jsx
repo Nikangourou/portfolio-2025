@@ -1,12 +1,22 @@
-import React, { useRef, useImperativeHandle, forwardRef } from 'react';
+import React, { useRef, useImperativeHandle, forwardRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber'
 import { Mesh } from 'three';
 import { RigidBody } from '@react-three/rapier';
 import * as THREE from 'three';
+import { useTexture } from '@react-three/drei';
 
-const Projet = forwardRef(function Projet({ position, rotation, title, description, technologies, link, color, isDynamic, onAnyClick, camera }, ref) {
+const Projet = forwardRef(function Projet({ position, rotation, title, description, technologies, link, color, isDynamic, onAnyClick, camera, image }, ref) {
   const meshRef = useRef(null);
   const rigidBodyRef = useRef(null);
+  const texture = useTexture(image || '');
+
+  useEffect(() => {
+    if (texture) {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+    }
+  }, [texture, image]);
 
   useImperativeHandle(ref, () => ({
     setDynamic: () => {
@@ -32,9 +42,19 @@ const Projet = forwardRef(function Projet({ position, rotation, title, descripti
         restitution={0.4}
         friction={0.8}
       >
-        <mesh ref={meshRef} onClick={onAnyClick} castShadow receiveShadow>
-          <boxGeometry args={[projectSize.width, projectSize.height, 0.05]} />
-          <meshStandardMaterial color={color} />
+        <mesh ref={meshRef} onClick={onAnyClick}>
+          <planeGeometry args={[projectSize.width, projectSize.height]} />
+          {texture ? (
+            <meshBasicMaterial 
+              map={texture} 
+              side={THREE.DoubleSide}
+              toneMapped={true}
+              transparent={true}
+              opacity={1}
+            />
+          ) : (
+            <meshBasicMaterial color={color} />
+          )}
         </mesh>
       </RigidBody>
     </group>

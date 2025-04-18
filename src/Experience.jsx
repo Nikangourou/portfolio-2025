@@ -1,5 +1,4 @@
 import { Physics } from '@react-three/rapier'
-import Lights from './Lights.jsx'
 import Projets from './components/Projets.jsx'
 import Debug from './components/Debug.jsx'
 import CameraController from './components/CameraController.jsx'
@@ -11,7 +10,6 @@ export default function Experience() {
       <CameraController />
       <Debug />
       <Physics debug={false}>
-        <Lights />
         <Projets />
       </Physics> 
     </>
