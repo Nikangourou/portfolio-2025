@@ -21,6 +21,7 @@ function ProjetsContent() {
   const [rotationY, setRotationY] = useState(0);
   const distance = -5; // Distance pour l'état initial
   const fov = camera.fov * (Math.PI / 180);
+  const speed = 0.05;
   
   // Calculer la largeur initiale
   const width = 2 * Math.tan(fov / 2) * Math.abs(distance);
@@ -140,14 +141,14 @@ function ProjetsContent() {
           const target = targetStates[index];
           
           // Interpolation linéaire pour la position avec un facteur de 0.05 pour une transition plus douce
-          const newX = THREE.MathUtils.lerp(state.position[0], target.position[0], 0.05);
-          const newY = THREE.MathUtils.lerp(state.position[1], target.position[1], 0.05);
-          const newZ = THREE.MathUtils.lerp(state.position[2], target.position[2], 0.05);
+          const newX = THREE.MathUtils.lerp(state.position[0], target.position[0], speed);
+          const newY = THREE.MathUtils.lerp(state.position[1], target.position[1], speed);
+          const newZ = THREE.MathUtils.lerp(state.position[2], target.position[2], speed);
           
           // Interpolation linéaire pour la rotation
-          const newRotX = THREE.MathUtils.lerp(state.rotation[0], target.rotation[0], 0.05);
-          const newRotY = THREE.MathUtils.lerp(state.rotation[1], target.rotation[1], 0.05);
-          const newRotZ = THREE.MathUtils.lerp(state.rotation[2], target.rotation[2], 0.05);
+          const newRotX = THREE.MathUtils.lerp(state.rotation[0], target.rotation[0], speed);
+          const newRotY = THREE.MathUtils.lerp(state.rotation[1], target.rotation[1], speed);
+          const newRotZ = THREE.MathUtils.lerp(state.rotation[2], target.rotation[2], speed);
           
           return {
             ...state,
@@ -239,11 +240,22 @@ function ProjetsContent() {
 
   useFrame(() => {
     if (groupRef.current) {
-      if (isProjectsArranged) {
-        groupRef.current.rotation.y = 0;
-      } else {
-        groupRef.current.rotation.y = rotationY;
+      const currentRotation = groupRef.current.rotation.y;
+      const targetRotation = isProjectsArranged ? 0 : rotationY;
+      
+      // Normaliser les rotations entre -π et π
+      const normalizedCurrent = ((currentRotation + Math.PI) % (2 * Math.PI)) - Math.PI;
+      const normalizedTarget = ((targetRotation + Math.PI) % (2 * Math.PI)) - Math.PI;
+      
+      // Trouver le chemin le plus court vers la rotation cible
+      let shortestPath = normalizedTarget - normalizedCurrent;
+      if (Math.abs(shortestPath) > Math.PI) {
+        shortestPath = shortestPath > 0 
+          ? shortestPath - 2 * Math.PI 
+          : shortestPath + 2 * Math.PI;
       }
+      
+      groupRef.current.rotation.y = currentRotation + shortestPath * speed;
     }
   });
 
