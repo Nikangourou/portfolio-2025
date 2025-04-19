@@ -12,7 +12,6 @@ root.render(
     <>
         <Leva />
         <Canvas
-            shadows
             camera={ {
                 fov: 75,
                 near: 0.1,

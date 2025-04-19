@@ -6,13 +6,6 @@ import projectsData from '../data/projects.json';
 import { useFrame } from '@react-three/fiber';
 import { useStore } from '../stores/store';
 
-const getRandomColor = () => {
-  const hue = Math.random() * 360;
-  const saturation = 70 + Math.random() * 30; // 70-100%
-  const lightness = 40 + Math.random() * 20; // 40-60%
-  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-};
-
 export default function Projets() {
   return <ProjetsContent />;
 }
@@ -25,6 +18,7 @@ function ProjetsContent() {
   const [projectStates, setProjectStates] = useState([]);
   const [targetStates, setTargetStates] = useState([]);
   const [minDistance, setMinDistance] = useState(2.0); // Distance minimale entre les projets
+  const [rotationY, setRotationY] = useState(0);
   const distance = -5; // Distance pour l'état initial
   const fov = camera.fov * (Math.PI / 180);
   
@@ -75,9 +69,13 @@ function ProjetsContent() {
   };
 
   const findValidPosition = (positions, maxAttempts = 100) => {
-    const xRange = [-width/4, width/4];
-    const yRange = [-height/4, height/4];
-    const zRange = [distance - 2, distance + 2];
+        // const xRange = [-width/4, width/4];
+        // const yRange = [-height/4, height/4];
+        // const zRange = [distance - 2, distance + 2];
+
+    const xRange = [-2, 2];
+    const yRange = [-2, 2];
+    const zRange = [-2, 2];
     
     let attempts = 0;
     let position;
@@ -216,7 +214,6 @@ function ProjetsContent() {
         position,
         rotation: [rotationX, rotationY, rotationZ],
         project,
-        color: getRandomColor()
       };
     });
     
@@ -229,9 +226,25 @@ function ProjetsContent() {
     setProjectsArranged(!isProjectsArranged);
   };
 
+  useEffect(() => {
+    const handleWheel = (event) => {
+      // Utiliser deltaY pour la direction et la vitesse du scroll
+      const delta = event.deltaY * 0.001; // Ajuster la sensibilité ici
+      setRotationY(prev => prev + delta);
+    };
+
+    window.addEventListener('wheel', handleWheel);
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, []);
+
+  useFrame(() => {
+    if (groupRef.current && !isProjectsArranged) {
+      groupRef.current.rotation.y = rotationY;
+    }
+  });
+
   return (  
-    <group position={[0, 0, 0]} rotation={[0, 0, 0]}>
-      <group ref={groupRef}>  
+      <group ref={groupRef} position={[0, 0, distance]}>
         {projectStates.map((state, i) => (
           <Projet
             key={state.project.id}
@@ -241,7 +254,6 @@ function ProjetsContent() {
             description={state.project.description}
             technologies={state.project.technologies}
             link={state.project.link}
-            color={state.color}
             isDynamic={false}
             onAnyClick={() => handleProjectClick(i)}
             camera={camera}
@@ -249,6 +261,5 @@ function ProjetsContent() {
           />
         ))}
       </group>
-    </group>
   );
 } 
