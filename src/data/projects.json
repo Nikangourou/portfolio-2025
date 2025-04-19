@@ -2,83 +2,107 @@
   "projects": [
     {
       "id": 1,
-      "title": "Portfolio 3D",
-      "description": "Un portfolio interactif en 3D utilisant Three.js et React",
-      "technologies": ["React", "Three.js", "TypeScript", "Framer Motion"],
-      "link": "https://github.com/yourusername/portfolio-2025",
-      "image": "/images/portfolio.png"
+      "title": "Espace 22",
+      "description": "Un projet d'aménagement d'espace de travail innovant",
+      "technologies": ["Design d'espace", "Architecture d'intérieur"],
+      "link": "#",
+      "image": "/images/Espace22.jpg"
     },
     {
       "id": 2,
-      "title": "Application Web",
-      "description": "Une application web moderne avec authentification et base de données",
-      "technologies": ["Node.js", "Express", "MongoDB", "React"],
-      "link": "https://github.com/yourusername/project-name",
-      "image": "/images/webapp.png"
+      "title": "Alizora",
+      "description": "Une application de gestion de projet",
+      "technologies": ["React", "Node.js", "MongoDB"],
+      "link": "#",
+      "image": "/images/Alizora.jpg"
     },
     {
       "id": 3,
-      "title": "Jeu Mobile",
-      "description": "Un jeu mobile captivant développé avec Unity",
-      "technologies": ["Unity", "C#", "Blender"],
-      "link": "https://github.com/yourusername/game",
-      "image": "/images/game.png"
+      "title": "Biosse",
+      "description": "Une plateforme de gestion de biens immobiliers",
+      "technologies": ["Vue.js", "Firebase", "TypeScript"],
+      "link": "#",
+      "image": "/images/Biosse.jpg"
     },
     {
       "id": 4,
-      "title": "Jeu Mobile",
-      "description": "Un jeu mobile captivant développé avec Unity",
-      "technologies": ["Unity", "C#", "Blender"],
-      "link": "https://github.com/yourusername/game",
-      "image": "/images/game.png"
+      "title": "Bonne Sobriyearte",
+      "description": "Un projet artistique sur la sobriété énergétique",
+      "technologies": ["Design graphique", "Illustration"],
+      "link": "#",
+      "image": "/images/Bonne_Sobriyearte.jpg"
     },
     {
       "id": 5,
-      "title": "Jeu Mobile",
-      "description": "Un jeu mobile captivant développé avec Unity",
-      "technologies": ["Unity", "C#", "Blender"],
-      "link": "https://github.com/yourusername/game",
-      "image": "/images/game.png"
+      "title": "Fenetre Immersive",
+      "description": "Une expérience immersive en réalité virtuelle",
+      "technologies": ["Unity", "VR", "3D"],
+      "link": "#",
+      "image": "/images/Fenetre_Immersive.jpg"
     },
     {
       "id": 6,
-      "title": "Jeu Mobile",
-      "description": "Un jeu mobile captivant développé avec Unity",
-      "technologies": ["Unity", "C#", "Blender"],
-      "link": "https://github.com/yourusername/game",
-      "image": "/images/game.png"
+      "title": "Histoires Et Nombres",
+      "description": "Une application éducative pour l'apprentissage des mathématiques",
+      "technologies": ["React Native", "Firebase"],
+      "link": "#",
+      "image": "/images/Histoires_Et_Nombres.jpg"
     },
     {
       "id": 7,
-      "title": "Jeu Mobile",
-      "description": "Un jeu mobile captivant développé avec Unity",
-      "technologies": ["Unity", "C#", "Blender"],
-      "link": "https://github.com/yourusername/game",
-      "image": "/images/game.png"
+      "title": "HopMaListe",
+      "description": "Une application de gestion de listes de courses",
+      "technologies": ["Flutter", "Firebase"],
+      "link": "#",
+      "image": "/images/HopMaListe.jpg"
     },
     {
       "id": 8,
-      "title": "Jeu Mobile",
-      "description": "Un jeu mobile captivant développé avec Unity",
-      "technologies": ["Unity", "C#", "Blender"],
-      "link": "https://github.com/yourusername/game",
-      "image": "/images/game.png"
+      "title": "Ikea",
+      "description": "Un projet de design d'intérieur",
+      "technologies": ["Design d'espace", "Architecture d'intérieur"],
+      "link": "#",
+      "image": "/images/Ikea.jpg"
     },
     {
       "id": 9,
-      "title": "Jeu Mobile",
-      "description": "Un jeu mobile captivant développé avec Unity",
-      "technologies": ["Unity", "C#", "Blender"],
-      "link": "https://github.com/yourusername/game",
-      "image": "/images/game.png"
+      "title": "Imagier",
+      "description": "Une application d'apprentissage du vocabulaire",
+      "technologies": ["React", "Node.js"],
+      "link": "#",
+      "image": "/images/Imagier.jpg"
     },
     {
       "id": 10,
-      "title": "Jeu Mobile",
-      "description": "Un jeu mobile captivant développé avec Unity",
-      "technologies": ["Unity", "C#", "Blender"],
-      "link": "https://github.com/yourusername/game",
-      "image": "/images/game.png"
+      "title": "Magazine",
+      "description": "Un projet de design éditorial",
+      "technologies": ["Design graphique", "Mise en page"],
+      "link": "#",
+      "image": "/images/Magazine.jpg"
+    },
+    {
+      "id": 11,
+      "title": "MyVignette",
+      "description": "Une application de gestion de vignettes automobiles",
+      "technologies": ["React Native", "Firebase"],
+      "link": "#",
+      "image": "/images/MyVignette.jpg"
+    },
+    {
+      "id": 12,
+      "title": "Orangerie",
+      "description": "Un projet d'aménagement paysager",
+      "technologies": ["Design paysager", "Architecture"],
+      "link": "#",
+      "image": "/images/Orangerie.jpg"
+    },
+    {
+      "id": 13,
+      "title": "Presage",
+      "description": "Une application de prédiction météorologique",
+      "technologies": ["Python", "React", "API"],
+      "link": "#",
+      "image": "/images/Presage.jpg"
     }
   ]
 }
