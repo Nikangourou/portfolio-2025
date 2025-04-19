@@ -26,7 +26,7 @@ function ProjetsContent() {
   const width = 2 * Math.tan(fov / 2) * Math.abs(distance);
   const height = width;
 
-  const arrangedDistance = -width / (3 * Math.tan(fov / 2))
+  const arrangedDistance = 1.5
 
   // Positions prédéfinies pour l'arrangement
   const predefinedPositions = useMemo(() => {
@@ -36,7 +36,7 @@ function ProjetsContent() {
     const cols = 5;
     
     // Calculer la taille des projets en fonction de la hauteur de l'écran
-    const gap = 0.1; // Marge entre les projets
+    const gap = 0.05; // Marge entre les projets
     const totalWidth = width - gap;
   
     // Calculer la taille des projets pour utiliser toute la largeur
@@ -238,8 +238,12 @@ function ProjetsContent() {
   }, []);
 
   useFrame(() => {
-    if (groupRef.current && !isProjectsArranged) {
-      groupRef.current.rotation.y = rotationY;
+    if (groupRef.current) {
+      if (isProjectsArranged) {
+        groupRef.current.rotation.y = 0;
+      } else {
+        groupRef.current.rotation.y = rotationY;
+      }
     }
   });
 

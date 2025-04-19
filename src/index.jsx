@@ -51,22 +51,6 @@ root.render(
                 followCamera={false}
                 infiniteGrid={false}
             />
-             {/* Mur arrière */}
-             <Grid
-                position={[0, 2.5, 5]}
-                rotation={[Math.PI / 2, 0, Math.PI]}
-                args={[20, 15]}
-                cellSize={1}
-                cellThickness={0.7}
-                cellColor="#6f6f6f"
-                sectionSize={0}
-                sectionThickness={1}
-                sectionColor="#6f6f6f"
-                fadeDistance={100}
-                fadeStrength={1}
-                followCamera={false}
-                infiniteGrid={false}
-            />
             {/* Mur gauche */}
             <Grid
                 position={[-10, 2.5, -5]}
