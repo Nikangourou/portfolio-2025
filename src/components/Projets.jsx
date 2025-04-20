@@ -59,9 +59,8 @@ function ProjetsContent() {
   const arrangedDistance = calculateArrangedDistance()
   // console.log(arrangedDistance)
  
-
   // Positions prédéfinies pour l'arrangement
-  const predefinedPositions = useMemo(() => {
+  const [predefinedPositions, setPredefinedPositions] = useState(() => {
     const positions = [];
     const totalProjects = projectsData.projects.length;
     const rows = 3;
@@ -86,7 +85,33 @@ function ProjetsContent() {
     window.projectSize = { width, height };
     
     return positions;
-  }, [distance, height, width]);
+  });
+
+  // Recalculer arrangedDistance au resize
+  useEffect(() => {
+    const handleResize = () => {
+      const newDistance = calculateArrangedDistance();
+      
+      // Mettre à jour les positions prédéfinies
+      const newPredefinedPositions = predefinedPositions.map(pos => 
+        [...pos.slice(0, 2), newDistance]
+      );
+      setPredefinedPositions(newPredefinedPositions);
+      
+      // Si les projets sont arrangés, mettre à jour les targetStates
+      if (isProjectsArranged) {
+        setTargetStates(prevStates => 
+          prevStates.map((state, index) => ({
+            ...state,
+            position: newPredefinedPositions[index]
+          }))
+        );
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [camera, isProjectsArranged, predefinedPositions]);
 
   const checkCollision = (pos1, pos2) => {
     const dx = pos1[0] - pos2[0];
