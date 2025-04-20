@@ -19,6 +19,7 @@ function ProjetsContent() {
   const [targetStates, setTargetStates] = useState([]);
   const [minDistance, setMinDistance] = useState(2.0); // Distance minimale entre les projets
   const [rotationY, setRotationY] = useState(0);
+  const [predefinedPositions, setPredefinedPositions] = useState([]);
   const distance = -5;
   const speed = 0.05;
   
@@ -54,13 +55,9 @@ function ProjetsContent() {
         
     return - distanceMax - distance
   };
-
-
-  const arrangedDistance = calculateArrangedDistance()
-  // console.log(arrangedDistance)
  
   // Positions prédéfinies pour l'arrangement
-  const [predefinedPositions, setPredefinedPositions] = useState(() => {
+  const calculatePredefinedPositions = (arrangedDistance) => {
     const positions = [];
     const totalProjects = projectsData.projects.length;
     const rows = 3;
@@ -85,40 +82,13 @@ function ProjetsContent() {
     window.projectSize = { width, height };
     
     return positions;
-  });
-
-  // Recalculer arrangedDistance au resize
-  useEffect(() => {
-    const handleResize = () => {
-      const newDistance = calculateArrangedDistance();
-      
-      // Mettre à jour les positions prédéfinies
-      const newPredefinedPositions = predefinedPositions.map(pos => 
-        [...pos.slice(0, 2), newDistance]
-      );
-      setPredefinedPositions(newPredefinedPositions);
-      
-      // Si les projets sont arrangés, mettre à jour les targetStates
-      if (isProjectsArranged) {
-        setTargetStates(prevStates => 
-          prevStates.map((state, index) => ({
-            ...state,
-            position: newPredefinedPositions[index]
-          }))
-        );
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [camera, isProjectsArranged, predefinedPositions]);
-
-  const checkCollision = (pos1, pos2) => {
-    const dx = pos1[0] - pos2[0];
-    const dy = pos1[1] - pos2[1];
-    const dz = pos1[2] - pos2[2];
-    return Math.sqrt(dx * dx + dy * dy + dz * dz) < minDistance;
   };
+
+  useEffect(() => {
+    const dist = calculateArrangedDistance();
+    setPredefinedPositions(calculatePredefinedPositions(dist));
+    // console.log(predefinedPositions)
+  }, [camera, isProjectsArranged]);
 
   const findValidPosition = (positions, maxAttempts = 100) => {
         // const xRange = [-width/4, width/4];
