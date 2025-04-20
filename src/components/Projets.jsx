@@ -20,13 +20,45 @@ function ProjetsContent() {
   const [minDistance, setMinDistance] = useState(2.0); // Distance minimale entre les projets
   const [rotationY, setRotationY] = useState(0);
   const distance = -5;
-  const arrangedDistance = 3;
   const speed = 0.05;
   
   // Taille fixe pour les projets
   const projectSize = 1;
   const width = projectSize;
   const height = projectSize;
+
+  // Calcul dynamique de arrangedDistance
+  const calculateArrangedDistance = () => {
+    const cols = 5;
+    const rows = 3;
+    const gap = 0.1;
+    
+    // Calculer la taille totale de la grille
+    const totalWidth = (width * cols) + (gap * (cols - 1));
+    const totalHeight = (height * rows) + (gap * (rows - 1));
+    // Calculer la distance nécessaire pour que la grille soit visible
+    const fov = camera.fov * (Math.PI / 180);
+    const aspect = camera.aspect;
+    
+    const distanceForWidth = Math.max(
+      totalWidth / aspect,
+      totalHeight
+    ) / (2 * Math.tan(fov / 2));
+
+    const distanceForHeight = Math.max(
+      totalHeight,
+      totalWidth / aspect
+    ) / (2 * Math.tan(fov / 2));
+
+    const distanceMax = Math.max(distanceForWidth, distanceForHeight);
+        
+    return - distanceMax - distance
+  };
+
+
+  const arrangedDistance = calculateArrangedDistance()
+  // console.log(arrangedDistance)
+ 
 
   // Positions prédéfinies pour l'arrangement
   const predefinedPositions = useMemo(() => {
