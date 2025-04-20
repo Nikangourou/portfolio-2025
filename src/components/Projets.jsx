@@ -19,7 +19,8 @@ function ProjetsContent() {
   const [targetStates, setTargetStates] = useState([]);
   const [minDistance, setMinDistance] = useState(2.0); // Distance minimale entre les projets
   const [rotationY, setRotationY] = useState(0);
-  const [distance, setDistance] = useState(-5); // Distance pour l'état initial
+  const distance = -5;
+  const arrangedDistance = 3;
   const speed = 0.05;
   
   // Taille fixe pour les projets
@@ -46,7 +47,7 @@ function ProjetsContent() {
       const col = i % cols;
       const x = (col * (width + gap)) - (totalWidth / 2) + (width / 2);
       const y = (row * (height + gap)) - (totalHeight / 2) + (height / 2);
-      positions.push([x, y, 3]);
+      positions.push([x, y, arrangedDistance]);
     }
     
     // Stocker la taille des projets pour l'utiliser dans le composant Projet
