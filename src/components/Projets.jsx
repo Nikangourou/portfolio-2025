@@ -19,15 +19,14 @@ function ProjetsContent() {
   const [targetStates, setTargetStates] = useState([]);
   const [minDistance, setMinDistance] = useState(2.0); // Distance minimale entre les projets
   const [rotationY, setRotationY] = useState(0);
-  const distance = -5; // Distance pour l'état initial
-  const fov = camera.fov * (Math.PI / 180);
+  const [distance, setDistance] = useState(-5); // Distance pour l'état initial
+  const [targetDistance, setTargetDistance] = useState(-5);
   const speed = 0.05;
   
-  // Calculer la largeur initiale
-  const width = 2 * Math.tan(fov / 2) * Math.abs(distance);
-  const height = width;
-
-  const arrangedDistance = 1.5
+  // Taille fixe pour les projets
+  const projectSize = 1;
+  const width = projectSize;
+  const height = projectSize;
 
   // Positions prédéfinies pour l'arrangement
   const predefinedPositions = useMemo(() => {
@@ -36,28 +35,23 @@ function ProjetsContent() {
     const rows = 3;
     const cols = 5;
     
-    // Calculer la taille des projets en fonction de la hauteur de l'écran
-    const gap = 0.05; // Marge entre les projets
-    const totalWidth = width - gap;
-  
-    // Calculer la taille des projets pour utiliser toute la largeur
-    const projectWidth = (totalWidth - (cols - 1) * gap) / cols;
-    const projectHeight = projectWidth; // Garder un ratio carré
+    // Espacement entre les projets
+    const gap = 0.1;
     
-    // Ajuster les dimensions totales pour centrer correctement
-    const adjustedTotalWidth = (projectWidth * cols) + (gap * (cols - 1));
-    const adjustedTotalHeight = (projectHeight * rows) + (gap * (rows - 1));
+    // Calculer la taille totale de la grille
+    const totalWidth = (width * cols) + (gap * (cols - 1));
+    const totalHeight = (height * rows) + (gap * (rows - 1));
     
     for (let i = 0; i < totalProjects; i++) {
       const row = Math.floor(i / cols);
       const col = i % cols;
-      const x = (col * (projectWidth + gap)) - (adjustedTotalWidth / 2) + (projectWidth / 2);
-      const y = (row * (projectHeight + gap)) - (adjustedTotalHeight / 2) + (projectHeight / 2);
-      positions.push([x, y, arrangedDistance]);
+      const x = (col * (width + gap)) - (totalWidth / 2) + (width / 2);
+      const y = (row * (height + gap)) - (totalHeight / 2) + (height / 2);
+      positions.push([x, y, distance]);
     }
     
     // Stocker la taille des projets pour l'utiliser dans le composant Projet
-    window.projectSize = { width: projectWidth, height: projectHeight };
+    window.projectSize = { width, height };
     
     return positions;
   }, [distance, height, width]);
@@ -224,6 +218,7 @@ function ProjetsContent() {
   }, [camera]);
 
   const handleProjectClick = (index) => {
+    setTargetDistance(isProjectsArranged ? -5 : 2);
     setProjectsArranged(!isProjectsArranged);
   };
 
@@ -256,6 +251,10 @@ function ProjetsContent() {
       }
       
       groupRef.current.rotation.y = currentRotation + shortestPath * speed;
+      
+      // Interpolation de la distance
+      const newDistance = THREE.MathUtils.lerp(distance, targetDistance, speed);
+      setDistance(newDistance);
     }
   });
 
