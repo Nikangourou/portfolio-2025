@@ -20,7 +20,6 @@ function ProjetsContent() {
   const [minDistance, setMinDistance] = useState(2.0); // Distance minimale entre les projets
   const [rotationY, setRotationY] = useState(0);
   const [distance, setDistance] = useState(-5); // Distance pour l'état initial
-  const [targetDistance, setTargetDistance] = useState(-5);
   const speed = 0.05;
   
   // Taille fixe pour les projets
@@ -47,7 +46,7 @@ function ProjetsContent() {
       const col = i % cols;
       const x = (col * (width + gap)) - (totalWidth / 2) + (width / 2);
       const y = (row * (height + gap)) - (totalHeight / 2) + (height / 2);
-      positions.push([x, y, distance]);
+      positions.push([x, y, 3]);
     }
     
     // Stocker la taille des projets pour l'utiliser dans le composant Projet
@@ -218,7 +217,6 @@ function ProjetsContent() {
   }, [camera]);
 
   const handleProjectClick = (index) => {
-    setTargetDistance(isProjectsArranged ? -5 : 2);
     setProjectsArranged(!isProjectsArranged);
   };
 
@@ -251,10 +249,6 @@ function ProjetsContent() {
       }
       
       groupRef.current.rotation.y = currentRotation + shortestPath * speed;
-      
-      // Interpolation de la distance
-      const newDistance = THREE.MathUtils.lerp(distance, targetDistance, speed);
-      setDistance(newDistance);
     }
   });
 
