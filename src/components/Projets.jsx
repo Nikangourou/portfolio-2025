@@ -61,13 +61,16 @@ function ProjetsContent() {
     const halfHeight = totalHeight / 2;
     const arrangedDistance = calculateArrangedDistance();
 
+    // Calculer une taille suffisamment grande pour atteindre les bords de l'écran
+    const screenSize = 100; // Taille arbitrairement grande pour couvrir l'écran
+
     // Créer les lignes horizontales
     const horizontalLines = [];
     for (let i = 0; i <= rows; i++) {
       const y = -halfHeight + (i * (height + gap));
       horizontalLines.push({
         position: [0, y - (gap / 2), arrangedDistance],
-        size: [totalWidth, gap]
+        size: [screenSize, gap]
       });
     }
 
@@ -77,7 +80,7 @@ function ProjetsContent() {
       const x = -halfWidth + (i * (width + gap));
       verticalLines.push({
         position: [x - (gap / 2), 0, arrangedDistance],
-        size: [gap, totalHeight]
+        size: [gap, screenSize]
       });
     }
 
