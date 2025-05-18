@@ -25,6 +25,7 @@ function ProjetsContent() {
   const cols = 5;
   const rows = 3;
   const gap = 0.01;
+  const margin = 0.5; 
   
   // Taille fixe pour les projets
   const projectSize = 1;
@@ -41,12 +42,12 @@ function ProjetsContent() {
     const distanceForWidth = Math.max(
       totalWidth / aspect,
       totalHeight
-    ) / (2 * Math.tan(fov / 2));
+    ) / (2 * Math.tan(fov / 2)) + margin;
 
     const distanceForHeight = Math.max(
       totalHeight,
       totalWidth / aspect
-    ) / (2 * Math.tan(fov / 2));
+    ) / (2 * Math.tan(fov / 2)) + margin;
 
     const distanceMax = Math.max(distanceForWidth, distanceForHeight);
         
