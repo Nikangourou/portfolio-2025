@@ -4,7 +4,7 @@ import { Canvas } from '@react-three/fiber'
 import { Grid } from '@react-three/drei'
 import Experience from './Experience.jsx'
 import { Leva } from 'leva'
-import Interface from './components/Interface.jsx'
+import Interface from './components/Interface/Interface.jsx'
 
 const root = ReactDOM.createRoot(document.querySelector('#root'))
 
@@ -20,8 +20,7 @@ root.render(
             } }
         >
             <color args={['#ffffff']} attach="background" />
-            {/* Mur devant */}
-            <Grid
+            {/* <Grid
                 position={[0, 0, -10]}
                 rotation={[Math.PI / 2, 0, 0]}
                 args={[100, 100]}
@@ -35,7 +34,7 @@ root.render(
                 fadeStrength={1}
                 followCamera={false}
                 infiniteGrid={false}
-            />
+            /> */}
          
             <Experience />
         </Canvas>

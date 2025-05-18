@@ -22,6 +22,9 @@ function ProjetsContent() {
   const [predefinedPositions, setPredefinedPositions] = useState([]);
   const distance = -5;
   const speed = 0.05;
+  const cols = 5;
+  const rows = 3;
+  const gap = 0.01;
   
   // Taille fixe pour les projets
   const projectSize = 1;
@@ -30,14 +33,8 @@ function ProjetsContent() {
 
   // Calcul dynamique de arrangedDistance
   const calculateArrangedDistance = () => {
-    const cols = 5;
-    const rows = 3;
-    const gap = 0.1;
-    
-    // Calculer la taille totale de la grille
     const totalWidth = (width * cols) + (gap * (cols - 1));
     const totalHeight = (height * rows) + (gap * (rows - 1));
-    // Calculer la distance nécessaire pour que la grille soit visible
     const fov = camera.fov * (Math.PI / 180);
     const aspect = camera.aspect;
     
@@ -53,18 +50,44 @@ function ProjetsContent() {
 
     const distanceMax = Math.max(distanceForWidth, distanceForHeight);
         
-    return - distanceMax - distance
+    return - distanceMax - distance;
   };
- 
+
+  // Créer la géométrie de la grille
+  const gridGeometry = useMemo(() => {
+    const totalWidth = (width * cols) + (gap * (cols - 1));
+    const totalHeight = (height * rows) + (gap * (rows - 1));
+    const halfWidth = totalWidth / 2;
+    const halfHeight = totalHeight / 2;
+    const arrangedDistance = calculateArrangedDistance();
+
+    // Créer les lignes horizontales
+    const horizontalLines = [];
+    for (let i = 0; i <= rows; i++) {
+      const y = -halfHeight + (i * (height + gap));
+      horizontalLines.push({
+        position: [0, y - (gap / 2), arrangedDistance],
+        size: [totalWidth, gap]
+      });
+    }
+
+    // Créer les lignes verticales
+    const verticalLines = [];
+    for (let i = 0; i <= cols; i++) {
+      const x = -halfWidth + (i * (width + gap));
+      verticalLines.push({
+        position: [x - (gap / 2), 0, arrangedDistance],
+        size: [gap, totalHeight]
+      });
+    }
+
+    return [...horizontalLines, ...verticalLines];
+  }, [cols, rows, width, height, gap, camera]);
+
   // Positions prédéfinies pour l'arrangement
   const calculatePredefinedPositions = (arrangedDistance) => {
     const positions = [];
     const totalProjects = projectsData.projects.length;
-    const rows = 3;
-    const cols = 5;
-    
-    // Espacement entre les projets
-    const gap = 0.1;
     
     // Calculer la taille totale de la grille
     const totalWidth = (width * cols) + (gap * (cols - 1));
@@ -281,6 +304,18 @@ function ProjetsContent() {
   });
 
   return (  
+    <>
+      {/* Grille fixe */}
+      <group position={[0, 0, distance + 0.0]}>
+        {gridGeometry.map((line, index) => (
+          <mesh key={index} position={line.position}>
+            <planeGeometry args={line.size} />
+            <meshBasicMaterial color="black" opacity={1} transparent />
+          </mesh>
+        ))}
+      </group>
+
+      {/* Groupe de projets qui tourne */}
       <group ref={groupRef} position={[0, 0, distance]}>
         {projectStates.map((state, i) => (
           <Projet
@@ -298,5 +333,6 @@ function ProjetsContent() {
           />
         ))}
       </group>
+    </>
   );
 } 
