@@ -1,25 +1,27 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { useThree } from '@react-three/fiber';
-import Projet from './Projet';
-import projectsData from '../data/projects.json';
+import Project from './Project';
+import projectsData from '../../data/projects.json';
 import { useFrame } from '@react-three/fiber';
-import { useStore } from '../stores/store';
+import { useStore } from '../../stores/store';
 
-export default function Projets() {
-  return <ProjetsContent />;
+export default function Projects() {
+  return <ProjectsContent />;
 }
 
-function ProjetsContent() {
+function ProjectsContent() {
   const groupRef = useRef(null);
   const { camera } = useThree();
   const isProjectsArranged = useStore((state) => state.isProjectsArranged);
   const setProjectsArranged = useStore((state) => state.setProjectsArranged);
+  const setSelectedProject = useStore((state) => state.setSelectedProject);
   const [projectStates, setProjectStates] = useState([]);
   const [targetStates, setTargetStates] = useState([]);
-  const [minDistance, setMinDistance] = useState(2.0); // Distance minimale entre les projets
+  const [minDistance, setMinDistance] = useState(2.0); 
   const [rotationY, setRotationY] = useState(0);
   const [predefinedPositions, setPredefinedPositions] = useState([]);
+
   const distance = -5;
   const speed = 0.05;
   const cols = 5;
@@ -27,7 +29,6 @@ function ProjetsContent() {
   const gap = 0.005;
   const margin = 0.5; 
   
-  // Taille fixe pour les projets
   const projectSize = 1;
   const width = projectSize;
   const height = projectSize;
@@ -101,7 +102,7 @@ function ProjetsContent() {
       const row = Math.floor(i / cols);
       const col = i % cols;
       const x = (col * (width + gap)) - (totalWidth / 2) + (width / 2);
-      const y = (row * (height + gap)) - (totalHeight / 2) + (height / 2);
+      const y = -(row * (height + gap)) + (totalHeight / 2) - (height / 2);
       positions.push([x, y, arrangedDistance]);
     }
     
@@ -114,7 +115,6 @@ function ProjetsContent() {
   useEffect(() => {
     const dist = calculateArrangedDistance();
     setPredefinedPositions(calculatePredefinedPositions(dist));
-    // console.log(predefinedPositions)
   }, [camera, isProjectsArranged]);
 
   const findValidPosition = (positions, maxAttempts = 100) => {
@@ -272,7 +272,10 @@ function ProjetsContent() {
   }, [camera]);
 
   const handleProjectClick = (index) => {
+    if (!isProjectsArranged) {
     setProjectsArranged(!isProjectsArranged);
+    setSelectedProject(projectsData.projects[index]);
+    }
   };
 
   useEffect(() => {
@@ -319,21 +322,16 @@ function ProjetsContent() {
         ))}
       </group>
         
-      {/* Groupe de projets qui tourne */}
       <group ref={groupRef} position={[0, 0, distance]}>
         {projectStates.map((state, i) => (
-          <Projet
+          <Project
             key={state.project.id}
+            gridPosition={i}
             position={state.position}
             rotation={state.rotation}
-            title={state.project.title}
-            description={state.project.description}
-            technologies={state.project.technologies}
-            link={state.project.link}
-            isDynamic={false}
             onAnyClick={() => handleProjectClick(i)}
             camera={camera}
-            image={state.project.image}
+            image={state.project.cover}
           />
         ))}
       </group>

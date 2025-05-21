@@ -4,7 +4,6 @@ import { Canvas } from '@react-three/fiber'
 import { Grid } from '@react-three/drei'
 import Experience from './Experience.jsx'
 import { Leva } from 'leva'
-import Interface from './components/Interface/Interface.jsx'
 
 const root = ReactDOM.createRoot(document.querySelector('#root'))
 
@@ -22,6 +21,5 @@ root.render(
             <color args={['#ffffff']} attach="background" />
             <Experience />
         </Canvas>
-        <Interface />
     </>
 )

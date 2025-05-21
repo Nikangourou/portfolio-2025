@@ -3,106 +3,159 @@
     {
       "id": 1,
       "title": "Espace 22",
+      "year" : "2024",
+      "context" : "School project",
       "description": "Un projet d'aménagement d'espace de travail innovant",
       "technologies": ["Design d'espace", "Architecture d'intérieur"],
       "link": "#",
-      "image": "/images/Espace22.jpg"
+      "cover": "/images/Espace22.jpg",
+      "contents": [
+        [
+          {
+            
+          }
+        ]
+      ]
     },
     {
       "id": 2,
       "title": "Alizora",
+      "year" : "2024",
+      "context" : "Personal project",
       "description": "Une application de gestion de projet",
       "technologies": ["React", "Node.js", "MongoDB"],
       "link": "#",
-      "image": "/images/Alizora.jpg"
+      "cover": "/images/Alizora.jpg"
     },
     {
       "id": 3,
       "title": "Biosse",
+      "year" : "2024",
+      "context" : "School project",
       "description": "Une plateforme de gestion de biens immobiliers",
       "technologies": ["Vue.js", "Firebase", "TypeScript"],
       "link": "#",
-      "image": "/images/Biosse.jpg"
+      "cover": "/images/Biosse.jpg"
     },
     {
       "id": 4,
       "title": "Bonne Sobriyearte",
+      "year" : "2024",
+      "context" : "Havas Factory",
       "description": "Un projet artistique sur la sobriété énergétique",
       "technologies": ["Design graphique", "Illustration"],
       "link": "#",
-      "image": "/images/Bonne_Sobriyearte.jpg"
+      "cover": "/images/Bonne_Sobriyearte.jpg"
     },
     {
       "id": 5,
       "title": "Fenetre Immersive",
+      "year" : "2024",
+      "context" : "Pando Studio",
       "description": "Une expérience immersive en réalité virtuelle",
       "technologies": ["Unity", "VR", "3D"],
       "link": "#",
-      "image": "/images/Fenetre_Immersive.jpg"
+      "cover": "/images/Fenetre_Immersive.jpg"
     },
     {
       "id": 6,
       "title": "Histoires Et Nombres",
+      "year" : "2024",
+      "context" : "Studit",
       "description": "Une application éducative pour l'apprentissage des mathématiques",
       "technologies": ["React Native", "Firebase"],
       "link": "#",
-      "image": "/images/Histoires_Et_Nombres.jpg"
+      "cover": "/images/Histoires_Et_Nombres.jpg"
     },
     {
       "id": 7,
       "title": "HopMaListe",
+      "year" : "2024",
+      "context" : "Studit",
       "description": "Une application de gestion de listes de courses",
       "technologies": ["Flutter", "Firebase"],
       "link": "#",
-      "image": "/images/HopMaListe.jpg"
+      "cover": "/images/HopMaListe.jpg"
     },
     {
       "id": 8,
       "title": "Ikea",
+      "year" : "2024",
+      "context" : "Studit",
       "description": "Un projet de design d'intérieur",
       "technologies": ["Design d'espace", "Architecture d'intérieur"],
       "link": "#",
-      "image": "/images/Ikea.jpg"
+      "cover": "/images/Ikea.jpg"
     },
     {
       "id": 9,
       "title": "Imagier",
+      "year" : "2024",
+      "context" : "Studit",
       "description": "Une application d'apprentissage du vocabulaire",
       "technologies": ["React", "Node.js"],
       "link": "#",
-      "image": "/images/Imagier.jpg"
+      "cover": "/images/Imagier.jpg"
     },
     {
       "id": 10,
       "title": "Magazine",
+      "year" : "2024",
+      "context" : "School project",
       "description": "Un projet de design éditorial",
       "technologies": ["Design graphique", "Mise en page"],
       "link": "#",
-      "image": "/images/Magazine.jpg"
+      "cover": "/images/Magazine.jpg"
     },
     {
       "id": 11,
       "title": "MyVignette",
+      "year" : "2024",
+      "context" : "Freelance",
       "description": "Une application de gestion de vignettes automobiles",
       "technologies": ["React Native", "Firebase"],
       "link": "#",
-      "image": "/images/MyVignette.jpg"
+      "cover": "/images/MyVignette.jpg"
     },
     {
       "id": 12,
       "title": "Orangerie",
+      "year" : "2024",
+      "context" : "School project",
       "description": "Un projet d'aménagement paysager",
       "technologies": ["Design paysager", "Architecture"],
       "link": "#",
-      "image": "/images/Orangerie.jpg"
+      "cover": "/images/Orangerie.jpg"
     },
     {
       "id": 13,
       "title": "Presage",
+      "year" : "2024",
+      "context" : "School project",
       "description": "Une application de prédiction météorologique",
       "technologies": ["Python", "React", "API"],
       "link": "#",
-      "image": "/images/Presage.jpg"
+      "cover": "/images/Presage.jpg"
+    },
+    {
+      "id": 14,
+      "title": "Projet 14",
+      "year" : "2024",
+      "context" : "School project",
+      "description": "Un projet de design d'intérieur",
+      "technologies": ["Design d'espace", "Architecture d'intérieur"],
+      "link": "#",
+      "cover": "/images/Presage.jpg"
+    },
+    {
+      "id": 15,
+      "title": "Projet 15",
+      "year" : "2024",
+      "context" : "School project",
+      "description": "Un projet de design d'intérieur",
+      "technologies": ["Design d'espace", "Architecture d'intérieur"],
+      "link": "#",
+      "cover": "/images/Presage.jpg"
     }
   ]
 }
