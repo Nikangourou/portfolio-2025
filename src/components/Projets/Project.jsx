@@ -23,6 +23,7 @@ const Project = forwardRef(function Project(
   const isArrangementAnimationComplete = useStore(
     (state) => state.isArrangementAnimationComplete,
   )
+  // const isProjectsArranged = useStore((state) => state.isProjectsArranged)
 
   // Utiliser la taille calculée ou une taille par défaut
   const projectSize = window.projectSize || { width: 1, height: 1 }
@@ -72,32 +73,37 @@ const Project = forwardRef(function Project(
           <meshBasicMaterial color="white" />
         )}
       </mesh>
-      <ProjectOverlay
-        condition={
-          selectedProject && gridPosition === 0 && selectedProject.title
-        }
-        projectSize={projectSize}
-      >
-        <p className={styles.title}>{selectedProject?.title}</p>
-      </ProjectOverlay>
-      <ProjectOverlay
-        condition={selectedProject && gridPosition === 4}
-        projectSize={projectSize}
-      >
-        <Cross />
-      </ProjectOverlay>
-      <ProjectOverlay
-        condition={selectedProject && gridPosition === 9}
-        projectSize={projectSize}
-      >
-        <ArrowUp />
-      </ProjectOverlay>
-      <ProjectOverlay
-        condition={selectedProject && gridPosition === 14}
-        projectSize={projectSize}
-      >
-        <ArrowDown />
-      </ProjectOverlay>
+      {isArrangementAnimationComplete && (
+        <>
+          <ProjectOverlay
+            condition={
+              selectedProject && gridPosition === 0 && selectedProject.title
+            }
+            projectSize={projectSize}
+            reverse={true}
+          >
+            <p className={styles.title}>{selectedProject?.title}</p>
+          </ProjectOverlay>
+          <ProjectOverlay
+            condition={selectedProject && gridPosition === 4}
+            projectSize={projectSize}
+          >
+            <Cross />
+          </ProjectOverlay>
+          <ProjectOverlay
+            condition={selectedProject && gridPosition === 9}
+            projectSize={projectSize}
+          >
+            <ArrowUp />
+          </ProjectOverlay>
+          <ProjectOverlay
+            condition={selectedProject && gridPosition === 14}
+            projectSize={projectSize}
+          >
+            <ArrowDown />
+          </ProjectOverlay>
+        </>
+      )}
     </group>
   )
 })
