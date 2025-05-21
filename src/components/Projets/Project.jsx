@@ -7,20 +7,22 @@ import { Cross, ArrowUp, ArrowDown } from '../Interface/Interface'
 import ProjectOverlay from './ProjectOverlay'
 
 const Project = forwardRef(function Project(
-  { gridPosition, position, rotation, title, color, onAnyClick, camera, image },
+  { gridPosition, position, rotation, onAnyClick, camera, image },
   ref,
 ) {
-  const meshRef = useRef(null)
-  const texture = useTexture(image || '')
-  const selectedProject = useStore((state) => state.selectedProject)
+  const frontMeshRef = useRef(null)
+  const backMeshRef = useRef(null)
 
-  useEffect(() => {
-    if (texture) {
-      texture.colorSpace = THREE.SRGBColorSpace
-      texture.minFilter = THREE.LinearFilter
-      texture.magFilter = THREE.LinearFilter
-    }
-  }, [texture, image])
+  const texture = useTexture(image || '', (texture) => {
+    texture.colorSpace = THREE.SRGBColorSpace
+    texture.minFilter = THREE.LinearFilter
+    texture.magFilter = THREE.LinearFilter
+  })
+
+  const selectedProject = useStore((state) => state.selectedProject)
+  const isArrangementAnimationComplete = useStore(
+    (state) => state.isArrangementAnimationComplete,
+  )
 
   // Utiliser la taille calculée ou une taille par défaut
   const projectSize = window.projectSize || { width: 1, height: 1 }
@@ -42,39 +44,55 @@ const Project = forwardRef(function Project(
 
   return (
     <group position={position} rotation={rotation}>
-      <mesh ref={meshRef} onClick={onAnyClick}>
+      <mesh ref={frontMeshRef} onClick={onAnyClick}>
         <planeGeometry args={[projectSize.width, projectSize.height]} />
         {texture ? (
           <meshBasicMaterial
             map={texture}
-            side={THREE.DoubleSide}
+            side={THREE.FrontSide}
             toneMapped={true}
             transparent={true}
             opacity={1}
           />
         ) : (
-          <meshBasicMaterial color={color} />
+          <meshBasicMaterial color="white" />
         )}
       </mesh>
-      <ProjectOverlay 
-        condition={selectedProject && gridPosition === 0 && selectedProject.title}
+      <mesh ref={backMeshRef} onClick={onAnyClick} rotation-y={Math.PI}>
+        <planeGeometry args={[projectSize.width, projectSize.height]} />
+        {texture ? (
+          <meshBasicMaterial
+            map={texture}
+            side={THREE.FrontSide}
+            toneMapped={true}
+            transparent={true}
+            opacity={1}
+          />
+        ) : (
+          <meshBasicMaterial color="white" />
+        )}
+      </mesh>
+      <ProjectOverlay
+        condition={
+          selectedProject && gridPosition === 0 && selectedProject.title
+        }
         projectSize={projectSize}
       >
         <p className={styles.title}>{selectedProject?.title}</p>
       </ProjectOverlay>
-      <ProjectOverlay 
+      <ProjectOverlay
         condition={selectedProject && gridPosition === 4}
         projectSize={projectSize}
       >
         <Cross />
       </ProjectOverlay>
-      <ProjectOverlay 
+      <ProjectOverlay
         condition={selectedProject && gridPosition === 9}
         projectSize={projectSize}
       >
         <ArrowUp />
       </ProjectOverlay>
-      <ProjectOverlay 
+      <ProjectOverlay
         condition={selectedProject && gridPosition === 14}
         projectSize={projectSize}
       >

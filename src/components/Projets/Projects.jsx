@@ -16,11 +16,14 @@ function ProjectsContent() {
   const isProjectsArranged = useStore((state) => state.isProjectsArranged);
   const setProjectsArranged = useStore((state) => state.setProjectsArranged);
   const setSelectedProject = useStore((state) => state.setSelectedProject);
+  const isArrangementAnimationComplete = useStore((state) => state.isArrangementAnimationComplete);
+  const setArrangementAnimationComplete = useStore((state) => state.setArrangementAnimationComplete);
   const [projectStates, setProjectStates] = useState([]);
   const [targetStates, setTargetStates] = useState([]);
   const [minDistance, setMinDistance] = useState(2.0); 
   const [rotationY, setRotationY] = useState(0);
   const [predefinedPositions, setPredefinedPositions] = useState([]);
+  const [rotatingProjects, setRotatingProjects] = useState(new Set());
 
   const distance = -5;
   const speed = 0.05;
@@ -118,9 +121,6 @@ function ProjectsContent() {
   }, [camera, isProjectsArranged]);
 
   const findValidPosition = (positions, maxAttempts = 100) => {
-        // const xRange = [-width/4, width/4];
-        // const yRange = [-height/4, height/4];
-        // const zRange = [distance - 2, distance + 2];
 
     const xRange = [-2, 2];
     const yRange = [-2, 2];
@@ -166,21 +166,40 @@ function ProjectsContent() {
           ...state,
           position: newPosition,
           rotation: [
+            Math.random() * Math.PI * 0.5 - Math.PI * 0.25,
             Math.random() * Math.PI * 2,
-            Math.random() * Math.PI * 2,
-            Math.random() * Math.PI * 2
+            Math.random() * Math.PI * 0.5 - Math.PI * 0.25,
           ]
         };
       });
       setTargetStates(newTargetStates);
+      setRotatingProjects(new Set());
+      setArrangementAnimationComplete(false);
     } else {
       setTargetStates(predefinedPositions.map((pos, index) => ({
         ...projectStates[index],
         position: pos,
         rotation: [0, 0, 0]
       })));
+      
+      // Attendre une seconde avant de marquer l'animation comme terminée
+      setTimeout(() => {
+        setArrangementAnimationComplete(true);
+      }, 1000);
     }
   }, [isProjectsArranged]);
+
+  // Effet pour gérer les rotations une fois l'animation terminée
+  useEffect(() => {
+    if (isArrangementAnimationComplete) {
+      projectStates.forEach((_, index) => {
+        const randomDelay = Math.random() * 1000 + 1000; // Entre 1000ms et 2000ms
+        setTimeout(() => {
+          setRotatingProjects(prev => new Set([...prev, index]));
+        }, randomDelay);
+      });
+    }
+  }, [isArrangementAnimationComplete]);
 
   useFrame(() => {
     if (projectStates.length > 0 && targetStates.length > 0) {
@@ -193,10 +212,13 @@ function ProjectsContent() {
           const newY = THREE.MathUtils.lerp(state.position[1], target.position[1], speed);
           const newZ = THREE.MathUtils.lerp(state.position[2], target.position[2], speed);
           
+          // Rotation cible basée sur si le projet doit tourner
+          const targetRotation = rotatingProjects.has(index) ? [Math.PI, 0, 0] : target.rotation;
+          
           // Interpolation linéaire pour la rotation
-          const newRotX = THREE.MathUtils.lerp(state.rotation[0], target.rotation[0], speed);
-          const newRotY = THREE.MathUtils.lerp(state.rotation[1], target.rotation[1], speed);
-          const newRotZ = THREE.MathUtils.lerp(state.rotation[2], target.rotation[2], speed);
+          const newRotX = THREE.MathUtils.lerp(state.rotation[0], targetRotation[0], speed);
+          const newRotY = THREE.MathUtils.lerp(state.rotation[1], targetRotation[1], speed);
+          const newRotZ = THREE.MathUtils.lerp(state.rotation[2], targetRotation[2], speed);
           
           return {
             ...state,

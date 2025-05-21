@@ -7,8 +7,9 @@ const ProjectOverlay = ({ condition, children, projectSize }) => {
 
   return (
     <Html
+        occlude
       transform
-      position={[0, 0, 0.01]}
+      position={[0, 0, -0.01]}
       className={styles.project}
       style={{
         width: `${projectSize.width * 40}px`,
