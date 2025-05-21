@@ -24,7 +24,7 @@ function ProjetsContent() {
   const speed = 0.05;
   const cols = 5;
   const rows = 3;
-  const gap = 0.01;
+  const gap = 0.005;
   const margin = 0.5; 
   
   // Taille fixe pour les projets
@@ -310,15 +310,15 @@ function ProjetsContent() {
   return (  
     <>
       {/* Grille fixe */}
-      <group position={[0, 0, distance + 0.0]}>
+      <group position={[0, 0, distance + 1]} scale={0.8}>
         {gridGeometry.map((line, index) => (
           <mesh key={index} position={line.position}>
             <planeGeometry args={line.size} />
-            <meshBasicMaterial color="black" opacity={1} transparent />
+            <meshBasicMaterial color="grey" opacity={1} transparent />
           </mesh>
         ))}
       </group>
-
+        
       {/* Groupe de projets qui tourne */}
       <group ref={groupRef} position={[0, 0, distance]}>
         {projectStates.map((state, i) => (
