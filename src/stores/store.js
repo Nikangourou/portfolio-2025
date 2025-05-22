@@ -1,10 +1,21 @@
 import { create } from 'zustand'
+import useThemeStore from './themeStore'
 
-export const useStore = create((set) => ({
-  isProjectsArranged: false,
-  setProjectsArranged: (value) => set({ isProjectsArranged: value }),
-  isArrangementAnimationComplete: false,
-  setArrangementAnimationComplete: (value) => set({ isArrangementAnimationComplete: value }),
+const useStore = create((set) => ({
   selectedProject: null,
-  setSelectedProject: (project) => set({ selectedProject: project }),
-})) 
+  isProjectsArranged: false,
+  isArrangementAnimationComplete: false,
+  setSelectedProject: (project) => {
+    set({ selectedProject: project })
+    // Mettre à jour le thème global quand un projet est sélectionné
+    if (project?.color) {
+      useThemeStore.getState().setTheme(project.color)
+    } else {
+      useThemeStore.getState().resetTheme()
+    }
+  },
+  setProjectsArranged: (value) => set({ isProjectsArranged: value }),
+  setArrangementAnimationComplete: (value) => set({ isArrangementAnimationComplete: value })
+}))
+
+export { useStore } 

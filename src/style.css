@@ -8,3 +8,16 @@ body,
     width: 100%;
     height: 100%;
 }
+
+:root {
+  --theme-background: white;
+  --theme-text: black;
+}
+
+body {
+  background-color: var(--theme-background);
+  color: var(--theme-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Vous pouvez ajouter d'autres styles globaux ici */

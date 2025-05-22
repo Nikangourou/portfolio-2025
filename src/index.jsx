@@ -1,14 +1,16 @@
 import './style.css'
 import ReactDOM from 'react-dom/client'
+import ThemeProvider from './components/Theme/ThemeProvider'
 import { Canvas } from '@react-three/fiber'
-import { Grid } from '@react-three/drei'
 import Experience from './Experience.jsx'
 import { Leva } from 'leva'
+
+
 
 const root = ReactDOM.createRoot(document.querySelector('#root'))
 
 root.render(
-    <>
+    <ThemeProvider>
         <Leva />
         <Canvas
             camera={ {
@@ -18,8 +20,8 @@ root.render(
                 position: [ 0, 0, 0 ],
             } }
         >
-            <color args={['#ffffff']} attach="background" />
+            <color args={['var(--theme-background)']} attach="background" />
             <Experience />
         </Canvas>
-    </>
+    </ThemeProvider>
 )

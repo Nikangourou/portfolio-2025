@@ -5,6 +5,7 @@ import styles from './Project.module.scss'
 const ProjectOverlay = ({ condition, children, projectSize, reverse }) => {
   if (!condition) return null
 
+
   return (
     <Html
       occlude

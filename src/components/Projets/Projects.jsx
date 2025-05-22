@@ -185,7 +185,7 @@ function ProjectsContent() {
       // Attendre une seconde avant de marquer l'animation comme terminée
       setTimeout(() => {
         setArrangementAnimationComplete(true);
-      }, 1300);
+      }, 1100);
     }
   }, [isProjectsArranged]);
 

@@ -3,16 +3,20 @@
     {
       "id": 1,
       "title": "Espace 22",
-      "year" : "2024",
-      "context" : "School project",
-      "description": "Un projet d'aménagement d'espace de travail innovant",
-      "technologies": ["Design d'espace", "Architecture d'intérieur"],
+      "year" : "2021",
+      "context" : "Pando Studio",
+      "description": "Creation of an e-commerce for a stylist",
+      "technologies": ["Wordpress", "Woocommerce"],
       "link": "#",
       "cover": "/images/Espace22.jpg",
+      "color": {
+        "background": "#E8F4EA",
+        "text": "#2C5530"
+      },
       "contents": [
         [
           {
-            
+
           }
         ]
       ]
@@ -20,92 +24,128 @@
     {
       "id": 2,
       "title": "Alizora",
-      "year" : "2024",
+      "year" : "2021",
       "context" : "Personal project",
-      "description": "Une application de gestion de projet",
-      "technologies": ["React", "Node.js", "MongoDB"],
+      "description": "Creation of a tote bag brand",
+      "technologies": ["Wordpress", "Woocommerce"],
       "link": "#",
-      "cover": "/images/Alizora.jpg"
+      "cover": "/images/Alizora.jpg",
+      "color": {
+        "background": "#F0E6FF",
+        "text": "#4A2C82"
+      }
     },
     {
       "id": 3,
-      "title": "Biosse",
+      "title": "Totoro's Veggie Feast",
       "year" : "2024",
       "context" : "School project",
-      "description": "Une plateforme de gestion de biens immobiliers",
-      "technologies": ["Vue.js", "Firebase", "TypeScript"],
-      "link": "#",
-      "cover": "/images/Biosse.jpg"
+      "description": "Creation of an arcade game",
+      "technologies": ["React Three Fiber"],
+      "link": "https://totoru-three.vercel.app/",
+      "cover": "/images/Totoro.jpg",
+      "color": {
+        "background": "#FFF4E5",
+        "text": "#8B4513"
+      }
     },
     {
       "id": 4,
       "title": "Bonne Sobriyearte",
-      "year" : "2024",
+      "year" : "2023",
       "context" : "Havas Factory",
-      "description": "Un projet artistique sur la sobriété énergétique",
-      "technologies": ["Design graphique", "Illustration"],
-      "link": "#",
-      "cover": "/images/Bonne_Sobriyearte.jpg"
+      "description": "Greeting card",
+      "technologies": ["React Three Fiber"],
+      "link": "https://www.awwwards.com/sites/bonne-sobriyearte-2023",
+      "cover": "/images/Bonne_Sobriyearte.jpg",
+      "color": {
+        "background": "#E6F3FF",
+        "text": "#1A4B8C"
+      }
     },
     {
       "id": 5,
-      "title": "Fenetre Immersive",
-      "year" : "2024",
+      "title": "La Fenêtre Immersive",
+      "year" : "2021",
       "context" : "Pando Studio",
-      "description": "Une expérience immersive en réalité virtuelle",
-      "technologies": ["Unity", "VR", "3D"],
+      "description": "Interactive installation to create a link between SNCF stations",
+      "technologies": ["Javascript"],
       "link": "#",
-      "cover": "/images/Fenetre_Immersive.jpg"
+      "cover": "/images/Fenetre_Immersive.jpg",
+      "color": {
+        "background": "#FFE6E6",
+        "text": "#8B0000"
+      }
     },
     {
       "id": 6,
       "title": "Histoires Et Nombres",
-      "year" : "2024",
+      "year" : "2022",
       "context" : "Studit",
-      "description": "Une application éducative pour l'apprentissage des mathématiques",
-      "technologies": ["React Native", "Firebase"],
-      "link": "#",
-      "cover": "/images/Histoires_Et_Nombres.jpg"
+      "description": "Tool for learning reading and mathematics",
+      "technologies": ["Next.JS", "Symfony"],
+      "link": "https://histoires-et-nombres.editions-retz.com/",
+      "cover": "/images/Histoires_Et_Nombres.jpg",
+      "color": {
+        "background": "#E6FFFA",
+        "text": "#006666"
+      }
     },
     {
       "id": 7,
-      "title": "HopMaListe",
-      "year" : "2024",
+      "title": "Hop Ma Liste",
+      "year" : "2022",
       "context" : "Studit",
-      "description": "Une application de gestion de listes de courses",
-      "technologies": ["Flutter", "Firebase"],
-      "link": "#",
-      "cover": "/images/HopMaListe.jpg"
+      "description": "Mobile app for to help people with suicidal thoughts",
+      "technologies": ["React Native"],
+      "link": "https://hopmaliste.fr/",
+      "cover": "/images/HopMaListe.jpg",
+      "color": {
+        "background": "#FFF0F5",
+        "text": "#8B008B"
+      }
     },
     {
       "id": 8,
-      "title": "Ikea",
-      "year" : "2024",
-      "context" : "Studit",
-      "description": "Un projet de design d'intérieur",
-      "technologies": ["Design d'espace", "Architecture d'intérieur"],
-      "link": "#",
-      "cover": "/images/Ikea.jpg"
+      "title": "Wanderlost Whispers",
+      "year" : "2023",
+      "context" : "School project",
+      "description": "What happens to postcards that don't arrive?",
+      "technologies": ["Three.js"],
+      "link": "https://wanderlost-whispers.netlify.app/",
+      "cover": "/images/Wanderlost.jpg",
+      "color": {
+        "background": "#F5F5DC",
+        "text": "#556B2F"
+      }
     },
     {
       "id": 9,
-      "title": "Imagier",
-      "year" : "2024",
-      "context" : "Studit",
-      "description": "Une application d'apprentissage du vocabulaire",
-      "technologies": ["React", "Node.js"],
-      "link": "#",
-      "cover": "/images/Imagier.jpg"
+      "title": "KFC ORIGINS",
+      "year" : "2023",
+      "context" : "Havas Factory",
+      "description": "Landing page for KFC Origins collection",
+      "technologies": ["Javascript"],
+      "link": "https://www.kfc.fr/origins#",
+      "cover": "/images/KFC.jpg",
+      "color": {
+        "background": "#F0FFF0",
+        "text": "#228B22"
+      }
     },
     {
       "id": 10,
-      "title": "Magazine",
-      "year" : "2024",
+      "title": "The other Side",
+      "year" : "2025",
       "context" : "School project",
-      "description": "Un projet de design éditorial",
-      "technologies": ["Design graphique", "Mise en page"],
+      "description": "Current project",
+      "technologies": ["Arduino"],
       "link": "#",
-      "cover": "/images/Magazine.jpg"
+      "cover": "/images/OtherSide.jpg",
+      "color": {
+        "background": "#F5F5F5",
+        "text": "#363636"
+      }
     },
     {
       "id": 11,
@@ -115,7 +155,11 @@
       "description": "Une application de gestion de vignettes automobiles",
       "technologies": ["React Native", "Firebase"],
       "link": "#",
-      "cover": "/images/MyVignette.jpg"
+      "cover": "/images/MyVignette.jpg",
+      "color": {
+        "background": "#FFE4E1",
+        "text": "#8B0000"
+      }
     },
     {
       "id": 12,
@@ -125,7 +169,11 @@
       "description": "Un projet d'aménagement paysager",
       "technologies": ["Design paysager", "Architecture"],
       "link": "#",
-      "cover": "/images/Orangerie.jpg"
+      "cover": "/images/Orangerie.jpg",
+      "color": {
+        "background": "#F0F8FF",
+        "text": "#4682B4"
+      }
     },
     {
       "id": 13,
@@ -135,7 +183,11 @@
       "description": "Une application de prédiction météorologique",
       "technologies": ["Python", "React", "API"],
       "link": "#",
-      "cover": "/images/Presage.jpg"
+      "cover": "/images/Presage.jpg",
+      "color": {
+        "background": "#E6E6FA",
+        "text": "#483D8B"
+      }
     },
     {
       "id": 14,
@@ -145,7 +197,11 @@
       "description": "Un projet de design d'intérieur",
       "technologies": ["Design d'espace", "Architecture d'intérieur"],
       "link": "#",
-      "cover": "/images/Presage.jpg"
+      "cover": "/images/Presage.jpg",
+      "color": {
+        "background": "#FAFAD2",
+        "text": "#B8860B"
+      }
     },
     {
       "id": 15,
@@ -155,7 +211,11 @@
       "description": "Un projet de design d'intérieur",
       "technologies": ["Design d'espace", "Architecture d'intérieur"],
       "link": "#",
-      "cover": "/images/Presage.jpg"
+      "cover": "/images/Presage.jpg",
+      "color": {
+        "background": "#FFDAB9",
+        "text": "#CD853F"
+      }
     }
   ]
 }
