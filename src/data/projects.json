@@ -149,13 +149,13 @@
     },
     {
       "id": 11,
-      "title": "MyVignette",
+      "title": "Sizing",
       "year" : "2024",
-      "context" : "Freelance",
-      "description": "Une application de gestion de vignettes automobiles",
-      "technologies": ["React Native", "Firebase"],
+      "context" : "Veepee",
+      "description": "Size recommendation project for Veepee",
+      "technologies": ["React", "Strapi", ".NET"],
       "link": "#",
-      "cover": "/images/MyVignette.jpg",
+      "cover": "/images/Sizing.jpg",
       "color": {
         "background": "#FFE4E1",
         "text": "#8B0000"
@@ -163,11 +163,11 @@
     },
     {
       "id": 12,
-      "title": "Orangerie",
-      "year" : "2024",
+      "title": "MARI-E",
+      "year" : "2023",
       "context" : "School project",
-      "description": "Un projet d'aménagement paysager",
-      "technologies": ["Design paysager", "Architecture"],
+      "description": "AR experience in partnership with the Orangerie Museum",
+      "technologies": ["Three.js", "WebXR"],
       "link": "#",
       "cover": "/images/Orangerie.jpg",
       "color": {
@@ -178,11 +178,11 @@
     {
       "id": 13,
       "title": "Presage",
-      "year" : "2024",
+      "year" : "2023",
       "context" : "School project",
-      "description": "Une application de prédiction météorologique",
-      "technologies": ["Python", "React", "API"],
-      "link": "#",
+      "description": "Interactive road trip story",
+      "technologies": ["React Three Fiber"],
+      "link": "https://presage-game.netlify.app/",
       "cover": "/images/Presage.jpg",
       "color": {
         "background": "#E6E6FA",
@@ -191,13 +191,13 @@
     },
     {
       "id": 14,
-      "title": "Projet 14",
-      "year" : "2024",
+      "title": "DATAVIZ",
+      "year" : "2023",
       "context" : "School project",
-      "description": "Un projet de design d'intérieur",
-      "technologies": ["Design d'espace", "Architecture d'intérieur"],
-      "link": "#",
-      "cover": "/images/Presage.jpg",
+      "description": "Data visualization project on classmates' travel data",
+      "technologies": ["GSAP"],
+      "link": "https://datavis-transport.netlify.app/",
+      "cover": "/images/DataViz.jpg",
       "color": {
         "background": "#FAFAD2",
         "text": "#B8860B"
@@ -205,13 +205,13 @@
     },
     {
       "id": 15,
-      "title": "Projet 15",
+      "title": "Vraiment",
       "year" : "2024",
       "context" : "School project",
-      "description": "Un projet de design d'intérieur",
-      "technologies": ["Design d'espace", "Architecture d'intérieur"],
-      "link": "#",
-      "cover": "/images/Presage.jpg",
+      "description": "A party game in which one player shares two memories. Only one of the two is true. The other players must find the real memory by asking questions.",
+      "technologies": ["Next.JS", "Three.js", "GSAP", "Socket.io", "Express.js"],
+      "link": "https://vraiment.netlify.app/",
+      "cover": "/images/Vraiment.jpg",
       "color": {
         "background": "#FFDAB9",
         "text": "#CD853F"
