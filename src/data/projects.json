@@ -8,15 +8,24 @@
       "description": "Creation of an e-commerce for a stylist",
       "technologies": ["Wordpress", "Woocommerce"],
       "link": "#",
-      "cover": "/images/Espace22.jpg",
+      "cover": "/images/Espace22/Espace22.jpg",
       "color": {
-        "background": "#E8F4EA",
-        "text": "#2C5530"
+        "background": "#23288C",
+        "text": "#FFFFFF"
       },
       "contents": [
         [
           {
-
+            "image": "/images/Espace22/space2.jpeg",
+            "text": "Espace 22 is a platform for discovering and buying clothes. It is a platform for discovering and buying clothes.",
+            "span": 2
+          },
+          {
+            "image": "/images/Espace22/space3.jpeg",
+            "text": "Espace 22 is a platform for discovering and buying clothes. It is a platform for discovering and buying clothes."
+          },
+          {
+            "image": "/images/Espace22/space4.jpeg"
           }
         ]
       ]

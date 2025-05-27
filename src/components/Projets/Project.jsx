@@ -1,4 +1,4 @@
-import React, { useRef, forwardRef, useEffect } from 'react'
+import React, { useRef, forwardRef, useEffect, useState } from 'react'
 import * as THREE from 'three'
 import { useTexture } from '@react-three/drei'
 import { useStore } from '../../stores/store'
@@ -13,6 +13,7 @@ const Project = forwardRef(function Project(
   const frontMeshRef = useRef(null)
   const backMeshRef = useRef(null)
   const backMaterialRef = useRef(null)
+  const [contentTexture, setContentTexture] = useState(null)
 
   const texture = useTexture(image || '', (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace
@@ -25,22 +26,60 @@ const Project = forwardRef(function Project(
     (state) => state.isArrangementAnimationComplete,
   )
 
+  // Utiliser la taille calculée ou une taille par défaut
+  const projectSize = window.projectSize || { width: 1, height: 1 }
+
+  // Charger la texture du contenu si nécessaire
+  useEffect(() => {
+    const contentImage = selectedProject?.contents?.[0]?.[0]?.image
+    if (contentImage && (gridPosition === 5 || gridPosition === 6)) {
+      const loader = new THREE.TextureLoader()
+      loader.load(
+        contentImage,
+        (texture) => {
+          texture.colorSpace = THREE.SRGBColorSpace
+          texture.minFilter = THREE.LinearFilter
+          texture.magFilter = THREE.LinearFilter
+          texture.rotation = Math.PI
+          texture.center.set(0.5, 0.5)
+        
+          const scale = 0.5
+          texture.repeat.set(scale, scale)
+          texture.offset.set(
+            gridPosition === 5 ? -0.25 : 0.25,
+            0.25
+          )
+          
+          setContentTexture(texture)
+        },
+        undefined,
+        (error) => {
+          console.warn('Error loading content texture:', error)
+          setContentTexture(null)
+        }
+      )
+    } else {
+      setContentTexture(null)
+    }
+  }, [selectedProject, gridPosition, projectSize])
+
   useEffect(() => {
     if (backMaterialRef.current) {
-      if (texture && !isArrangementAnimationComplete) {
+      if (contentTexture && (gridPosition === 5 || gridPosition === 6)) {
+        backMaterialRef.current.map = contentTexture
+        backMaterialRef.current.color.set('white')
+        backMaterialRef.current.needsUpdate = true
+      } else if (texture && !isArrangementAnimationComplete) {
         backMaterialRef.current.map = texture
         backMaterialRef.current.color.set('white')
         backMaterialRef.current.needsUpdate = true
       } else {
         backMaterialRef.current.map = null
-        backMaterialRef.current.color.set(selectedProject.color.background)
+        backMaterialRef.current.color.set(selectedProject?.color?.background || 'white')
         backMaterialRef.current.needsUpdate = true
       }
     }
-  }, [isArrangementAnimationComplete, texture])
-
-  // Utiliser la taille calculée ou une taille par défaut
-  const projectSize = window.projectSize || { width: 1, height: 1 }
+  }, [isArrangementAnimationComplete, texture, contentTexture, selectedProject, gridPosition])
 
   // Convertir les coordonnées 3D en coordonnées 2D pour le positionnement CSS
   const get2DPosition = () => {
@@ -74,7 +113,11 @@ const Project = forwardRef(function Project(
           <meshBasicMaterial color="white" />
         )}
       </mesh>
-      <mesh ref={backMeshRef} onClick={onAnyClick} rotation-y={Math.PI}>
+      <mesh 
+        ref={backMeshRef} 
+        onClick={onAnyClick} 
+        rotation-y={Math.PI}
+      >
         <planeGeometry args={[projectSize.width, projectSize.height]} />
         <meshBasicMaterial
           ref={backMaterialRef}
@@ -123,7 +166,7 @@ const Project = forwardRef(function Project(
           >
             <div className={styles.technoContainer}>
               {selectedProject?.technologies.map((techno) => (
-                <p className={styles.techno}>{techno}</p>
+                <p key={techno} className={styles.techno}>{techno}</p>
               ))}
             </div>
           </ProjectOverlay>
@@ -147,6 +190,15 @@ const Project = forwardRef(function Project(
           >
             <ArrowDown />
           </ProjectOverlay>
+          {selectedProject?.contents?.[0]?.[0]?.text && gridPosition === 5 && (
+            <ProjectOverlay
+              condition={selectedProject}
+              projectSize={projectSize}
+              reverse={true}
+            >
+              <p className={styles.contentText}>{selectedProject.contents[0][0].text}</p>
+            </ProjectOverlay>
+          )}
         </>
       )}
     </group>

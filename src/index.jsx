@@ -20,7 +20,7 @@ root.render(
                 position: [ 0, 0, 0 ],
             } }
         >
-            <color args={['var(--theme-background)']} attach="background" />
+            <color args={[1, 1, 1]} attach="background" />
             <Experience />
         </Canvas>
     </ThemeProvider>

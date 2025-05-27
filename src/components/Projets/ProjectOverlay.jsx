@@ -5,11 +5,11 @@ import styles from './Project.module.scss'
 const ProjectOverlay = ({ condition, children, projectSize, reverse }) => {
   if (!condition) return null
 
-
   return (
     <Html
       occlude
       transform
+      prepend
       position={[0, 0, -0.01]}
       rotation={reverse ? [Math.PI, 0, 0] : [0, 0, 0]}
       className={styles.project}
