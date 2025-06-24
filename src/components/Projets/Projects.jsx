@@ -34,7 +34,7 @@ function ProjectsContent() {
   const [borderStates, setBorderStates] = useState([]);
 
   const distance = -5
-  const speed = 0.05
+  const baseSpeed = 2.5 
   const cols = 5
   const rows = 3
   const gap = 0.005
@@ -231,27 +231,30 @@ function ProjectsContent() {
     }
   }, [isArrangementAnimationComplete])
 
-  useFrame(() => {
+  useFrame((state, delta) => {
     if (projectStates.length > 0 && targetStates.length > 0) {
+      // Calculer la vitesse adaptée au delta time
+      const adaptiveSpeed = Math.min(baseSpeed * delta, 0.1) // Limiter à 0.1 pour éviter les sauts
+      
       setProjectStates((prevStates) => {
         return prevStates.map((state, index) => {
           const target = targetStates[index]
 
-          // Interpolation linéaire pour la position avec un facteur de 0.05 pour une transition plus douce
+          // Interpolation linéaire pour la position avec une vitesse adaptée
           const newX = THREE.MathUtils.lerp(
             state.position[0],
             target.position[0],
-            speed,
+            adaptiveSpeed,
           )
           const newY = THREE.MathUtils.lerp(
             state.position[1],
             target.position[1],
-            speed,
+            adaptiveSpeed,
           )
           const newZ = THREE.MathUtils.lerp(
             state.position[2],
             target.position[2],
-            speed,
+            adaptiveSpeed,
           )
 
           // Rotation cible basée sur si le projet doit tourner
@@ -263,17 +266,17 @@ function ProjectsContent() {
           const newRotX = THREE.MathUtils.lerp(
             state.rotation[0],
             targetRotation[0],
-            speed,
+            adaptiveSpeed,
           )
           const newRotY = THREE.MathUtils.lerp(
             state.rotation[1],
             targetRotation[1],
-            speed,
+            adaptiveSpeed,
           )
           const newRotZ = THREE.MathUtils.lerp(
             state.rotation[2],
             targetRotation[2],
-            speed,
+            adaptiveSpeed,
           )
 
           return {
@@ -295,17 +298,17 @@ function ProjectsContent() {
           const newRotX = THREE.MathUtils.lerp(
             state.rotation[0],
             targetRotation[0],
-            speed,
+            adaptiveSpeed,
           )
           const newRotY = THREE.MathUtils.lerp(
             state.rotation[1],
             targetRotation[1],
-            speed,
+            adaptiveSpeed,
           )
           const newRotZ = THREE.MathUtils.lerp(
             state.rotation[2],
             targetRotation[2],
-            speed,
+            adaptiveSpeed,
           )
 
           return {
@@ -385,15 +388,14 @@ function ProjectsContent() {
       setProjectsArranged(!isProjectsArranged)
       setSelectedProject(projectsData.projects[index])
     } else {
-      // Si les projets sont arrangés, on les désarrange complètement
       useStore.getState().resetProjectState()
     }
   }
 
   useEffect(() => {
     const handleWheel = (event) => {
-      // Utiliser deltaY pour la direction et la vitesse du scroll
-      const delta = event.deltaY * 0.001 // Ajuster la sensibilité ici
+      const screenFactor = Math.min(window.innerWidth / 1920, 1) 
+      const delta = event.deltaY * 0.0007 * screenFactor 
       setRotationY((prev) => prev + delta)
     }
 
@@ -401,7 +403,7 @@ function ProjectsContent() {
     return () => window.removeEventListener('wheel', handleWheel)
   }, [])
 
-  useFrame(() => {
+  useFrame((state, delta) => {
     if (groupRef.current) {
       const currentRotation = groupRef.current.rotation.y
       const targetRotation = isProjectsArranged ? 0 : rotationY
@@ -421,7 +423,8 @@ function ProjectsContent() {
             : shortestPath + 2 * Math.PI
       }
 
-      groupRef.current.rotation.y = currentRotation + shortestPath * speed
+      const adaptiveSpeed = Math.min(baseSpeed * delta, 0.1)
+      groupRef.current.rotation.y = currentRotation + shortestPath * adaptiveSpeed
     }
   })
 
