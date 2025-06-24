@@ -30,8 +30,8 @@ const Project = forwardRef(function Project(
   // Utiliser la taille calculée ou une taille par défaut
   const projectSize = window.projectSize || { width: 1, height: 1 }
 
-  // Utiliser le hook personnalisé avec les options par défaut
-  const { contentTexture } = useContentTexture(selectedProject, gridPosition)
+  // Utiliser le hook personnalisé
+  const { contentTexture } = useContentTexture(gridPosition)
 
   // Optimiser le useEffect pour éviter les re-renders inutiles
   useEffect(() => {
@@ -59,7 +59,6 @@ const Project = forwardRef(function Project(
     
     backMaterialRef.current.needsUpdate = true
   }, [isArrangementAnimationComplete, isProjectsArranged, texture, contentTexture, selectedProject, gridPosition])
-
 
   return (
     <group position={position} rotation={rotation}>

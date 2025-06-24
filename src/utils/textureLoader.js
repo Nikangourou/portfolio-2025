@@ -1,14 +1,16 @@
 import * as THREE from 'three'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useStore } from '../stores/store'
 
 /**
  * Hook simple pour charger les textures de contenu
  */
-export const useContentTexture = (selectedProject, gridPosition) => {
+export const useContentTexture = (gridPosition) => {
   const [contentTexture, setContentTexture] = useState(null)
+  
+  const contentImage = useStore((state) => state.selectedProject?.contents?.[0]?.[0]?.image)
 
   useEffect(() => {
-    const contentImage = selectedProject?.contents?.[0]?.[0]?.image
     
     if (!contentImage || (gridPosition !== 5 && gridPosition !== 6)) {
       setContentTexture(null)
@@ -37,7 +39,7 @@ export const useContentTexture = (selectedProject, gridPosition) => {
         setContentTexture(null)
       }
     )
-  }, [selectedProject, gridPosition])
+  }, [contentImage, gridPosition])
 
   return { contentTexture }
 } 
