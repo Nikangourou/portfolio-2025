@@ -31,7 +31,8 @@ function ProjectsContent() {
   const [rotatingProjects, setRotatingProjects] = useState(new Set())
   const [rotatingBorders, setRotatingBorders] = useState(new Set())
   const currentTheme = useThemeStore((state) => state.currentTheme)
-  const [borderStates, setBorderStates] = useState([]);
+  const [borderStates, setBorderStates] = useState([])
+  const [animatingProjects, setAnimatingProjects] = useState(new Set())
 
   const distance = -5
   const baseSpeed = 2.5 
@@ -192,8 +193,13 @@ function ProjectsContent() {
       setTargetStates(newTargetStates)
       setRotatingProjects(new Set())
       setRotatingBorders(new Set())
+      setAnimatingProjects(new Set())
       setArrangementAnimationComplete(false)
     } else {
+      // Animation séquentielle pour éviter les superpositions
+      setAnimatingProjects(new Set())
+      
+      // Définir les positions cibles immédiatement
       setTargetStates(
         predefinedPositions.map((pos, index) => ({
           ...projectStates[index],
@@ -201,11 +207,23 @@ function ProjectsContent() {
           rotation: [0, 0, 0],
         })),
       )
+      
+      // Créer un ordre aléatoire pour l'animation
+      const randomOrder = Array.from({ length: projectStates.length }, (_, i) => i)
+        .sort(() => Math.random() - 0.5)
+      
+      // Démarrer l'animation des projets dans un ordre aléatoire
+      randomOrder.forEach((projectIndex, animationIndex) => {
+        setTimeout(() => {
+          setAnimatingProjects(prev => new Set([...prev, projectIndex]))
+        }, animationIndex * 100) // 100ms de délai entre chaque projet
+      })
 
-      // Attendre une seconde avant de marquer l'animation comme terminée
+      // Attendre que tous les projets aient commencé leur animation
+      const totalAnimationTime = projectStates.length * 100 + 1100
       setTimeout(() => {
         setArrangementAnimationComplete(true)
-      }, 1100)
+      }, totalAnimationTime)
     }
   }, [isProjectsArranged])
 
@@ -239,6 +257,11 @@ function ProjectsContent() {
       setProjectStates((prevStates) => {
         return prevStates.map((state, index) => {
           const target = targetStates[index]
+          
+          // Si le projet n'est pas encore en cours d'animation, garder sa position actuelle
+          if (isProjectsArranged && !animatingProjects.has(index)) {
+            return state
+          }
 
           // Interpolation linéaire pour la position avec une vitesse adaptée
           const newX = THREE.MathUtils.lerp(
