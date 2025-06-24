@@ -25,6 +25,7 @@ const Project = forwardRef(function Project(
   const isArrangementAnimationComplete = useStore(
     (state) => state.isArrangementAnimationComplete,
   )
+  const isProjectsArranged = useStore((state) => state.isProjectsArranged)
 
   // Utiliser la taille calculée ou une taille par défaut
   const projectSize = window.projectSize || { width: 1, height: 1 }
@@ -69,7 +70,7 @@ const Project = forwardRef(function Project(
         backMaterialRef.current.map = contentTexture
         backMaterialRef.current.color.set('white')
         backMaterialRef.current.needsUpdate = true
-      } else if (texture && !isArrangementAnimationComplete) {
+      } else if (texture && (!isArrangementAnimationComplete || !isProjectsArranged)) {
         backMaterialRef.current.map = texture
         backMaterialRef.current.color.set('white')
         backMaterialRef.current.needsUpdate = true
@@ -79,7 +80,7 @@ const Project = forwardRef(function Project(
         backMaterialRef.current.needsUpdate = true
       }
     }
-  }, [isArrangementAnimationComplete, texture, contentTexture, selectedProject, gridPosition])
+  }, [isArrangementAnimationComplete, isProjectsArranged, texture, contentTexture, selectedProject, gridPosition])
 
   // Convertir les coordonnées 3D en coordonnées 2D pour le positionnement CSS
   const get2DPosition = () => {

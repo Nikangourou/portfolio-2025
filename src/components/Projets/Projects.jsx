@@ -384,6 +384,9 @@ function ProjectsContent() {
     if (!isProjectsArranged) {
       setProjectsArranged(!isProjectsArranged)
       setSelectedProject(projectsData.projects[index])
+    } else {
+      // Si les projets sont arrangés, on les désarrange complètement
+      useStore.getState().resetProjectState()
     }
   }
 
