@@ -5,6 +5,7 @@ import { useStore } from '../../stores/store'
 import styles from './Project.module.scss'
 import { Cross, ArrowUp, ArrowDown } from '../Interface/Interface'
 import ProjectOverlay from './ProjectOverlay'
+import { useContentTexture } from '../../utils/textureLoader'
 
 const Project = forwardRef(function Project(
   { gridPosition, position, rotation, onAnyClick, camera, image },
@@ -13,7 +14,6 @@ const Project = forwardRef(function Project(
   const frontMeshRef = useRef(null)
   const backMeshRef = useRef(null)
   const backMaterialRef = useRef(null)
-  const [contentTexture, setContentTexture] = useState(null)
 
   const texture = useTexture(image || '', (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace
@@ -30,72 +30,36 @@ const Project = forwardRef(function Project(
   // Utiliser la taille calculée ou une taille par défaut
   const projectSize = window.projectSize || { width: 1, height: 1 }
 
-  // Charger la texture du contenu si nécessaire
-  useEffect(() => {
-    const contentImage = selectedProject?.contents?.[0]?.[0]?.image
-    if (contentImage && (gridPosition === 5 || gridPosition === 6)) {
-      const loader = new THREE.TextureLoader()
-      loader.load(
-        contentImage,
-        (texture) => {
-          texture.colorSpace = THREE.SRGBColorSpace
-          texture.minFilter = THREE.LinearFilter
-          texture.magFilter = THREE.LinearFilter
-          texture.rotation = Math.PI
-          texture.center.set(0.5, 0.5)
-        
-          const scale = 0.5
-          texture.repeat.set(scale, scale)
-          texture.offset.set(
-            gridPosition === 5 ? -0.25 : 0.25,
-            0.25
-          )
-          
-          setContentTexture(texture)
-        },
-        undefined,
-        (error) => {
-          console.warn('Error loading content texture:', error)
-          setContentTexture(null)
-        }
-      )
-    } else {
-      setContentTexture(null)
-    }
-  }, [selectedProject, gridPosition, projectSize])
+  // Utiliser le hook personnalisé avec les options par défaut
+  const { contentTexture } = useContentTexture(selectedProject, gridPosition)
 
+  // Optimiser le useEffect pour éviter les re-renders inutiles
   useEffect(() => {
-    if (backMaterialRef.current) {
-      if (contentTexture && (gridPosition === 5 || gridPosition === 6)) {
-        backMaterialRef.current.map = contentTexture
-        backMaterialRef.current.color.set('white')
-        backMaterialRef.current.needsUpdate = true
-      } else if (texture && (!isArrangementAnimationComplete || !isProjectsArranged)) {
-        backMaterialRef.current.map = texture
-        backMaterialRef.current.color.set('white')
-        backMaterialRef.current.needsUpdate = true
-      } else {
-        backMaterialRef.current.map = null
-        backMaterialRef.current.color.set(selectedProject?.color?.background || 'white')
-        backMaterialRef.current.needsUpdate = true
-      }
+    if (!backMaterialRef.current) return
+
+    let newMap = null
+    let newColor = 'white'
+
+    if (contentTexture) {
+      newMap = contentTexture
+    } else if (texture && (!isArrangementAnimationComplete || !isProjectsArranged)) {
+      newMap = texture
+    } else {
+      newColor = selectedProject?.color?.background || 'white'
     }
+
+    // Mettre à jour seulement si nécessaire
+    if (backMaterialRef.current.map !== newMap) {
+      backMaterialRef.current.map = newMap
+    }
+    
+    if (backMaterialRef.current.color.getHexString() !== newColor.replace('#', '')) {
+      backMaterialRef.current.color.set(newColor)
+    }
+    
+    backMaterialRef.current.needsUpdate = true
   }, [isArrangementAnimationComplete, isProjectsArranged, texture, contentTexture, selectedProject, gridPosition])
 
-  // Convertir les coordonnées 3D en coordonnées 2D pour le positionnement CSS
-  const get2DPosition = () => {
-    if (!camera) return { x: 0, y: 0 }
-
-    const vector = new THREE.Vector3(position[0], position[1], position[2])
-    vector.project(camera)
-
-    return {
-      x: (vector.x * 0.5 + 0.5) * window.innerWidth,
-      y: (vector.y * -0.5 + 0.5) * window.innerHeight,
-    }
-  }
-
-  const pos2D = get2DPosition()
 
   return (
     <group position={position} rotation={rotation}>
