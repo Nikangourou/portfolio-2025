@@ -14,11 +14,10 @@
         "text": "#FFFFFF"
       },
       "contents": [
-        [
           {
             "image": "/images/Espace22/space2.jpeg",
             "text": "Espace 22 is a platform for discovering and buying clothes. It is a platform for discovering and buying clothes.",
-            "span": 2
+            "span": "2-2"
           },
           {
             "image": "/images/Espace22/space3.jpeg",
@@ -27,7 +26,6 @@
           {
             "image": "/images/Espace22/space4.jpeg"
           }
-        ]
       ]
     },
     {

@@ -3,16 +3,66 @@ import { useState, useEffect, useMemo } from 'react'
 import { useStore } from '../stores/store'
 
 /**
+ * Détermine les positions de grille à affecter en fonction du span
+ * @param {string} span - Span du contenu (ex: "2-2", "3-2")
+ * @param {number} startPosition - Position de départ
+ * @param {number} currentPosition - Position actuelle pour calculer l'offset
+ * @returns {Object} - { positions: number[], offsetX: number, offsetY: number }
+ */
+export const getGridPositionsFromSpan = (span, startPosition = 5, currentPosition = null) => {
+  if (!span) {
+    return { positions: [], offsetX: 0, offsetY: 0 }
+  }
+
+  const positions = []
+  const [width, height] = span.split('-').map(Number)
+  const cols = 5
+  const startRow = Math.floor(startPosition / cols)
+  const startCol = startPosition % cols
+  
+  for (let row = 0; row < height; row++) {
+    for (let col = 0; col < width; col++) {
+      const position = (startRow + row) * cols + (startCol + col)
+      positions.push(position)
+    }
+  }
+  
+  // Si on a une position actuelle, calculer l'offset pour cette position spécifique
+  if (currentPosition !== null) {
+    const currentRow = Math.floor(currentPosition / cols)
+    const currentCol = currentPosition % cols
+    
+    // Calculer la position relative dans le span
+    const relativeRow = currentRow - startRow
+    const relativeCol = currentCol - startCol
+    
+    // Calculer les offsets pour cette position spécifique
+    const offsetX = relativeCol * 0.5 - 0.25
+    const offsetY = -relativeRow * 0.5 + 0.25
+    
+    return { positions, offsetX, offsetY }
+  }
+  
+  // Fallback si pas de position spécifique
+  return { positions, offsetX: 0, offsetY: 0 }
+}
+
+/**
  * Hook simple pour charger les textures de contenu
  */
 export const useContentTexture = (gridPosition) => {
   const [contentTexture, setContentTexture] = useState(null)
-  
-  const contentImage = useStore((state) => state.selectedProject?.contents?.[0]?.[0]?.image)
+  const content = useStore((state) => state.selectedProject?.contents?.[0])
+  const contentImage = content?.image
+
+  // Déterminer les positions valides pour ce contenu
+  const validPositions = useMemo(() => 
+    getGridPositionsFromSpan(content?.span, 5, gridPosition), 
+    [content?.span, gridPosition]
+  )
 
   useEffect(() => {
-    
-    if (!contentImage || (gridPosition !== 5 && gridPosition !== 6)) {
+    if (!contentImage || !validPositions.positions.includes(gridPosition)) {
       setContentTexture(null)
       return
     }
@@ -28,8 +78,8 @@ export const useContentTexture = (gridPosition) => {
         texture.center.set(0.5, 0.5)
         texture.repeat.set(0.5, 0.5)
         texture.offset.set(
-          gridPosition === 5 ? -0.25 : 0.25,
-          0.25
+          validPositions.offsetX,
+          validPositions.offsetY
         )
         setContentTexture(texture)
       },
@@ -39,7 +89,7 @@ export const useContentTexture = (gridPosition) => {
         setContentTexture(null)
       }
     )
-  }, [contentImage, gridPosition])
+  }, [contentImage, gridPosition, validPositions])
 
   return { contentTexture }
 } 
