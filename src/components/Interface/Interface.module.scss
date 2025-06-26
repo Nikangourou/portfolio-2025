@@ -24,7 +24,6 @@
 }
 
 .arrow {
-
     width: 50%;
     height: 50%;
     border-top: 2px solid var(--theme-text);
@@ -32,6 +31,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
 
   &.arrowUp {
     transform: rotate(45deg);

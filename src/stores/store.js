@@ -5,6 +5,7 @@ const useStore = create((set, get) => ({
   selectedProject: null,
   isProjectsArranged: false,
   isArrangementAnimationComplete: false,
+  currentPage: 1,
   
   setSelectedProject: (project) => {
     set({ selectedProject: project })
@@ -14,6 +15,7 @@ const useStore = create((set, get) => ({
     } else {
       useThemeStore.getState().resetTheme()
     }
+    set({ currentPage: 1 }) // Réinitialiser la page à 1 à chaque sélection
   },
   
   setProjectsArranged: (value) => {
@@ -26,12 +28,15 @@ const useStore = create((set, get) => ({
   
   setArrangementAnimationComplete: (value) => set({ isArrangementAnimationComplete: value }),
   
+  setCurrentPage: (page) => set({ currentPage: page }),
+  
   // Méthode pour réinitialiser complètement l'état des projets
   resetProjectState: () => {
     set({
       selectedProject: null,
       isProjectsArranged: false,
-      isArrangementAnimationComplete: false
+      isArrangementAnimationComplete: false,
+      currentPage: 1
     })
     useThemeStore.getState().resetTheme()
   },
