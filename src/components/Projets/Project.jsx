@@ -102,54 +102,56 @@ const Project = forwardRef(function Project(
       </mesh>
       {isArrangementAnimationComplete && (
         <>
-        {currentPage === 1 && (
-          <>
-          <ProjectOverlay
-            condition={
-              selectedProject && gridPosition === 0 && selectedProject.title
-            }
-            projectSize={projectSize}
-            reverse={true}
-          >
-            <p className={styles.title}>{selectedProject?.title}</p>
-          </ProjectOverlay>
-          <ProjectOverlay
-            condition={
-              selectedProject && gridPosition === 1 && selectedProject.context
-            }
-            projectSize={projectSize}
-            reverse={true}
-          >
-            <p className={styles.title}>{selectedProject?.context}</p>
-          </ProjectOverlay>
-          <ProjectOverlay
-            condition={
-              selectedProject && gridPosition === 2 && selectedProject.year
-            }
-            projectSize={projectSize}
-            reverse={true}
-          >
-            <p className={styles.title}>{selectedProject?.year}</p>
-          </ProjectOverlay>
-          <ProjectOverlay
-            condition={
-              selectedProject &&
-              gridPosition === 3 &&
-              selectedProject.technologies
-            }
-            projectSize={projectSize}
-            reverse={true}
-          >
-            <div className={styles.technoContainer}>
-              {selectedProject?.technologies.map((techno) => (
-                <p key={techno} className={styles.techno}>
-                  {techno}
-                </p>
-              ))}
-            </div>
-          </ProjectOverlay>
-          </>
-        )}
+          {currentPage === 1 && (
+            <>
+              <ProjectOverlay
+                condition={
+                  selectedProject && gridPosition === 0 && selectedProject.title
+                }
+                projectSize={projectSize}
+                reverse={true}
+              >
+                <p className={styles.title}>{selectedProject?.title}</p>
+              </ProjectOverlay>
+              <ProjectOverlay
+                condition={
+                  selectedProject &&
+                  gridPosition === 1 &&
+                  selectedProject.context
+                }
+                projectSize={projectSize}
+                reverse={true}
+              >
+                <p className={styles.title}>{selectedProject?.context}</p>
+              </ProjectOverlay>
+              <ProjectOverlay
+                condition={
+                  selectedProject && gridPosition === 2 && selectedProject.year
+                }
+                projectSize={projectSize}
+                reverse={true}
+              >
+                <p className={styles.title}>{selectedProject?.year}</p>
+              </ProjectOverlay>
+              <ProjectOverlay
+                condition={
+                  selectedProject &&
+                  gridPosition === 3 &&
+                  selectedProject.technologies
+                }
+                projectSize={projectSize}
+                reverse={true}
+              >
+                <div className={styles.technoContainer}>
+                  {selectedProject?.technologies.map((techno) => (
+                    <p key={techno} className={styles.techno}>
+                      {techno}
+                    </p>
+                  ))}
+                </div>
+              </ProjectOverlay>
+            </>
+          )}
           {selectedProject.contents?.length > 2 && (
             <>
               <ProjectOverlay
@@ -160,12 +162,6 @@ const Project = forwardRef(function Project(
                 <ArrowUp />
               </ProjectOverlay>
               <ProjectOverlay
-                condition={selectedProject && gridPosition === 9}
-                projectSize={projectSize}
-              >
-                <Cross />
-              </ProjectOverlay>
-              <ProjectOverlay
                 condition={selectedProject && gridPosition === 14}
                 projectSize={projectSize}
                 reverse={true}
@@ -174,6 +170,12 @@ const Project = forwardRef(function Project(
               </ProjectOverlay>
             </>
           )}
+          <ProjectOverlay
+            condition={selectedProject && gridPosition === 9}
+            projectSize={projectSize}
+          >
+            <Cross />
+          </ProjectOverlay>
           {/* {selectedProject?.contents?.[0]?.text && gridPosition === 5 && (
             <ProjectOverlay
               condition={selectedProject}

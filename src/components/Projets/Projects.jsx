@@ -26,13 +26,14 @@ function ProjectsContent() {
   const [projectStates, setProjectStates] = useState([])
   const [targetStates, setTargetStates] = useState([])
   const [minDistance, setMinDistance] = useState(2.0)
-  const [rotationY, setRotationY] = useState(0)
+  const [rotationY, setRotationY] = useState(Math.PI)
   const [predefinedPositions, setPredefinedPositions] = useState([])
   const [rotatingProjects, setRotatingProjects] = useState(new Set())
   const [rotatingBorders, setRotatingBorders] = useState(new Set())
   const currentTheme = useThemeStore((state) => state.currentTheme)
   const [borderStates, setBorderStates] = useState([])
   const [animatingProjects, setAnimatingProjects] = useState(new Set())
+  const currentPage = useStore((state) => state.currentPage)
 
   const distance = -5
   const baseSpeed = 2.5 
@@ -188,6 +189,8 @@ function ProjectsContent() {
             Math.random() * Math.PI * 2,
             Math.random() * Math.PI * 0.5 - Math.PI * 0.25,
           ],
+          pageRotationX: 0,
+          targetPageRotationX: 0,
         }
       })
       setTargetStates(newTargetStates)
@@ -205,6 +208,8 @@ function ProjectsContent() {
           ...projectStates[index],
           position: pos,
           rotation: [0, 0, 0],
+          pageRotationX: 0,
+          targetPageRotationX: 0,
         })),
       )
       
@@ -302,10 +307,20 @@ function ProjectsContent() {
             adaptiveSpeed,
           )
 
+          // Interpolation pour la rotation X de page
+          let newPageRotationX = state.pageRotationX;
+          if (typeof state.targetPageRotationX === 'number' && Math.abs(state.pageRotationX - state.targetPageRotationX) > 0.01) {
+            newPageRotationX = THREE.MathUtils.lerp(state.pageRotationX, state.targetPageRotationX, 0.05);
+          } else if (typeof state.targetPageRotationX === 'number') {
+            newPageRotationX = state.targetPageRotationX;
+          }
+
           return {
             ...state,
             position: [newX, newY, newZ],
             rotation: [newRotX, newRotY, newRotZ],
+            pageRotationX: newPageRotationX,
+            targetPageRotationX: state.targetPageRotationX,
           }
         })
       })
@@ -349,7 +364,7 @@ function ProjectsContent() {
     // Définir les limites de la zone de placement
     const xRange = [-width / 4, width / 4]
     const yRange = [-height / 4, height / 4]
-    const zRange = [distance - 2, distance + 2]
+    const zRange = [10, 10]
 
     let minDistance = 1.0
 
@@ -398,6 +413,9 @@ function ProjectsContent() {
         position,
         rotation: [rotationX, rotationY, rotationZ],
         project,
+        pageRotationX: (currentPage - 1) * Math.PI,
+        targetPageRotationX: (currentPage - 1) * Math.PI,
+        pageRotationDelay: Math.random() * 0.5, 
       }
     })
 
@@ -408,11 +426,9 @@ function ProjectsContent() {
 
   const handleProjectClick = (index) => {
     if (!isProjectsArranged) {
-      setProjectsArranged(!isProjectsArranged)
+      setProjectsArranged(true)
       setSelectedProject(projectsData.projects[index])
-    } else {
-      useStore.getState().resetProjectState()
-    }
+    } 
   }
 
   useEffect(() => {
@@ -426,8 +442,16 @@ function ProjectsContent() {
     return () => window.removeEventListener('wheel', handleWheel)
   }, [])
 
+  // Initialiser la rotation du groupe au montage du composant
+  useEffect(() => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = rotationY
+    }
+  }, [])
+
   useFrame((state, delta) => {
     if (groupRef.current) {
+
       const currentRotation = groupRef.current.rotation.y
       const targetRotation = isProjectsArranged ? 0 : rotationY
 
@@ -448,8 +472,23 @@ function ProjectsContent() {
 
       const adaptiveSpeed = Math.min(baseSpeed * delta, 0.1)
       groupRef.current.rotation.y = currentRotation + shortestPath * adaptiveSpeed
+
     }
   })
+
+  useEffect(() => {
+    projectStates.forEach((state, i) => {
+      setTimeout(() => {
+        setProjectStates((prev) =>
+          prev.map((s, j) =>
+            j === i
+              ? { ...s, targetPageRotationX: (currentPage - 1) * Math.PI }
+              : s
+          )
+        );
+      }, (state.pageRotationDelay || 0) * 1000);
+    });
+  }, [currentPage]);
 
   return (
     <>
@@ -470,13 +509,17 @@ function ProjectsContent() {
         </group>
       )}
 
-      <group ref={groupRef} position={[0, 0, distance]}>
+      <group ref={groupRef} position={[0, 0, distance]}> 
         {projectStates.map((state, i) => (
           <Project
             key={state.project.id}
             gridPosition={i}
             position={state.position}
-            rotation={state.rotation}
+            rotation={[
+              (state.rotation[0]) + (state.pageRotationX || 0),
+              state.rotation[1],
+              state.rotation[2],
+            ]}
             onAnyClick={() => handleProjectClick(i)}
             camera={camera}
             image={state.project.cover}
