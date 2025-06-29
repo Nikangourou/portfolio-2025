@@ -1,17 +1,23 @@
 import React from 'react'
 import { Html } from '@react-three/drei'
 import styles from './Project.module.scss'
+import { useStore } from '../../stores/store'
 
-const ProjectOverlay = ({ condition, children, projectSize, reverse }) => {
+
+const ProjectOverlay = ({ condition, children, projectSize }) => {
   if (!condition) return null
+
+  const currentPage = useStore((state) => state.currentPage)
+  const evenPage = currentPage % 2
+
 
   return (
     <Html
-      // occlude
+      occlude
       transform
       prepend
-      position={[0, 0, -0.01]}
-      rotation={reverse ? [Math.PI, 0, 0] : [0, 0, 0]}
+      position={evenPage ? [0, 0, -0.01] : [0, 0, 0.01]}
+      rotation={evenPage ? [Math.PI, 0, 0] : [0, 0, 0]}
       className={styles.project}
       style={{
         width: `${projectSize.width * 40}px`,

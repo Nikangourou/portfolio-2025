@@ -5,7 +5,7 @@ const useStore = create((set, get) => ({
   selectedProject: null,
   isProjectsArranged: false,
   isArrangementAnimationComplete: false,
-  currentPage: 1,
+  currentPage: 0,
   
   setSelectedProject: (project) => {
     set({ selectedProject: project })
@@ -36,7 +36,7 @@ const useStore = create((set, get) => ({
       selectedProject: null,
       isProjectsArranged: false,
       isArrangementAnimationComplete: false,
-      currentPage: 1
+      currentPage: 0
     })
     useThemeStore.getState().resetTheme()
   },

@@ -14,6 +14,7 @@ const Project = forwardRef(function Project(
   const frontMeshRef = useRef(null)
   const backMeshRef = useRef(null)
   const backMaterialRef = useRef(null)
+  const frontMaterialRef = useRef(null)
 
   const texture = useTexture(image || '', (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace
@@ -23,6 +24,7 @@ const Project = forwardRef(function Project(
 
   const selectedProject = useStore((state) => state.selectedProject)
   const currentPage = useStore((state) => state.currentPage)
+  const evenPage = currentPage % 2
   const isArrangementAnimationComplete = useStore(
     (state) => state.isArrangementAnimationComplete,
   )
@@ -36,12 +38,12 @@ const Project = forwardRef(function Project(
 
   // Optimiser le useEffect pour éviter les re-renders inutiles
   useEffect(() => {
-    if (!backMaterialRef.current) return
+    if (!backMaterialRef.current || !frontMaterialRef.current) return
 
     let newMap = null
     let newColor = 'white'
 
-    if (contentTexture && targetFace === 'back') {
+    if (contentTexture && isArrangementAnimationComplete) {
       newMap = contentTexture
     } else if (
       texture &&
@@ -52,18 +54,35 @@ const Project = forwardRef(function Project(
       newColor = selectedProject?.color?.background || 'white'
     }
 
-    // Mettre à jour seulement si nécessaire
-    if (backMaterialRef.current.map !== newMap) {
-      backMaterialRef.current.map = newMap
-    }
 
-    if (
-      backMaterialRef.current.color.getHexString() !== newColor.replace('#', '')
-    ) {
-      backMaterialRef.current.color.set(newColor)
-    }
+    if (evenPage || currentPage === 0) {
+      if (backMaterialRef.current.map !== newMap) {
+        backMaterialRef.current.map = newMap
+      }
 
-    backMaterialRef.current.needsUpdate = true
+      if (
+        backMaterialRef.current.color.getHexString() !==
+        newColor.replace('#', '')
+      ) {
+        backMaterialRef.current.color.set(newColor)
+      }
+
+      backMaterialRef.current.needsUpdate = true
+    }
+    
+    if (!evenPage || currentPage === 0) {
+      if (frontMaterialRef.current.map !== newMap) {
+        frontMaterialRef.current.map = newMap
+      }
+
+      if (
+        frontMaterialRef.current.color.getHexString() !==
+        newColor.replace('#', '')
+      ) {
+        frontMaterialRef.current.color.set(newColor)
+      }
+      frontMaterialRef.current.needsUpdate = true
+    }
   }, [
     isArrangementAnimationComplete,
     isProjectsArranged,
@@ -78,27 +97,13 @@ const Project = forwardRef(function Project(
     <group position={position} rotation={rotation}>
       <mesh ref={frontMeshRef} onClick={onAnyClick}>
         <planeGeometry args={[projectSize.width, projectSize.height]} />
-        {contentTexture && targetFace === 'front' ? (
-          <meshBasicMaterial
-            map={contentTexture}
-            side={THREE.FrontSide}
-            toneMapped={true}
-            transparent={true}
-            opacity={1}
-            color="white"
-          />
-        ) : texture ? (
-          <meshBasicMaterial
-            map={texture}
-            side={THREE.FrontSide}
-            toneMapped={true}
-            transparent={true}
-            opacity={1}
-            color="white"
-          />
-        ) : (
-          <meshBasicMaterial color="white" />
-        )}
+        <meshBasicMaterial
+          ref={frontMaterialRef}
+          side={THREE.FrontSide}
+          toneMapped={true}
+          transparent={true}
+          opacity={1}
+        />
       </mesh>
       <mesh ref={backMeshRef} onClick={onAnyClick} rotation-y={Math.PI}>
         <planeGeometry args={[projectSize.width, projectSize.height]} />
@@ -119,7 +124,6 @@ const Project = forwardRef(function Project(
                   selectedProject && gridPosition === 0 && selectedProject.title
                 }
                 projectSize={projectSize}
-                reverse={true}
               >
                 <p className={styles.title}>{selectedProject?.title}</p>
               </ProjectOverlay>
@@ -130,7 +134,6 @@ const Project = forwardRef(function Project(
                   selectedProject.context
                 }
                 projectSize={projectSize}
-                reverse={true}
               >
                 <p className={styles.title}>{selectedProject?.context}</p>
               </ProjectOverlay>
@@ -139,7 +142,6 @@ const Project = forwardRef(function Project(
                   selectedProject && gridPosition === 2 && selectedProject.year
                 }
                 projectSize={projectSize}
-                reverse={true}
               >
                 <p className={styles.title}>{selectedProject?.year}</p>
               </ProjectOverlay>
@@ -150,7 +152,6 @@ const Project = forwardRef(function Project(
                   selectedProject.technologies
                 }
                 projectSize={projectSize}
-                reverse={true}
               >
                 <div className={styles.technoContainer}>
                   {selectedProject?.technologies.map((techno) => (
