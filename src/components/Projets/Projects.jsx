@@ -26,7 +26,7 @@ function ProjectsContent() {
   const [projectStates, setProjectStates] = useState([])
   const [targetStates, setTargetStates] = useState([])
   const [minDistance, setMinDistance] = useState(2.0)
-  const [rotationY, setRotationY] = useState(Math.PI)
+  const [rotationY, setRotationY] = useState(Math.PI) 
   const [predefinedPositions, setPredefinedPositions] = useState([])
   const [rotatingProjects, setRotatingProjects] = useState(new Set())
   const [rotatingBorders, setRotatingBorders] = useState(new Set())
@@ -310,7 +310,7 @@ function ProjectsContent() {
           // Interpolation pour la rotation X de page
           let newPageRotationX = state.pageRotationX;
           if (typeof state.targetPageRotationX === 'number' && Math.abs(state.pageRotationX - state.targetPageRotationX) > 0.01) {
-            newPageRotationX = THREE.MathUtils.lerp(state.pageRotationX, state.targetPageRotationX, 0.05);
+            newPageRotationX = THREE.MathUtils.lerp(state.pageRotationX, state.targetPageRotationX, adaptiveSpeed);
           } else if (typeof state.targetPageRotationX === 'number') {
             newPageRotationX = state.targetPageRotationX;
           }
