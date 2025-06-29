@@ -32,7 +32,7 @@ const Project = forwardRef(function Project(
   const projectSize = window.projectSize || { width: 1, height: 1 }
 
   // Utiliser le hook personnalisé
-  const { contentTexture } = useContentTexture(gridPosition)
+  const { contentTexture, targetFace } = useContentTexture(gridPosition)
 
   // Optimiser le useEffect pour éviter les re-renders inutiles
   useEffect(() => {
@@ -41,7 +41,7 @@ const Project = forwardRef(function Project(
     let newMap = null
     let newColor = 'white'
 
-    if (contentTexture) {
+    if (contentTexture && targetFace === 'back') {
       newMap = contentTexture
     } else if (
       texture &&
@@ -69,6 +69,7 @@ const Project = forwardRef(function Project(
     isProjectsArranged,
     texture,
     contentTexture,
+    targetFace,
     selectedProject,
     gridPosition,
   ])
@@ -77,7 +78,16 @@ const Project = forwardRef(function Project(
     <group position={position} rotation={rotation}>
       <mesh ref={frontMeshRef} onClick={onAnyClick}>
         <planeGeometry args={[projectSize.width, projectSize.height]} />
-        {texture ? (
+        {contentTexture && targetFace === 'front' ? (
+          <meshBasicMaterial
+            map={contentTexture}
+            side={THREE.FrontSide}
+            toneMapped={true}
+            transparent={true}
+            opacity={1}
+            color="white"
+          />
+        ) : texture ? (
           <meshBasicMaterial
             map={texture}
             side={THREE.FrontSide}

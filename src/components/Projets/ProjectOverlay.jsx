@@ -7,7 +7,7 @@ const ProjectOverlay = ({ condition, children, projectSize, reverse }) => {
 
   return (
     <Html
-      occlude
+      // occlude
       transform
       prepend
       position={[0, 0, -0.01]}

@@ -53,6 +53,7 @@ export const getGridPositionsFromSpan = (span, startPosition = 5, currentPositio
 export const useContentTexture = (gridPosition) => {
   const [contentTexture, setContentTexture] = useState(null)
   const content = useStore((state) => state.selectedProject?.contents?.[0])
+  const currentPage = useStore((state) => state.currentPage)
   const contentImage = content?.image
 
   // Déterminer les positions valides pour ce contenu
@@ -60,6 +61,10 @@ export const useContentTexture = (gridPosition) => {
     getGridPositionsFromSpan(content?.span, 5, gridPosition), 
     [content?.span, gridPosition]
   )
+
+  // Déterminer quelle face utiliser selon la parité de la page
+  const isEvenPage = currentPage % 2 === 0
+  const targetFace = isEvenPage ? 'front' : 'back'
 
   useEffect(() => {
     if (!contentImage || !validPositions.positions.includes(gridPosition)) {
@@ -74,7 +79,14 @@ export const useContentTexture = (gridPosition) => {
         texture.colorSpace = THREE.SRGBColorSpace
         texture.minFilter = THREE.LinearFilter
         texture.magFilter = THREE.LinearFilter
-        texture.rotation = Math.PI
+        
+        // Rotation différente selon la face cible
+        if (targetFace === 'back') {
+          texture.rotation = Math.PI // Rotation de 180° pour la face arrière
+        } else {
+          texture.rotation = 0 // Pas de rotation pour la face avant
+        }
+        
         texture.center.set(0.5, 0.5)
         texture.repeat.set(0.5, 0.5)
         texture.offset.set(
@@ -89,7 +101,7 @@ export const useContentTexture = (gridPosition) => {
         setContentTexture(null)
       }
     )
-  }, [contentImage, gridPosition, validPositions])
+  }, [contentImage, gridPosition, validPositions, targetFace])
 
-  return { contentTexture }
+  return { contentTexture, targetFace }
 } 
