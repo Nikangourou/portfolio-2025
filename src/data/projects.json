@@ -3,8 +3,8 @@
     {
       "id": 1,
       "title": "Espace 22",
-      "year" : "2021",
-      "context" : "Pando Studio",
+      "year": "2021",
+      "context": "Pando Studio",
       "description": "Creation of an e-commerce for a stylist",
       "technologies": ["Wordpress", "Woocommerce"],
       "link": "#",
@@ -14,25 +14,48 @@
         "text": "#FFFFFF"
       },
       "contents": [
-          {
-            "image": "/images/Espace22/space2.jpeg",
-            "text": "Espace 22 is a platform for discovering and buying clothes. It is a platform for discovering and buying clothes.",
-            "span": "2-2"
-          },
-          {
-            "image": "/images/Espace22/space5.jpeg",
-            "text": "Espace 22 is a platform for discovering and buying clothes. It is a platform for discovering and buying clothes."
-          },
-          {
-            "image": "/images/Espace22/space6.jpeg"
-          }
+        {
+          "images": [
+            {
+              "url": "/images/Espace22/space2.jpeg",
+              "span": "2-2",
+              "position": 5
+            }
+          ],
+          "texts": [
+            {
+              "text": "Development of an e-commerce site for a fashion designer.",
+              "position": 12
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Espace22/space5.jpeg",
+              "span": "2-2",
+              "position": 0
+            },
+            {
+              "url": "/images/Espace22/space6.jpeg",
+              "span": "2-2",
+              "position": 8
+            }
+          ],
+          "texts": [
+            {
+              "text": "Development of an e-commerce site for a fashion designer.",
+              "position": 12
+            }
+          ]
+        }
       ]
     },
     {
       "id": 2,
       "title": "Alizora",
-      "year" : "2021",
-      "context" : "Personal project",
+      "year": "2021",
+      "context": "Personal project",
       "description": "Creation of a tote bag brand",
       "technologies": ["Wordpress", "Woocommerce"],
       "link": "#",
@@ -45,8 +68,8 @@
     {
       "id": 3,
       "title": "Totoro's Veggie Feast",
-      "year" : "2024",
-      "context" : "School project",
+      "year": "2024",
+      "context": "School project",
       "description": "Creation of an arcade game",
       "technologies": ["React Three Fiber"],
       "link": "https://totoru-three.vercel.app/",
@@ -59,8 +82,8 @@
     {
       "id": 4,
       "title": "Bonne Sobriyearte",
-      "year" : "2023",
-      "context" : "Havas Factory",
+      "year": "2023",
+      "context": "Havas Factory",
       "description": "Greeting card",
       "technologies": ["React Three Fiber"],
       "link": "https://www.awwwards.com/sites/bonne-sobriyearte-2023",
@@ -73,8 +96,8 @@
     {
       "id": 5,
       "title": "La Fenêtre Immersive",
-      "year" : "2021",
-      "context" : "Pando Studio",
+      "year": "2021",
+      "context": "Pando Studio",
       "description": "Interactive installation to create a link between SNCF stations",
       "technologies": ["Javascript"],
       "link": "#",
@@ -87,8 +110,8 @@
     {
       "id": 6,
       "title": "Histoires Et Nombres",
-      "year" : "2022",
-      "context" : "Studit",
+      "year": "2022",
+      "context": "Studit",
       "description": "Tool for learning reading and mathematics",
       "technologies": ["Next.JS", "Symfony"],
       "link": "https://histoires-et-nombres.editions-retz.com/",
@@ -101,8 +124,8 @@
     {
       "id": 7,
       "title": "Hop Ma Liste",
-      "year" : "2022",
-      "context" : "Studit",
+      "year": "2022",
+      "context": "Studit",
       "description": "Mobile app for to help people with suicidal thoughts",
       "technologies": ["React Native"],
       "link": "https://hopmaliste.fr/",
@@ -115,8 +138,8 @@
     {
       "id": 8,
       "title": "Wanderlost Whispers",
-      "year" : "2023",
-      "context" : "School project",
+      "year": "2023",
+      "context": "School project",
       "description": "What happens to postcards that don't arrive?",
       "technologies": ["Three.js"],
       "link": "https://wanderlost-whispers.netlify.app/",
@@ -129,8 +152,8 @@
     {
       "id": 9,
       "title": "KFC ORIGINS",
-      "year" : "2023",
-      "context" : "Havas Factory",
+      "year": "2023",
+      "context": "Havas Factory",
       "description": "Landing page for KFC Origins collection",
       "technologies": ["Javascript"],
       "link": "https://www.kfc.fr/origins#",
@@ -143,8 +166,8 @@
     {
       "id": 10,
       "title": "The other Side",
-      "year" : "2025",
-      "context" : "School project",
+      "year": "2025",
+      "context": "School project",
       "description": "Current project",
       "technologies": ["Arduino"],
       "link": "#",
@@ -157,8 +180,8 @@
     {
       "id": 11,
       "title": "Sizing",
-      "year" : "2024",
-      "context" : "Veepee",
+      "year": "2024",
+      "context": "Veepee",
       "description": "Size recommendation project for Veepee",
       "technologies": ["React", "Strapi", ".NET"],
       "link": "#",
@@ -171,8 +194,8 @@
     {
       "id": 12,
       "title": "MARI-E",
-      "year" : "2023",
-      "context" : "School project",
+      "year": "2023",
+      "context": "School project",
       "description": "AR experience in partnership with the Orangerie Museum",
       "technologies": ["Three.js", "WebXR"],
       "link": "#",
@@ -185,8 +208,8 @@
     {
       "id": 13,
       "title": "Presage",
-      "year" : "2023",
-      "context" : "School project",
+      "year": "2023",
+      "context": "School project",
       "description": "Interactive road trip story",
       "technologies": ["React Three Fiber"],
       "link": "https://presage-game.netlify.app/",
@@ -199,8 +222,8 @@
     {
       "id": 14,
       "title": "DATAVIZ",
-      "year" : "2023",
-      "context" : "School project",
+      "year": "2023",
+      "context": "School project",
       "description": "Data visualization project on classmates' travel data",
       "technologies": ["GSAP"],
       "link": "https://datavis-transport.netlify.app/",
@@ -213,10 +236,16 @@
     {
       "id": 15,
       "title": "Vraiment",
-      "year" : "2024",
-      "context" : "School project",
+      "year": "2024",
+      "context": "School project",
       "description": "A party game in which one player shares two memories. Only one of the two is true. The other players must find the real memory by asking questions.",
-      "technologies": ["Next.JS", "Three.js", "GSAP", "Socket.io", "Express.js"],
+      "technologies": [
+        "Next.JS",
+        "Three.js",
+        "GSAP",
+        "Socket.io",
+        "Express.js"
+      ],
       "link": "https://vraiment.netlify.app/",
       "cover": "/images/Vraiment.jpg",
       "color": {

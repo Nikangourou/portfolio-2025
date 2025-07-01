@@ -1,16 +1,16 @@
 import * as THREE from 'three'
 import { useState, useEffect, useMemo } from 'react'
-import { useStore } from '../stores/store'
+import { useStore } from '@/stores/store'
 
 /**
  * Détermine les positions de grille à affecter en fonction du span
  * @param {string} span - Span du contenu (ex: "2-2", "3-2")
- * @param {number} startPosition - Position de départ
+ * @param {number} startPosition - Position de départ (valeur position du JSON)
  * @param {number} currentPosition - Position actuelle pour calculer l'offset
  * @returns {Object} - { positions: number[], offsetX: number, offsetY: number }
  */
-export const getGridPositionsFromSpan = (span, startPosition = 5, currentPosition = null) => {
-  if (!span) {
+export const getGridPositionsFromSpan = (span, startPosition, currentPosition = null) => {
+  if (!span || startPosition === undefined) {
     return { positions: [], offsetX: 0, offsetY: 0 }
   }
 
@@ -48,18 +48,39 @@ export const getGridPositionsFromSpan = (span, startPosition = 5, currentPositio
 }
 
 /**
- * Hook simple pour charger les textures de contenu
+ * Hook pour charger les textures de contenu
  */
 export const useContentTexture = (gridPosition) => {
   const [contentTexture, setContentTexture] = useState(null)
-  const content = useStore((state) => state.selectedProject?.contents?.[0])
+  const selectedProject = useStore((state) => state.selectedProject)
   const currentPage = useStore((state) => state.currentPage)
-  const contentImage = content?.image
+  
+  // Trouver l'image correspondant à cette position de grille
+  const contentImage = useMemo(() => {
+    if (!selectedProject?.contents) return null
+    
+    // Récupérer le contenu de la page actuelle
+    const currentContent = selectedProject.contents[currentPage - 1]
+    if (!currentContent?.images) return null
+    
+    // Chercher l'image qui correspond à cette position
+    for (const image of currentContent.images) {
+      const validPositions = getGridPositionsFromSpan(image.span, image.position)
+      if (validPositions.positions.includes(gridPosition)) {
+        return {
+          url: image.url,
+          span: image.span,
+          position: image.position
+        }
+      }
+    }
+    return null
+  }, [selectedProject, currentPage, gridPosition])
 
-  // Déterminer les positions valides pour ce contenu
+  // Déterminer les positions valides pour cette image
   const validPositions = useMemo(() => 
-    getGridPositionsFromSpan(content?.span, 5, gridPosition), 
-    [content?.span, gridPosition]
+    contentImage ? getGridPositionsFromSpan(contentImage.span, contentImage.position, gridPosition) : { positions: [], offsetX: 0, offsetY: 0 }, 
+    [contentImage, gridPosition]
   )
 
   // Déterminer quelle face utiliser selon la parité de la page
@@ -67,14 +88,14 @@ export const useContentTexture = (gridPosition) => {
   const targetFace = isEvenPage ? 'front' : 'back'
 
   useEffect(() => {
-    if (!contentImage || !validPositions.positions.includes(gridPosition)) {
+    if (!contentImage?.url || !validPositions.positions.includes(gridPosition)) {
       setContentTexture(null)
       return
     }
 
     const loader = new THREE.TextureLoader()
     loader.load(
-      contentImage,
+      contentImage.url,
       (texture) => {
         texture.colorSpace = THREE.SRGBColorSpace
         texture.minFilter = THREE.LinearFilter
@@ -101,7 +122,38 @@ export const useContentTexture = (gridPosition) => {
         setContentTexture(null)
       }
     )
-  }, [contentImage, gridPosition, validPositions, targetFace])
+  }, [contentImage?.url, gridPosition, validPositions, targetFace])
 
   return { contentTexture, targetFace }
+}
+
+/**
+ * Hook pour récupérer les textes de contenu
+ */
+export const useContentText = (gridPosition) => {
+  const selectedProject = useStore((state) => state.selectedProject)
+  const currentPage = useStore((state) => state.currentPage)
+  
+  // Trouver le texte correspondant à cette position de grille
+  const contentText = useMemo(() => {
+    if (!selectedProject?.contents) return null
+    
+    // Récupérer le contenu de la page actuelle
+    const currentContent = selectedProject.contents[currentPage - 1]
+    if (!currentContent?.texts) return null
+    
+    // Chercher le texte qui correspond à cette position
+    for (const text of currentContent.texts) {
+      if (text.position === gridPosition) {
+        return {
+          text: text.text,
+          position: text.position
+        }
+      }
+    }
+    
+    return null
+  }, [selectedProject, currentPage, gridPosition])
+
+  return { contentText }
 } 

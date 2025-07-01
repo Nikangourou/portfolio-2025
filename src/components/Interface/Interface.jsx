@@ -1,7 +1,8 @@
-import { useStore } from '../../stores/store'
+import { useStore } from '@/stores/store'
+import ProjectOverlay from '@/components/Projets/ProjectOverlay'
 import styles from './Interface.module.scss'
 
-export function Cross() {
+function Cross() {
   const resetProjectState = useStore((state) => state.resetProjectState)
 
   const handleClick = () => {
@@ -16,7 +17,7 @@ export function Cross() {
   )
 }
 
-export function ArrowUp() {
+function ArrowUp() {
   const setCurrentPage = useStore((state) => state.setCurrentPage)
   const currentPage = useStore((state) => state.currentPage)
 
@@ -34,7 +35,7 @@ export function ArrowUp() {
   )
 }
 
-export function ArrowDown() {
+function ArrowDown() {
   const setCurrentPage = useStore((state) => state.setCurrentPage)
   const maxPage = useStore((state) => state.selectedProject?.contents?.length)
   const currentPage = useStore((state) => state.currentPage)
@@ -50,5 +51,45 @@ export function ArrowDown() {
       className={styles.arrow + ' ' + styles.arrowDown}
       onClick={handleClick}
     ></div>
+  )
+}
+
+export function Navigation({
+  selectedProject,
+  currentPage,
+  gridPosition,
+  projectSize,
+}) {
+  return (
+    <>
+      {selectedProject.contents?.length > 1 && (
+        <>
+          {currentPage > 1 && (
+            <ProjectOverlay
+              condition={selectedProject && gridPosition === 4}
+              projectSize={projectSize}
+              reverse={true}
+            >
+              <ArrowUp />
+            </ProjectOverlay>
+          )}
+          {currentPage < selectedProject.contents?.length && (
+            <ProjectOverlay
+              condition={selectedProject && gridPosition === 14}
+              projectSize={projectSize}
+              reverse={true}
+            >
+              <ArrowDown />
+            </ProjectOverlay>
+          )}
+        </>
+      )}
+      <ProjectOverlay
+        condition={selectedProject && gridPosition === 9}
+        projectSize={projectSize}
+      >
+        <Cross />
+      </ProjectOverlay>
+    </>
   )
 }

@@ -1,11 +1,11 @@
 import React, { useRef, forwardRef, useEffect, useState } from 'react'
 import * as THREE from 'three'
 import { useTexture } from '@react-three/drei'
-import { useStore } from '../../stores/store'
+import { useStore } from '@/stores/store'
 import styles from './Project.module.scss'
-import { Cross, ArrowUp, ArrowDown } from '../Interface/Interface'
+import { Navigation } from '@/components/Interface/Interface'
 import ProjectOverlay from './ProjectOverlay'
-import { useContentTexture } from '../../utils/textureLoader'
+import { useContentTexture, useContentText } from '@/utils/contentLoader'
 
 const Project = forwardRef(function Project(
   { gridPosition, position, rotation, onAnyClick, camera, image },
@@ -33,8 +33,9 @@ const Project = forwardRef(function Project(
   // Utiliser la taille calculée ou une taille par défaut
   const projectSize = window.projectSize || { width: 1, height: 1 }
 
-  // Utiliser le hook personnalisé
+  // Utiliser les hooks personnalisés
   const { contentTexture, targetFace } = useContentTexture(gridPosition)
+  const { contentText } = useContentText(gridPosition)
 
   // Optimiser le useEffect pour éviter les re-renders inutiles
   useEffect(() => {
@@ -163,39 +164,21 @@ const Project = forwardRef(function Project(
               </ProjectOverlay>
             </>
           )}
-          {selectedProject.contents?.length > 2 && (
-            <>
-              <ProjectOverlay
-                condition={selectedProject && gridPosition === 4}
-                projectSize={projectSize}
-                reverse={true}
-              >
-                <ArrowUp />
-              </ProjectOverlay>
-              <ProjectOverlay
-                condition={selectedProject && gridPosition === 14}
-                projectSize={projectSize}
-                reverse={true}
-              >
-                <ArrowDown />
-              </ProjectOverlay>
-            </>
-          )}
-          <ProjectOverlay
-            condition={selectedProject && gridPosition === 9}
+          <Navigation 
+            selectedProject={selectedProject}
+            currentPage={currentPage}
+            gridPosition={gridPosition}
             projectSize={projectSize}
-          >
-            <Cross />
-          </ProjectOverlay>
-          {/* {selectedProject?.contents?.[0]?.text && gridPosition === 5 && (
+          />
+          {contentText && (
             <ProjectOverlay
               condition={selectedProject}
               projectSize={projectSize}
               reverse={true}
             >
-              <p className={styles.contentText}>{selectedProject.contents[0].text}</p>
+              <p className={styles.contentText}>{contentText.text}</p>
             </ProjectOverlay>
-          )} */}
+          )}
         </>
       )}
     </group>
