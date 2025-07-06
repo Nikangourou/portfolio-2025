@@ -39,8 +39,43 @@
           ],
           "texts": [
             {
-              "text": "Development of an e-commerce site for a fashion designer.",
+              "text": "Shop page.",
               "position": 12
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Espace22/space6.png",
+              "span": "3-2",
+              "position": 5
+            }
+          ],
+          "texts": [
+            {
+              "text": "Cart page.",
+              "position": 3
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Espace22/space4.png",
+              "span": "2-1",
+              "position": 0
+            },
+            {
+              "url": "/images/Espace22/space3.png",
+              "span": "3-2",
+              "position": 6
+            }
+          ],
+          "texts": [
+            {
+              "text": "100% editable",
+              "position": 10
             }
           ]
         }
