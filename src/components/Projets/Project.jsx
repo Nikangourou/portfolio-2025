@@ -83,7 +83,7 @@ const Project = forwardRef(function Project(
         frontMaterialRef.current.color.set(newColor)
       }
       frontMaterialRef.current.needsUpdate = true
-    }
+    }    
   }, [
     isArrangementAnimationComplete,
     isProjectsArranged,
@@ -102,8 +102,6 @@ const Project = forwardRef(function Project(
           ref={frontMaterialRef}
           side={THREE.FrontSide}
           toneMapped={true}
-          transparent={true}
-          opacity={1}
         />
       </mesh>
       <mesh ref={backMeshRef} onClick={onAnyClick} rotation-y={Math.PI}>
@@ -112,8 +110,6 @@ const Project = forwardRef(function Project(
           ref={backMaterialRef}
           side={THREE.FrontSide}
           toneMapped={true}
-          transparent={true}
-          opacity={1}
         />
       </mesh>
       {isArrangementAnimationComplete && (

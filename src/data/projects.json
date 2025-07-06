@@ -32,14 +32,9 @@
         {
           "images": [
             {
-              "url": "/images/Espace22/space5.jpeg",
-              "span": "2-2",
+              "url": "/images/Espace22/space5.png",
+              "span": "3-2",
               "position": 0
-            },
-            {
-              "url": "/images/Espace22/space6.jpeg",
-              "span": "2-2",
-              "position": 8
             }
           ],
           "texts": [

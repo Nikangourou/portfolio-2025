@@ -1,11 +1,15 @@
 import { create } from 'zustand'
 import useThemeStore from './themeStore'
+import projectsData from '@/data/projects.json'
+
+const firstProject =  projectsData.projects[0]
 
 const useStore = create((set, get) => ({
   selectedProject: null,
   isProjectsArranged: false,
-  isArrangementAnimationComplete: false,
+  isArrangementAnimationComplete: false, 
   currentPage: 0,
+
   
   setSelectedProject: (project) => {
     set({ selectedProject: project })

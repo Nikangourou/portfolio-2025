@@ -37,8 +37,8 @@ export const getGridPositionsFromSpan = (span, startPosition, currentPosition = 
     const relativeCol = currentCol - startCol
     
     // Calculer les offsets pour cette position spécifique
-    const offsetX = relativeCol * 0.5 - 0.25
-    const offsetY = -relativeRow * 0.5 + 0.25
+    const offsetX = (relativeCol - 1 + 1 / width) / width
+    const offsetY = -(relativeRow - 1 + 1 / height) / height
     
     return { positions, offsetX, offsetY }
   }
@@ -101,20 +101,79 @@ export const useContentTexture = (gridPosition) => {
         texture.minFilter = THREE.LinearFilter
         texture.magFilter = THREE.LinearFilter
         
-        // Rotation différente selon la face cible
-        if (targetFace === 'back') {
-          texture.rotation = Math.PI // Rotation de 180° pour la face arrière
-        } else {
-          texture.rotation = 0 // Pas de rotation pour la face avant
+        // Configuration pour la transparence PNG
+        texture.format = THREE.RGBAFormat
+        texture.premultiplyAlpha = false
+        
+        // Remplacer la transparence par la couleur de fond du projet
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        
+        // Créer une image temporaire pour accéder aux pixels
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => {
+          canvas.width = img.width
+          canvas.height = img.height
+          
+          // Dessiner l'image sur le canvas
+          ctx.drawImage(img, 0, 0)
+          
+          // Récupérer les données des pixels
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+          const data = imageData.data
+          
+          // Couleur de fond du projet (convertir hex en RGB)
+          const backgroundColor = selectedProject?.color?.background || '#ffffff'
+          const r = parseInt(backgroundColor.slice(1, 3), 16)
+          const g = parseInt(backgroundColor.slice(3, 5), 16)
+          const b = parseInt(backgroundColor.slice(5, 7), 16)
+          
+          // Remplacer les pixels transparents par la couleur de fond (optimisé)
+          const hasTransparency = data.some((_, i) => i % 4 === 3 && data[i] < 128)
+          
+          if (hasTransparency) {
+            for (let i = 0; i < data.length; i += 4) {
+              const alpha = data[i + 3]
+              if (alpha < 128) { // Si le pixel est assez transparent
+                data[i] = r     // Rouge
+                data[i + 1] = g // Vert
+                data[i + 2] = b // Bleu
+                data[i + 3] = 255 // Alpha opaque
+              }
+            }
+            // Remettre les données modifiées sur le canvas
+            ctx.putImageData(imageData, 0, 0)
+          }
+          
+          // Créer une nouvelle texture à partir du canvas
+          const newTexture = new THREE.CanvasTexture(canvas)
+          newTexture.colorSpace = THREE.SRGBColorSpace
+          newTexture.minFilter = THREE.LinearFilter
+          newTexture.magFilter = THREE.LinearFilter
+          newTexture.format = THREE.RGBAFormat
+          newTexture.premultiplyAlpha = false
+          
+          // Rotation différente selon la face cible
+          if (targetFace === 'back') {
+            newTexture.rotation = Math.PI // Rotation de 180° pour la face arrière
+          } else {
+            newTexture.rotation = 0 // Pas de rotation pour la face avant
+          }
+
+          const spanWidth = contentImage.span.split('-')[0]
+          const spanHeight = contentImage.span.split('-')[1]
+     
+          newTexture.center.set(1 / spanWidth, 1 /spanHeight)
+          newTexture.repeat.set(1 / spanWidth , 1 / spanHeight)
+          newTexture.offset.set(
+            validPositions.offsetX,
+            validPositions.offsetY
+          )
+          setContentTexture(newTexture)
         }
         
-        texture.center.set(0.5, 0.5)
-        texture.repeat.set(0.5, 0.5)
-        texture.offset.set(
-          validPositions.offsetX,
-          validPositions.offsetY
-        )
-        setContentTexture(texture)
+        img.src = contentImage.url
       },
       undefined,
       (error) => {

@@ -26,7 +26,7 @@ function ProjectsContent() {
   const [projectStates, setProjectStates] = useState([])
   const [targetStates, setTargetStates] = useState([])
   const [minDistance, setMinDistance] = useState(2.0)
-  const [rotationY, setRotationY] = useState(Math.PI) 
+  const [rotationY, setRotationY] = useState(Math.PI)
   const [predefinedPositions, setPredefinedPositions] = useState([])
   const [rotatingProjects, setRotatingProjects] = useState(new Set())
   const [rotatingBorders, setRotatingBorders] = useState(new Set())
@@ -36,7 +36,7 @@ function ProjectsContent() {
   const currentPage = useStore((state) => state.currentPage)
 
   const distance = -5
-  const baseSpeed = 2.5 
+  const baseSpeed = 2.5
   const cols = 5
   const rows = 3
   const gap = 0.005
@@ -93,7 +93,7 @@ function ProjectsContent() {
     const positions = []
 
     // Créer une bordure plus large
-    const borderSize = 1 // Nombre de carrés de bordure de chaque côté
+    const borderSize = 2 // Nombre de carrés de bordure de chaque côté
 
     // Calculer les dimensions de la grille totale (projets + bordure)
     const totalCols = cols + borderSize * 2
@@ -131,11 +131,13 @@ function ProjectsContent() {
     const dist = calculateArrangedDistance()
     setPredefinedPositions(calculatePredefinedPositions(dist))
     // Initialiser les états des carrés de bordure
-    const borderPositions = calculateBorderPositions(dist);
-    setBorderStates(borderPositions.map(pos => ({
-      position: pos,
-      rotation: [0, 0, 0]
-    })));
+    const borderPositions = calculateBorderPositions(dist)
+    setBorderStates(
+      borderPositions.map((pos) => ({
+        position: pos,
+        rotation: [0, 0, 0],
+      })),
+    )
   }, [camera, isProjectsArranged])
 
   const findValidPosition = (positions, maxAttempts = 100) => {
@@ -185,7 +187,8 @@ function ProjectsContent() {
           ...state,
           position: newPosition,
           rotation: [
-            Math.random() * Math.PI * 0.5 - Math.PI * 0.25,
+            // Math.random() * Math.PI * 0.5 - Math.PI * 0.25,
+            Math.random() * Math.PI * 0.5 - Math.PI * 1.25,
             Math.random() * Math.PI * 2,
             Math.random() * Math.PI * 0.5 - Math.PI * 0.25,
           ],
@@ -201,7 +204,7 @@ function ProjectsContent() {
     } else {
       // Animation séquentielle pour éviter les superpositions
       setAnimatingProjects(new Set())
-      
+
       // Définir les positions cibles immédiatement
       setTargetStates(
         predefinedPositions.map((pos, index) => ({
@@ -212,15 +215,17 @@ function ProjectsContent() {
           targetPageRotationX: 0,
         })),
       )
-      
+
       // Créer un ordre aléatoire pour l'animation
-      const randomOrder = Array.from({ length: projectStates.length }, (_, i) => i)
-        .sort(() => Math.random() - 0.5)
-      
+      const randomOrder = Array.from(
+        { length: projectStates.length },
+        (_, i) => i,
+      ).sort(() => Math.random() - 0.5)
+
       // Démarrer l'animation des projets dans un ordre aléatoire
       randomOrder.forEach((projectIndex, animationIndex) => {
         setTimeout(() => {
-          setAnimatingProjects(prev => new Set([...prev, projectIndex]))
+          setAnimatingProjects((prev) => new Set([...prev, projectIndex]))
         }, animationIndex * 100) // 100ms de délai entre chaque projet
       })
 
@@ -244,7 +249,9 @@ function ProjectsContent() {
       })
 
       // Rotation des carrés de bordure
-      const borderPositions = calculateBorderPositions(calculateArrangedDistance());
+      const borderPositions = calculateBorderPositions(
+        calculateArrangedDistance(),
+      )
       borderPositions.forEach((_, index) => {
         const randomDelay = Math.random() * 1000 + 1000 // Entre 1000ms et 2000ms
         setTimeout(() => {
@@ -258,11 +265,11 @@ function ProjectsContent() {
     if (projectStates.length > 0 && targetStates.length > 0) {
       // Calculer la vitesse adaptée au delta time
       const adaptiveSpeed = Math.min(baseSpeed * delta, 0.1) // Limiter à 0.1 pour éviter les sauts
-      
+
       setProjectStates((prevStates) => {
         return prevStates.map((state, index) => {
           const target = targetStates[index]
-          
+
           // Si le projet n'est pas encore en cours d'animation, garder sa position actuelle
           if (isProjectsArranged && !animatingProjects.has(index)) {
             return state
@@ -308,11 +315,18 @@ function ProjectsContent() {
           )
 
           // Interpolation pour la rotation X de page
-          let newPageRotationX = state.pageRotationX;
-          if (typeof state.targetPageRotationX === 'number' && Math.abs(state.pageRotationX - state.targetPageRotationX) > 0.01) {
-            newPageRotationX = THREE.MathUtils.lerp(state.pageRotationX, state.targetPageRotationX, adaptiveSpeed);
+          let newPageRotationX = state.pageRotationX
+          if (
+            typeof state.targetPageRotationX === 'number' &&
+            Math.abs(state.pageRotationX - state.targetPageRotationX) > 0.01
+          ) {
+            newPageRotationX = THREE.MathUtils.lerp(
+              state.pageRotationX,
+              state.targetPageRotationX,
+              adaptiveSpeed,
+            )
           } else if (typeof state.targetPageRotationX === 'number') {
-            newPageRotationX = state.targetPageRotationX;
+            newPageRotationX = state.targetPageRotationX
           }
 
           return {
@@ -330,7 +344,7 @@ function ProjectsContent() {
         return prevStates.map((state, index) => {
           const targetRotation = rotatingBorders.has(index)
             ? [Math.PI, 0, 0]
-            : [0, 0, 0];
+            : [0, 0, 0]
 
           // Interpolation linéaire pour la rotation
           const newRotX = THREE.MathUtils.lerp(
@@ -415,7 +429,7 @@ function ProjectsContent() {
         project,
         pageRotationX: (currentPage - 1) * Math.PI,
         targetPageRotationX: (currentPage - 1) * Math.PI,
-        pageRotationDelay: Math.random() * 0.5, 
+        pageRotationDelay: Math.random() * 0.5,
       }
     })
 
@@ -428,13 +442,13 @@ function ProjectsContent() {
     if (!isProjectsArranged) {
       setProjectsArranged(true)
       setSelectedProject(projectsData.projects[index])
-    } 
+    }
   }
 
   useEffect(() => {
     const handleWheel = (event) => {
-      const screenFactor = Math.min(window.innerWidth / 1920, 1) 
-      const delta = event.deltaY * 0.0007 * screenFactor 
+      const screenFactor = Math.min(window.innerWidth / 1920, 1)
+      const delta = event.deltaY * 0.0007 * screenFactor
       setRotationY((prev) => prev + delta)
     }
 
@@ -451,7 +465,6 @@ function ProjectsContent() {
 
   useFrame((state, delta) => {
     if (groupRef.current) {
-
       const currentRotation = groupRef.current.rotation.y
       const targetRotation = isProjectsArranged ? 0 : rotationY
 
@@ -471,8 +484,8 @@ function ProjectsContent() {
       }
 
       const adaptiveSpeed = Math.min(baseSpeed * delta, 0.1)
-      groupRef.current.rotation.y = currentRotation + shortestPath * adaptiveSpeed
-
+      groupRef.current.rotation.y =
+        currentRotation + shortestPath * adaptiveSpeed
     }
   })
 
@@ -483,12 +496,12 @@ function ProjectsContent() {
           prev.map((s, j) =>
             j === i
               ? { ...s, targetPageRotationX: (currentPage - 1) * Math.PI }
-              : s
-          )
-        );
-      }, (state.pageRotationDelay || 0) * 1000);
-    });
-  }, [currentPage]);
+              : s,
+          ),
+        )
+      }, (state.pageRotationDelay || 0) * 1000)
+    })
+  }, [currentPage])
 
   return (
     <>
@@ -496,7 +509,11 @@ function ProjectsContent() {
       {isProjectsArranged && (
         <group position={[0, 0, distance]}>
           {borderStates.map((state, index) => (
-            <mesh key={`square-${index}`} position={state.position} rotation={state.rotation}>
+            <mesh
+              key={`square-${index}`}
+              position={state.position}
+              rotation={state.rotation}
+            >
               <planeGeometry args={[width, height]} />
               <meshBasicMaterial
                 side={THREE.BackSide}
@@ -509,14 +526,14 @@ function ProjectsContent() {
         </group>
       )}
 
-      <group ref={groupRef} position={[0, 0, distance]}> 
+      <group ref={groupRef} position={[0, 0, distance]}>
         {projectStates.map((state, i) => (
           <Project
             key={state.project.id}
             gridPosition={i}
             position={state.position}
             rotation={[
-              (state.rotation[0]) + (state.pageRotationX || 0),
+              state.rotation[0] + (state.pageRotationX || 0),
               state.rotation[1],
               state.rotation[2],
             ]}
