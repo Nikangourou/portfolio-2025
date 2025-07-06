@@ -35,10 +35,26 @@ export const getGridPositionsFromSpan = (span, startPosition, currentPosition = 
     // Calculer la position relative dans le span
     const relativeRow = currentRow - startRow
     const relativeCol = currentCol - startCol
-    
+
     // Calculer les offsets pour cette position spécifique
-    const offsetX = (relativeCol - 1 + 1 / width) / width
-    const offsetY = -(relativeRow - 1 + 1 / height) / height
+    let offsetX, offsetY
+    
+    switch (width) {
+      case 1:
+        offsetX = 0
+        break
+      case 2:
+        // Cas spécial pour les spans de largeur 2
+        offsetX = relativeCol === 0 ? -0.25 : 0.25
+        break
+      default:
+        // Logique générale pour les autres spans
+        offsetX = (1 / width) * (relativeCol - 1)
+        break
+    }
+    
+    offsetY = -(relativeRow - 1 + 1 / height) / height
+
     
     return { positions, offsetX, offsetY }
   }

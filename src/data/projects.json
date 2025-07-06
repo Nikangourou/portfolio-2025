@@ -7,8 +7,8 @@
       "context": "Pando Studio",
       "description": "Creation of an e-commerce for a stylist",
       "technologies": ["Wordpress", "Woocommerce"],
-      "link": "#",
-      "cover": "/images/Espace22/Espace22.jpg",
+      "link": "",
+      "cover": "/images/Espace22/espace22.webp",
       "color": {
         "background": "#23288C",
         "text": "#FFFFFF"
@@ -17,7 +17,7 @@
         {
           "images": [
             {
-              "url": "/images/Espace22/space2.jpeg",
+              "url": "/images/Espace22/space2.webp",
               "span": "2-2",
               "position": 5
             }
@@ -32,7 +32,7 @@
         {
           "images": [
             {
-              "url": "/images/Espace22/space5.png",
+              "url": "/images/Espace22/space5.webp",
               "span": "3-2",
               "position": 0
             }
@@ -47,7 +47,7 @@
         {
           "images": [
             {
-              "url": "/images/Espace22/space6.png",
+              "url": "/images/Espace22/space6.webp",
               "span": "3-2",
               "position": 5
             }
@@ -62,12 +62,12 @@
         {
           "images": [
             {
-              "url": "/images/Espace22/space4.png",
+              "url": "/images/Espace22/space4.webp",
               "span": "2-1",
               "position": 0
             },
             {
-              "url": "/images/Espace22/space3.png",
+              "url": "/images/Espace22/space3.webp",
               "span": "3-2",
               "position": 6
             }
@@ -88,12 +88,73 @@
       "context": "Personal project",
       "description": "Creation of a tote bag brand",
       "technologies": ["Wordpress", "Woocommerce"],
-      "link": "#",
-      "cover": "/images/Alizora.jpg",
+      "link": "https://alizora.com/",
+      "cover": "/images/Alizora/alizora.webp",
       "color": {
-        "background": "#F0E6FF",
-        "text": "#4A2C82"
-      }
+        "background": "#8b7eb4",
+        "text": "#FFFFFF"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/Alizora/alizora3.webp",
+              "span": "3-2",
+              "position": 5
+            }
+          ],
+          "texts": [
+            {
+              "text": "Creation of a tote bags brand with a designer friend.",
+              "position": 13
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Alizora/alizora1.webp",
+              "span": "1-2",
+              "position": 1
+            },
+            {
+              "url": "/images/Alizora/alizora2.webp",
+              "span": "1-2",
+              "position": 8
+            }
+          ],
+          "texts": [
+            {
+              "text": "Shooting",
+              "position": 5
+            },
+            {
+              "text": "Mock-up",
+              "position": 12
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Alizora/carte1.webp",
+              "span": "2-2",
+              "position": 0
+            },
+            {
+              "url": "/images/Alizora/carte2.webp",
+              "span": "2-2",
+              "position": 7
+            }
+          ],
+          "texts": [
+            {
+              "text": "Branding",
+              "position": 10
+            }
+          ]
+        }
+      ]
     },
     {
       "id": 3,

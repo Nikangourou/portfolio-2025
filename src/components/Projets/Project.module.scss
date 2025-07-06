@@ -13,7 +13,7 @@
 
     .title {
       font-size: 8px;
-      font-weight: bold;
+      font-family: 'Allerta Stencil', sans-serif;
       text-align: center;
       padding: 0;
       margin: 0;
@@ -25,9 +25,10 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-    
+
       .techno {
-        font-size: 6px;
+        font-family: 'Allerta Stencil', sans-serif;
+        font-size: 5px;
         text-align: center;
         padding: 0;
         margin: 0;
@@ -47,6 +48,21 @@
   padding: 5px;
   color: white;
   font-size: 4px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  // text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   z-index: 1;
+}
+
+.linkButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  color: var(--theme-background);
+  text-decoration: none;
+  font-family: 'Allerta Stencil', sans-serif;
+  font-size: 6px;
+  // font-weight: bold;
+  // text-transform: uppercase;
+  transition: background-color 0.2s ease;
+  padding: 2px 4px;
 }

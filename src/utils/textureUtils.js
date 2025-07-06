@@ -79,13 +79,17 @@ export const configureTexture = (texture, span, validPositions, targetFace) => {
     texture.rotation = 0 // Pas de rotation pour la face avant
   }
 
-  const spanWidth = span.split('-')[0]
-  const spanHeight = span.split('-')[1]
+  const spanWidth = parseInt(span.split('-')[0])
+  const spanHeight = parseInt(span.split('-')[1])
 
-  texture.center.set(1 / spanWidth, 1 / spanHeight)
+  // Normaliser la configuration pour tous les spans
+  texture.center.set(.5, .5)
   texture.repeat.set(1 / spanWidth, 1 / spanHeight)
   texture.offset.set(
     validPositions.offsetX,
     validPositions.offsetY
   )
 } 
+
+// span 3 = 0.5
+// span 2 environ 0.67

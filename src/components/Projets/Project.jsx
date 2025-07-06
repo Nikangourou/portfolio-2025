@@ -158,6 +158,21 @@ const Project = forwardRef(function Project(
                   ))}
                 </div>
               </ProjectOverlay>
+              <ProjectOverlay
+                condition={
+                  selectedProject && gridPosition === 4 && selectedProject.link
+                }
+                projectSize={projectSize}
+              >
+                <a 
+                  href={selectedProject?.link} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={styles.linkButton}
+                >
+                  Link
+                </a>
+              </ProjectOverlay>
             </>
           )}
           <Navigation 
