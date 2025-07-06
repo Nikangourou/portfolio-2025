@@ -163,12 +163,73 @@
       "context": "School project",
       "description": "Creation of an arcade game",
       "technologies": ["React Three Fiber"],
-      "link": "https://totoru-three.vercel.app/",
-      "cover": "/images/Totoro.jpg",
+      "link": "",
+      "cover": "/images/Totoro/totoro.webp",
       "color": {
-        "background": "#FFF4E5",
-        "text": "#8B4513"
-      }
+        "background": "#fce6d3",
+        "text": "#ab7349"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/Totoro/born1.webp",
+              "span": "2-2",
+              "position": 5
+            }
+          ],
+          "texts": [
+            {
+              "text": "Creation of an arcade game.",
+              "position": 12
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Totoro/player.webp",
+              "span": "2-2",
+              "position": 0
+            },
+            {
+              "url": "/images/Totoro/score.webp",
+              "span": "3-2",
+              "position": 7
+            }
+          ],
+          "texts": [
+            {
+              "text": "Variable number of players",
+              "position": 2
+            },
+            {
+              "text": "Leaderboard",
+              "position": 11
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Totoro/born2.webp",
+              "span": "2-3",
+              "position": 3
+            },
+            {
+              "url": "/images/Totoro/print.webp",
+              "span": "2-3",
+              "position": 0
+            }
+          ],
+          "texts": [
+            {
+              "text": "Poster",
+              "position": 2
+            }
+          ]
+        }
+      ]
     },
     {
       "id": 4,
