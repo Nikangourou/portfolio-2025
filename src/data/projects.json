@@ -204,7 +204,7 @@
               "position": 2
             },
             {
-              "text": "Leaderboard",
+              "text": "Leaderboard.",
               "position": 11
             }
           ]
@@ -224,7 +224,7 @@
           ],
           "texts": [
             {
-              "text": "Poster",
+              "text": "Poster.",
               "position": 2
             }
           ]
@@ -375,11 +375,63 @@
       "description": "Tool for learning reading and mathematics",
       "technologies": ["Next.JS", "Symfony"],
       "link": "https://histoires-et-nombres.editions-retz.com/",
-      "cover": "/images/Histoires_Et_Nombres.jpg",
+      "cover": "/images/HistoiresEtNombres/Histoires_Et_Nombres.webp",
       "color": {
-        "background": "#E6FFFA",
-        "text": "#006666"
-      }
+        "background": "#558774",
+        "text": "#FFFFFF"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/HistoiresEtNombres/menu.webp",
+              "span": "3-2",
+              "position": 5
+            }
+          ],
+          "texts": [
+            {
+              "text": "Web application for learning reading and arithmetic.",
+              "position": 8
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/HistoiresEtNombres/c1.webp",
+              "span": "2-2",
+              "position": 0
+            },
+            {
+              "url": "/images/HistoiresEtNombres/c2.webp",
+              "span": "2-2",
+              "position": 7
+            }
+          ],
+          "texts": [
+            {
+              "text": "Arithmetic.",
+              "position": 3
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/HistoiresEtNombres/s1.webp",
+              "span": "3-2",
+              "position": 1
+            }
+          ],
+          "texts": [
+            {
+              "text": "Create your own stories.",
+              "position": 10
+            }
+          ]
+        }
+      ]
     },
     {
       "id": 7,
