@@ -328,12 +328,44 @@
       "context": "Pando Studio",
       "description": "Interactive installation to create a link between SNCF stations",
       "technologies": ["Javascript"],
-      "link": "#",
-      "cover": "/images/Fenetre_Immersive.jpg",
+      "link": "https://digitalandmarks.com/",
+      "cover": "/images/Fenetre_Immersive/fenetre_immersive.webp",
       "color": {
-        "background": "#FFE6E6",
-        "text": "#8B0000"
-      }
+        "background": "#5b68df",
+        "text": "#FFFFFF"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/Fenetre_Immersive/install.webp",
+              "span": "3-2",
+              "position": 5
+            }
+          ],
+          "texts": [
+            {
+              "text": "Interactive media display.",
+              "position": 13
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Fenetre_Immersive/map.webp",
+              "span": "3-2",
+              "position": 0
+            }
+          ],
+          "texts": [
+            {
+              "text": "Development of an interactive map available in the installation",
+              "position": 11
+            }
+          ]
+        }
+      ]
     },
     {
       "id": 6,
