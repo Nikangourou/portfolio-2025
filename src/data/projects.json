@@ -74,7 +74,7 @@
           ],
           "texts": [
             {
-              "text": "100% editable",
+              "text": "100% editable.",
               "position": 10
             }
           ]
@@ -125,11 +125,11 @@
           ],
           "texts": [
             {
-              "text": "Shooting",
+              "text": "Shooting.",
               "position": 5
             },
             {
-              "text": "Mock-up",
+              "text": "Mock-up.",
               "position": 12
             }
           ]
@@ -149,7 +149,7 @@
           ],
           "texts": [
             {
-              "text": "Branding",
+              "text": "Branding.",
               "position": 10
             }
           ]
@@ -233,17 +233,93 @@
     },
     {
       "id": 4,
-      "title": "Bonne Sobriyearte",
+      "title": "Bonne Sobri Yearte",
       "year": "2023",
       "context": "Havas Factory",
       "description": "Greeting card",
-      "technologies": ["React Three Fiber"],
+      "technologies": ["React Three Fiber", "JS"],
       "link": "https://www.awwwards.com/sites/bonne-sobriyearte-2023",
-      "cover": "/images/Bonne_Sobriyearte.jpg",
+      "cover": "/images/Bonne_Sobriyearte/bonne_sobriyearte.webp",
       "color": {
-        "background": "#E6F3FF",
-        "text": "#1A4B8C"
-      }
+        "background": "#2b2a83",
+        "text": "#FFFFFF"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/Bonne_Sobriyearte/mockup1.webp",
+              "span": "2-2",
+              "position": 6
+            }
+          ],
+          "texts": [
+            {
+              "text": "Greeting card based on the government's Turn Off",
+              "position": 10
+            },
+            {
+              "text": "Site of the Day.",
+              "position": 8
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Bonne_Sobriyearte/panpan.webp",
+              "span": "3-3",
+              "position": 0
+            }
+          ],
+          "texts": [
+            {
+              "text": "Shooting game.",
+              "position": 13
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Bonne_Sobriyearte/speed1.webp",
+              "span": "2-2",
+              "position": 0
+            },
+            {
+              "url": "/images/Bonne_Sobriyearte/speed2.webp",
+              "span": "2-2",
+              "position": 7
+            }
+          ],
+          "texts": [
+            {
+              "text": "Click speed game.",
+              "position": 11
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Bonne_Sobriyearte/resp1.webp",
+              "span": "2-2",
+              "position": 0
+            },
+            {
+              "url": "/images/Bonne_Sobriyearte/resp2.webp",
+              "span": "2-2",
+              "position": 7
+            }
+          ],
+          "texts": [
+            {
+              "text": "Responsive.",
+              "position": 11
+            }
+          ]
+        }
+      ]
     },
     {
       "id": 5,
