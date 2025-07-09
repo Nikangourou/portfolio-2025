@@ -438,14 +438,55 @@
       "title": "Hop Ma Liste",
       "year": "2022",
       "context": "Studit",
-      "description": "Mobile app for to help people with suicidal thoughts",
+      "description": "Mobile app to help people with suicidal thoughts.",
       "technologies": ["React Native"],
       "link": "https://hopmaliste.fr/",
-      "cover": "/images/HopMaListe.jpg",
+      "cover": "/images/HopMaListe/hopMaListe.webp",
       "color": {
-        "background": "#FFF0F5",
-        "text": "#8B008B"
-      }
+        "background": "#369bb8",
+        "text": "#FFFFFF"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/HopMaListe/home.webp",
+              "span": "3-2",
+              "position": 5
+            }
+          ],
+          "texts": [
+            {
+              "text": "Mobile app to help people with suicidal thoughts.",
+              "position": 13
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/HopMaListe/langue.webp",
+              "span": "2-3",
+              "position": 0
+            },
+            {
+              "url": "/images/HopMaListe/theme.webp",
+              "span": "2-3",
+              "position": 2
+            }
+          ],
+          "texts": [
+            {
+              "text": "Language settings.",
+              "position": 0
+            },
+            {
+              "text": "Theme settings.",
+              "position": 12
+            }
+          ]
+        }
+      ]
     },
     {
       "id": 8,
