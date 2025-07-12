@@ -495,12 +495,68 @@
       "context": "School project",
       "description": "What happens to postcards that don't arrive?",
       "technologies": ["Three.js"],
-      "link": "https://wanderlost-whispers.netlify.app/",
-      "cover": "/images/Wanderlost.jpg",
+      "link": "",
+      "cover": "/images/Wanderlost/wanderlost.webp",
       "color": {
-        "background": "#F5F5DC",
-        "text": "#556B2F"
-      }
+        "background": "#96a3b7",
+        "text": "#FFFFFF"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/Wanderlost/intro.webp",
+              "span": "3-2",
+              "position": 5
+            }
+          ],
+          "texts": [
+            {
+              "text": "Poetic and interactive 3D experience.",
+              "position": 13
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Wanderlost/coridor2.webp",
+              "span": "2-1",
+              "position": 12
+            },
+            {
+              "url": "/images/Wanderlost/coridor1.webp",
+              "span": "3-2",
+              "position": 0
+            }
+          ],
+          "texts": [
+            {
+              "text": "Creation of the 3D environment in Blender.",
+              "position": 11
+            },
+            {
+              "text": "Integration of the 3D scene into Three.js.",
+              "position": 3
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Wanderlost/end.webp",
+              "span": "4-3",
+              "position": 0
+            }
+          ],
+          "texts": [
+            {
+              "text": "Particles creation in three.js.",
+              "position": 1
+            }
+          ]
+        }
+      ]
     },
     {
       "id": 9,

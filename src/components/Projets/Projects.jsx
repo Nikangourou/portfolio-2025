@@ -230,7 +230,7 @@ function ProjectsContent() {
       })
 
       // Attendre que tous les projets aient commencé leur animation
-      const totalAnimationTime = projectStates.length * 100 + 1100
+      const totalAnimationTime = projectStates.length * 100 + 500
       setTimeout(() => {
         setArrangementAnimationComplete(true)
       }, totalAnimationTime)
@@ -242,7 +242,7 @@ function ProjectsContent() {
     if (isArrangementAnimationComplete) {
       // Rotation des projets
       projectStates.forEach((_, index) => {
-        const randomDelay = Math.random() * 1000 + 1000 // Entre 1000ms et 2000ms
+        const randomDelay = Math.random() * 500 + 1500 // Entre 1000ms et 2000ms
         setTimeout(() => {
           setRotatingProjects((prev) => new Set([...prev, index]))
         }, randomDelay)
