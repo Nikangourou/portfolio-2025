@@ -566,11 +566,48 @@
       "description": "Landing page for KFC Origins collection",
       "technologies": ["Javascript"],
       "link": "https://www.kfc.fr/origins#",
-      "cover": "/images/KFC.jpg",
+      "cover": "/images/KFC/KFC.webp",
       "color": {
-        "background": "#F0FFF0",
-        "text": "#228B22"
-      }
+        "background": "#FFFFFF",
+        "text": "#f30323"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/KFC/intro.webp",
+              "span": "3-2",
+              "position": 5
+            }
+          ],
+          "texts": [
+            {
+              "text": "Landing page for KFC Origins collection.",
+              "position": 13
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/KFC/c1.webp",
+              "span": "2-2",
+              "position": 0
+            },
+            {
+              "url": "/images/KFC/c2.webp",
+              "span": "2-2",
+              "position": 7
+            }
+          ],
+          "texts": [
+            {
+              "text": "Animation with GSAP and CSS sprite.",
+              "position": 11
+            }
+          ]
+        }
+      ]
     },
     {
       "id": 10,
