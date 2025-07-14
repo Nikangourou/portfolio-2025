@@ -731,12 +731,88 @@
       "context": "Veepee",
       "description": "Size recommendation project for Veepee",
       "technologies": ["React", "Strapi", ".NET"],
-      "link": "#",
-      "cover": "/images/Sizing.jpg",
+      "link": "",
+      "cover": "/images/Sizing/Sizing.webp",
       "color": {
-        "background": "#FFE4E1",
-        "text": "#8B0000"
-      }
+        "background": "#ec008c",
+        "text": "#FFFFFF"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/Sizing/intro.webp",
+              "span": "3-2",
+              "position": 5
+            }
+          ],
+          "texts": [
+            {
+              "text": "Size recommendation project for the Veepee e-commerce site.",
+              "position": 13
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Sizing/s1.webp",
+              "span": "2-3",
+              "position": 0
+            },
+            {
+              "url": "/images/Sizing/s2.webp",
+              "span": "2-2",
+              "position": 7
+            }
+          ],
+          "texts": [
+            {
+              "text": "Recommended size is calculated based on the brands' size charts.",
+              "position": 2
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Sizing/s3.webp",
+              "span": "2-2",
+              "position": 5
+            },
+            {
+              "url": "/images/Sizing/s4.webp",
+              "span": "2-2",
+              "position": 2
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Sizing/sr1.webp",
+              "span": "1-2",
+              "position": 0
+            },
+            {
+              "url": "/images/Sizing/sr2.webp",
+              "span": "1-2",
+              "position": 6
+            },
+            {
+              "url": "/images/Sizing/sr3.webp",
+              "span": "1-2",
+              "position": 2
+            }
+          ],
+          "texts": [
+            {
+              "text": "Available on the iOS and Android app.",
+              "position": 13
+            }
+          ]
+        }
+      ]
     },
     {
       "id": 12,
