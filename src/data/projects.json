@@ -616,12 +616,113 @@
       "context": "School project",
       "description": "Current project",
       "technologies": ["Arduino"],
-      "link": "#",
-      "cover": "/images/OtherSide.jpg",
+      "link": "",
+      "cover": "/images/OtherSide/otherSide.webp",
       "color": {
-        "background": "#F5F5F5",
-        "text": "#363636"
-      }
+        "background": "#e50044",
+        "text": "#FFFFFF"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/OtherSide/intro.webp",
+              "span": "2-2",
+              "position": 5
+            }
+          ],
+          "texts": [
+            {
+              "text": "Design of two remotely connected interactive frames.",
+              "position": 12
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/OtherSide/gabarit.webp",
+              "span": "1-1",
+              "position": 0
+            },
+            {
+              "url": "/images/OtherSide/percage.webp",
+              "span": "1-1",
+              "position": 6
+            },
+            {
+              "url": "/images/OtherSide/cut.webp",
+              "span": "1-1",
+              "position": 10
+            },
+            {
+              "url": "/images/OtherSide/fixation.webp",
+              "span": "1-1",
+              "position": 2
+            },
+            {
+              "url": "/images/OtherSide/border.webp",
+              "span": "1-1",
+              "position": 8
+            },
+            {
+              "url": "/images/OtherSide/cablage.webp",
+              "span": "1-1",
+              "position": 12
+            }
+          ],
+          "texts": [
+            {
+              "text": "Drilling template.",
+              "position": 1
+            },
+            {
+              "text": "Drilling.",
+              "position": 5
+            },
+            {
+              "text": "Cutting of optical fibers.",
+              "position": 11
+            },
+            {
+              "text": "Mounting.",
+              "position": 3
+            },
+            {
+              "text": "Border mounting.",
+              "position": 7
+            },
+            {
+              "text": "Wiring.",
+              "position": 13
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/OtherSide/duo.webp",
+              "span": "2-2",
+              "position": 0
+            },
+            {
+              "url": "/images/OtherSide/test.webp",
+              "span": "2-2",
+              "position": 7
+            }
+          ],
+          "texts": [
+            {
+              "text": "Wi-Fi connection between the two frames.",
+              "position": 2
+            },
+            {
+              "text": "Color test.",
+              "position": 11
+            }
+          ]
+        }
+      ]
     },
     {
       "id": 11,
