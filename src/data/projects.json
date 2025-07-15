@@ -821,12 +821,34 @@
       "context": "School project",
       "description": "AR experience in partnership with the Orangerie Museum",
       "technologies": ["Three.js", "WebXR"],
-      "link": "#",
-      "cover": "/images/Orangerie.jpg",
+      "link": "https://www.youtube.com/shorts/yh_1zn_Y2OQ",
+      "cover": "/images/Orangerie/orangerie.webp",
       "color": {
-        "background": "#F0F8FF",
-        "text": "#4682B4"
-      }
+        "background": "#316155",
+        "text": "#FFFFFF"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/Orangerie/intro.webp",
+              "span": "1-2",
+              "position": 5
+            },
+            {
+              "url": "/images/Orangerie/i4.webp",
+              "span": "2-2",
+              "position": 6
+            }
+          ],
+          "texts": [
+            {
+              "text": "AR experience in partnership with the Orangerie Museum.",
+              "position": 13
+            }
+          ]
+        }
+      ]
     },
     {
       "id": 13,
