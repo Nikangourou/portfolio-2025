@@ -862,7 +862,29 @@
       "color": {
         "background": "#E6E6FA",
         "text": "#483D8B"
-      }
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/Orangerie/intro.webp",
+              "span": "1-2",
+              "position": 5
+            },
+            {
+              "url": "/images/Orangerie/i4.webp",
+              "span": "2-2",
+              "position": 6
+            }
+          ],
+          "texts": [
+            {
+              "text": "AR experience in partnership with the Orangerie Museum.",
+              "position": 13
+            }
+          ]
+        }
+      ]
     },
     {
       "id": 14,
@@ -870,13 +892,50 @@
       "year": "2023",
       "context": "School project",
       "description": "Data visualization project on classmates' travel data",
-      "technologies": ["GSAP"],
+      "technologies": ["Javascript","GSAP"],
       "link": "https://datavis-transport.netlify.app/",
-      "cover": "/images/DataViz.jpg",
+      "cover": "/images/DataViz/dataViz.webp",
       "color": {
-        "background": "#FAFAD2",
-        "text": "#B8860B"
-      }
+        "background": "#fdfcec",
+        "text": "#181818"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/DataViz/intro.webp",
+              "span": "3-2",
+              "position": 5
+            }
+          ],
+          "texts": [
+            {
+              "text": "Data visualization project on classmates' travel data.",
+              "position": 13
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/DataViz/c1.webp",
+              "span": "2-2",
+              "position": 0
+            },
+            {
+              "url": "/images/DataViz/c2.webp",
+              "span": "2-2",
+              "position": 7
+            }
+          ],
+          "texts": [
+            {
+              "text": "Horizontal scrolling site.",
+              "position": 11
+            }
+          ]
+        }
+      ]
     },
     {
       "id": 15,
