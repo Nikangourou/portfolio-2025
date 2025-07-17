@@ -929,8 +929,8 @@
           ],
           "texts": [
             {
-              "text": "Scenario changes based on players' previous actions.",
-              "position": 12
+              "text": "Environment changes based on players' previous actions.",
+              "position": 13
             }
           ]
         }
