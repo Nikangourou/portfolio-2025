@@ -1001,11 +1001,114 @@
         "Express.js"
       ],
       "link": "https://vraiment.netlify.app/",
-      "cover": "/images/Vraiment.jpg",
+      "cover": "/images/Vraiment/vraiment.webp",
       "color": {
-        "background": "#FFDAB9",
-        "text": "#CD853F"
-      }
+        "background": "#efebe2",
+        "text": "#373fef"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/Vraiment/intro.webp",
+              "span": "3-2",
+              "position": 5
+            }
+          ],
+          "texts": [
+            {
+              "text":"A board game that blends physical and digital.",
+              "position": 13
+            }
+          ]
+        }, {
+          "images": [
+            {
+              "url": "/images/Vraiment/p1.webp",
+              "span": "4-3",
+              "position": 0
+            }
+          ],
+          "texts": [
+            {
+              "text": "Player selection.",
+              "position": 3
+            }
+          ]
+        }, {
+          "images": [
+            {
+              "url": "/images/Vraiment/i1.webp",
+              "span": "1-2",
+              "position": 0
+            },
+            {
+              "url": "/images/Vraiment/i2.webp",
+              "span": "1-2",
+              "position": 6
+            },
+            {
+              "url": "/images/Vraiment/i3.webp",
+              "span": "1-2",
+              "position": 2
+            },
+            {
+              "url": "/images/Vraiment/i4.webp",
+              "span": "1-2",
+              "position": 8
+            }
+          ],
+          "texts": [
+            {
+              "text": "A player isolates themselves and describes a memory.",
+              "position": 10
+            },  {
+              "text": "AI generates 2 images of the memory, one true and one false based on the true one.",
+              "position": 3
+            }
+          ]
+        }, {
+          "images": [
+            {
+              "url": "/images/Vraiment/v1.webp",
+              "span": "2-2",
+              "position": 0
+            }, {
+              "url": "/images/Vraiment/v2.webp",
+              "span": "2-2",
+              "position": 7
+            }
+          ],
+          "texts": [
+            {
+              "text": "Players ask questions to find the true memory.",
+              "position": 3
+            },
+            {
+              "text": "At the end of the allotted time, players vote for the true memory.",
+              "position": 11
+            }
+          ]
+        }, {
+          "images": [
+            {
+              "url": "/images/Vraiment/score.webp",
+              "span": "2-2",
+              "position": 0
+            }, {
+              "url": "/images/Vraiment/game.webp",
+              "span": "2-2",
+              "position": 7
+            }
+          ],
+          "texts": [
+            {
+              "text": "Scoreboard at the end of each turn.",
+              "position": 10
+            }
+          ]
+        }
+      ]
     }
   ]
 }
