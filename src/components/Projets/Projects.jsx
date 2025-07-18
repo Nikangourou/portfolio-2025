@@ -438,13 +438,6 @@ function ProjectsContent() {
     return initialStates
   }, [camera])
 
-  const handleProjectClick = (index) => {
-    if (!isProjectsArranged) {
-      setProjectsArranged(true)
-      setSelectedProject(projectsData.projects[index])
-    }
-  }
-
   useEffect(() => {
     const handleWheel = (event) => {
       const screenFactor = Math.min(window.innerWidth / 1920, 1)
@@ -537,7 +530,6 @@ function ProjectsContent() {
               state.rotation[1],
               state.rotation[2],
             ]}
-            onAnyClick={() => handleProjectClick(i)}
             camera={camera}
             image={state.project.cover}
           />

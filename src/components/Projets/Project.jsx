@@ -6,6 +6,7 @@ import styles from './Project.module.scss'
 import { Navigation } from '@/components/Interface/Interface'
 import ProjectOverlay from './ProjectOverlay'
 import { useContentTexture, useContentText } from '@/utils/contentLoader'
+import projectsData from '@/data/projects.json'
 
 const Project = forwardRef(function Project(
   { gridPosition, position, rotation, onAnyClick, camera, image },
@@ -29,6 +30,8 @@ const Project = forwardRef(function Project(
     (state) => state.isArrangementAnimationComplete,
   )
   const isProjectsArranged = useStore((state) => state.isProjectsArranged)
+  const setProjectsArranged = useStore((state) => state.setProjectsArranged)
+  const setSelectedProject = useStore((state) => state.setSelectedProject)
 
   // Utiliser la taille calculée ou une taille par défaut
   const projectSize = window.projectSize || { width: 1, height: 1 }
@@ -36,6 +39,17 @@ const Project = forwardRef(function Project(
   // Utiliser les hooks personnalisés
   const { contentTexture, targetFace } = useContentTexture(gridPosition)
   const { contentText } = useContentText(gridPosition)
+
+  // Fonction pour gérer le clic et arrêter la propagation
+  const handleMeshClick = (event) => {
+    event.stopPropagation()
+    
+    // Logique de sélection du projet
+    if (!isProjectsArranged) {
+      setProjectsArranged(true)
+      setSelectedProject(projectsData.projects[gridPosition])
+    }
+  }
 
   // Optimiser le useEffect pour éviter les re-renders inutiles
   useEffect(() => {
@@ -96,7 +110,7 @@ const Project = forwardRef(function Project(
 
   return (
     <group position={position} rotation={rotation}>
-      <mesh ref={frontMeshRef} onClick={onAnyClick}>
+      <mesh ref={frontMeshRef} onClick={handleMeshClick}>
         <planeGeometry args={[projectSize.width, projectSize.height]} />
         <meshBasicMaterial
           ref={frontMaterialRef}
@@ -104,7 +118,7 @@ const Project = forwardRef(function Project(
           toneMapped={true}
         />
       </mesh>
-      <mesh ref={backMeshRef} onClick={onAnyClick} rotation-y={Math.PI}>
+      <mesh ref={backMeshRef} onClick={handleMeshClick} rotation-y={Math.PI}>
         <planeGeometry args={[projectSize.width, projectSize.height]} />
         <meshBasicMaterial
           ref={backMaterialRef}
