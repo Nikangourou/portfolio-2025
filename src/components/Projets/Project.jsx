@@ -9,7 +9,7 @@ import { useContentTexture, useContentText } from '@/utils/contentLoader'
 import projectsData from '@/data/projects.json'
 
 const Project = forwardRef(function Project(
-  { gridPosition, position, rotation, onAnyClick, camera, image },
+  { gridPosition, position, rotation, camera, image, project, onProjectHover, onProjectUnhover },
   ref,
 ) {
   const frontMeshRef = useRef(null)
@@ -43,12 +43,23 @@ const Project = forwardRef(function Project(
   // Fonction pour gérer le clic et arrêter la propagation
   const handleMeshClick = (event) => {
     event.stopPropagation()
-    
     // Logique de sélection du projet
     if (!isProjectsArranged) {
       setProjectsArranged(true)
       setSelectedProject(projectsData.projects[gridPosition])
     }
+  }
+
+  // Fonction pour gérer le hover et arrêter la propagation
+  const handlePointerOver = (event) => {
+    event.stopPropagation()
+    onProjectHover()
+  }
+
+  // Fonction pour gérer le unhover et arrêter la propagation
+  const handlePointerOut = (event) => {
+    event.stopPropagation()
+    onProjectUnhover()
   }
 
   // Optimiser le useEffect pour éviter les re-renders inutiles
@@ -110,7 +121,12 @@ const Project = forwardRef(function Project(
 
   return (
     <group position={position} rotation={rotation}>
-      <mesh ref={frontMeshRef} onClick={handleMeshClick}>
+      <mesh
+        ref={frontMeshRef}
+        onClick={handleMeshClick}
+        onPointerOver={handlePointerOver}
+        onPointerOut={handlePointerOut}
+      >
         <planeGeometry args={[projectSize.width, projectSize.height]} />
         <meshBasicMaterial
           ref={frontMaterialRef}
@@ -118,7 +134,13 @@ const Project = forwardRef(function Project(
           toneMapped={true}
         />
       </mesh>
-      <mesh ref={backMeshRef} onClick={handleMeshClick} rotation-y={Math.PI}>
+      <mesh
+        ref={backMeshRef}
+        onClick={handleMeshClick}
+        onPointerOver={handlePointerOver}
+        onPointerOut={handlePointerOut}
+        rotation-y={Math.PI}
+      >
         <planeGeometry args={[projectSize.width, projectSize.height]} />
         <meshBasicMaterial
           ref={backMaterialRef}

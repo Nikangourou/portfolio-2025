@@ -6,6 +6,7 @@ import projectsData from '../../data/projects.json'
 import { useFrame } from '@react-three/fiber'
 import { useStore } from '../../stores/store'
 import useThemeStore from '../../stores/themeStore'
+import ProjectInfoFloating from '../Interface/ProjectInfoFloating'
 
 export default function Projects() {
   return <ProjectsContent />
@@ -34,6 +35,10 @@ function ProjectsContent() {
   const [borderStates, setBorderStates] = useState([])
   const [animatingProjects, setAnimatingProjects] = useState(new Set())
   const currentPage = useStore((state) => state.currentPage)
+  const selectedProject = useStore((state) => state.selectedProject)
+
+  // Ajout de l'état pour le projet survolé
+  const [hoveredProject, setHoveredProject] = useState(null)
 
   const distance = -5
   const baseSpeed = 2.5
@@ -519,6 +524,10 @@ function ProjectsContent() {
         </group>
       )}
 
+      {!isProjectsArranged && hoveredProject && (
+        <ProjectInfoFloating project={hoveredProject} />
+      )}
+
       <group ref={groupRef} position={[0, 0, distance]}>
         {projectStates.map((state, i) => (
           <Project
@@ -532,6 +541,9 @@ function ProjectsContent() {
             ]}
             camera={camera}
             image={state.project.cover}
+            project={state.project}
+            onProjectHover={() => setHoveredProject(state.project)}
+            onProjectUnhover={() => setHoveredProject(null)}
           />
         ))}
       </group>
