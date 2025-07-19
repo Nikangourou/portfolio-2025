@@ -28,8 +28,8 @@ export default function ProjectInfoFloating({ project }) {
       style={{
         pointerEvents: 'none',
         position: 'fixed',
-        top: '20px',
-        left: '20px',
+        bottom: '20px',
+        left: '10px',
         zIndex: 100,
       }}
     >

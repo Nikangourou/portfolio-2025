@@ -4,13 +4,13 @@ import ThemeProvider from './components/Theme/ThemeProvider'
 import { Canvas } from '@react-three/fiber'
 import Experience from './Experience.jsx'
 import { Leva } from 'leva'
-
-
+import Name from './components/Interface/Name'
 
 const root = ReactDOM.createRoot(document.querySelector('#root'))
 
 root.render(
     <ThemeProvider>
+        <Name />
         <Leva />
         <Canvas
             camera={ {
