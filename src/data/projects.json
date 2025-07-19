@@ -189,13 +189,13 @@
           "images": [
             {
               "url": "/images/Totoro/player.webp",
-              "span": "2-2",
+              "span": "2-1",
               "position": 0
             },
             {
               "url": "/images/Totoro/score.webp",
               "span": "3-2",
-              "position": 7
+              "position": 6
             }
           ],
           "texts": [
@@ -205,7 +205,7 @@
             },
             {
               "text": "Leaderboard.",
-              "position": 11
+              "position": 10
             }
           ]
         },
@@ -213,8 +213,8 @@
           "images": [
             {
               "url": "/images/Totoro/born2.webp",
-              "span": "2-3",
-              "position": 3
+              "span": "2-2",
+              "position": 7
             },
             {
               "url": "/images/Totoro/print.webp",
