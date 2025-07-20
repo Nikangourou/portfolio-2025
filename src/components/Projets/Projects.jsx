@@ -87,28 +87,36 @@ function ProjectsContent() {
     }
 
     // Gestion du touch pour mobile
+    let touchStartX = 0
     let touchStartY = 0
     let touchStartTime = 0
 
     const handleTouchStart = (event) => {
+      touchStartX = event.touches[0].clientX
       touchStartY = event.touches[0].clientY
       touchStartTime = Date.now()
     }
 
     const handleTouchMove = (event) => {
       event.preventDefault() // Empêcher le scroll par défaut
+      const touchCurrentX = event.touches[0].clientX
       const touchCurrentY = event.touches[0].clientY
+      const deltaX = touchStartX - touchCurrentX
       const deltaY = touchStartY - touchCurrentY
       const touchTime = Date.now() - touchStartTime
       
+      // Utiliser le plus grand mouvement (horizontal ou vertical)
+      const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY
+      
       // Calculer la vitesse du mouvement tactile
-      const velocity = Math.abs(deltaY) / Math.max(touchTime, 1)
-      const scaledDelta = deltaY * 0.003 * Math.min(velocity / 10, 1)
+      const velocity = Math.abs(delta) / Math.max(touchTime, 1)
+      const scaledDelta = delta * 0.008 * Math.min(velocity / 5, 2) // Augmenté de 0.003 à 0.008 et velocity/10 à velocity/5
       
       setNeedsRaycasting(true)
       const screenFactor = Math.min(window.innerWidth / 1920, 1)
       setRotationY((prev) => prev + scaledDelta * screenFactor)
       
+      touchStartX = touchCurrentX
       touchStartY = touchCurrentY
       touchStartTime = Date.now()
     }
