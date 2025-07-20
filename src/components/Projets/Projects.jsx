@@ -245,6 +245,37 @@ function ProjectsContent() {
     )
   }, [camera, isProjectsArranged])
 
+  // Gérer le redimensionnement de la fenêtre
+  useEffect(() => {
+    const handleResize = () => {
+      // Recalculer les positions quand la fenêtre est redimensionnée
+      const dist = calculateArrangedDistance()
+      setPredefinedPositions(calculatePredefinedPositions(dist))
+      
+      // Recalculer les bordures
+      const borderPositions = calculateBorderPositions(dist)
+      setBorderStates(
+        borderPositions.map((pos) => ({
+          position: pos,
+          rotation: [0, 0, 0],
+        })),
+      )
+
+      // Si on est en mode arrangé, mettre à jour les positions cibles immédiatement
+      if (isProjectsArranged && predefinedPositions.length > 0) {
+        setTargetStates((prevStates) =>
+          prevStates.map((state, index) => ({
+            ...state,
+            position: calculatePredefinedPositions(dist)[index] || state.position,
+          }))
+        )
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [isProjectsArranged, predefinedPositions.length])
+
   const findValidPosition = (positions, maxAttempts = 100) => {
     const xRange = [-2, 2]
     const yRange = [-2, 2]
