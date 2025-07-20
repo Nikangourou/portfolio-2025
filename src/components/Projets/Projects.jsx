@@ -86,11 +86,51 @@ function ProjectsContent() {
       }, 500)
     }
 
+    // Gestion du touch pour mobile
+    let touchStartY = 0
+    let touchStartTime = 0
+
+    const handleTouchStart = (event) => {
+      touchStartY = event.touches[0].clientY
+      touchStartTime = Date.now()
+    }
+
+    const handleTouchMove = (event) => {
+      event.preventDefault() // Empêcher le scroll par défaut
+      const touchCurrentY = event.touches[0].clientY
+      const deltaY = touchStartY - touchCurrentY
+      const touchTime = Date.now() - touchStartTime
+      
+      // Calculer la vitesse du mouvement tactile
+      const velocity = Math.abs(deltaY) / Math.max(touchTime, 1)
+      const scaledDelta = deltaY * 0.003 * Math.min(velocity / 10, 1)
+      
+      setNeedsRaycasting(true)
+      const screenFactor = Math.min(window.innerWidth / 1920, 1)
+      setRotationY((prev) => prev + scaledDelta * screenFactor)
+      
+      touchStartY = touchCurrentY
+      touchStartTime = Date.now()
+    }
+
+    const handleTouchEnd = () => {
+      setTimeout(() => {
+        setNeedsRaycasting(false)
+      }, 500)
+    }
+
     window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('wheel', handleWheel)
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    window.addEventListener('touchstart', handleTouchStart, { passive: true })
+    window.addEventListener('touchmove', handleTouchMove, { passive: false })
+    window.addEventListener('touchend', handleTouchEnd, { passive: true })
+    
     return () => {
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('wheel', handleWheel)
+      window.removeEventListener('touchstart', handleTouchStart)
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchend', handleTouchEnd)
     }
   }, [])
 
