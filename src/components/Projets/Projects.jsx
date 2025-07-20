@@ -101,7 +101,7 @@ function ProjectsContent() {
   }
 
   const distance = -5
-  const baseSpeed = 2.5
+  const baseSpeed = 3
   const cols = 5
   const rows = 3
   const gap = 0.005
@@ -295,7 +295,7 @@ function ProjectsContent() {
       })
 
       // Attendre que tous les projets aient commencé leur animation
-      const totalAnimationTime = projectStates.length * 100
+      const totalAnimationTime = projectStates.length * 100 
       setTimeout(() => {
         setArrangementAnimationComplete(true)
       }, totalAnimationTime)
@@ -359,22 +359,23 @@ function ProjectsContent() {
             ? [Math.PI, 0, 0]
             : target.rotation
 
-          // Interpolation linéaire pour la rotation
-          const newRotX = THREE.MathUtils.lerp(
-            state.rotation[0],
-            targetRotation[0],
-            adaptiveSpeed,
-          )
-          const newRotY = THREE.MathUtils.lerp(
-            state.rotation[1],
-            targetRotation[1],
-            adaptiveSpeed,
-          )
-          const newRotZ = THREE.MathUtils.lerp(
-            state.rotation[2],
-            targetRotation[2],
-            adaptiveSpeed,
-          )
+          // Interpolation avec chemin le plus court pour chaque axe
+          const getShortestRotationPath = (current, target) => {
+            const normalizedCurrent = ((current + Math.PI) % (2 * Math.PI)) - Math.PI
+            const normalizedTarget = ((target + Math.PI) % (2 * Math.PI)) - Math.PI
+            
+            let shortestPath = normalizedTarget - normalizedCurrent
+            if (Math.abs(shortestPath) > Math.PI) {
+              shortestPath = shortestPath > 0 
+                ? shortestPath - 2 * Math.PI 
+                : shortestPath + 2 * Math.PI
+            }
+            return current + shortestPath * adaptiveSpeed
+          }
+
+          const newRotX = getShortestRotationPath(state.rotation[0], targetRotation[0])
+          const newRotY = getShortestRotationPath(state.rotation[1], targetRotation[1])
+          const newRotZ = getShortestRotationPath(state.rotation[2], targetRotation[2])
 
           // Interpolation pour la rotation X de page
           let newPageRotationX = state.pageRotationX
