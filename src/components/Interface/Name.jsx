@@ -19,10 +19,10 @@ export default function Name() {
         left: '30px',
         zIndex: 1000,
         color: color,
-        fontSize: '2em',
+        fontSize: '1.5em',
         pointerEvents: 'none',
         transition: 'color 1s ease',
-        // fontFamily: 'Michroma, sans-serif',
+        fontFamily: 'Allerta Stencil, sans-serif',
       }}
     >
       Nicolas Neveu

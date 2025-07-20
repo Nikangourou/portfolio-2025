@@ -110,7 +110,7 @@ function ProjectsContent() {
       
       // Calculer la vitesse du mouvement tactile
       const velocity = Math.abs(delta) / Math.max(touchTime, 1)
-      const scaledDelta = delta * 0.008 * Math.min(velocity / 5, 2) // Augmenté de 0.003 à 0.008 et velocity/10 à velocity/5
+      const scaledDelta = delta * 0.02 * Math.min(velocity / 5, 2) // Augmenté de 0.003 à 0.008 et velocity/10 à velocity/5
       
       setNeedsRaycasting(true)
       const screenFactor = Math.min(window.innerWidth / 1920, 1)
