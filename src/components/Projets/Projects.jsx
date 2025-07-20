@@ -112,11 +112,11 @@ function ProjectsContent() {
       if (isHorizontal) {
         // Scroll horizontal : inverser le sens et augmenter légèrement la sensibilité
         const velocity = Math.abs(deltaX) / Math.max(touchTime, 1)
-        finalDelta = -deltaX * 0.06 * Math.min(velocity / 4, 2.5)
+        finalDelta = -deltaX * 0.15 * Math.min(velocity / 4, 2)
       } else {
         // Scroll vertical : garder le sens normal
         const velocity = Math.abs(deltaY) / Math.max(touchTime, 1)
-        finalDelta = deltaY * 0.05 * Math.min(velocity / 5, 2)
+        finalDelta = deltaY * 0.1 * Math.min(velocity / 5, 2)
       }
       
       setNeedsRaycasting(true)
