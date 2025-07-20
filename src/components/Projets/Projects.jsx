@@ -695,7 +695,7 @@ function ProjectsContent() {
               <meshBasicMaterial
                 side={THREE.BackSide}
                 color={currentTheme.background}
-                opacity={0.2}
+                opacity={1}
                 transparent={true}
               />
             </mesh>

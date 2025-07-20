@@ -4,11 +4,6 @@ import useThemeStore from '../../stores/themeStore';
 export default function Name() {
   const currentTheme = useThemeStore((state) => state.currentTheme);
 
-  let color = currentTheme.background
-  if(color === "white"){
-    color = "#181818"
-  }
-
 
   return (
     <div 
@@ -18,7 +13,7 @@ export default function Name() {
         top: '20px',
         left: '30px',
         zIndex: 1000,
-        color: color,
+        color: currentTheme.text,
         fontSize: '1.5em',
         pointerEvents: 'none',
         transition: 'color 1s ease',
