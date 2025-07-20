@@ -40,6 +40,18 @@ function ProjectsContent() {
   // Ajout de l'état pour le projet survolé
   const [hoveredProject, setHoveredProject] = useState(null)
 
+  // Fonction pour gérer le hover avec transition forcée
+  const handleProjectHover = (project) => {
+    if (hoveredProject && hoveredProject.id !== project.id) {
+      // Si on passe d'un projet à un autre, forcer une transition
+      setHoveredProject(null)
+      // Petit délai pour permettre l'animation de sortie
+      setTimeout(() => setHoveredProject(project), 50)
+    } else {
+      setHoveredProject(project)
+    }
+  }
+
   const distance = -5
   const baseSpeed = 2.5
   const cols = 5
@@ -542,7 +554,7 @@ function ProjectsContent() {
             camera={camera}
             image={state.project.cover}
             project={state.project}
-            onProjectHover={() => setHoveredProject(state.project)}
+            onProjectHover={() => handleProjectHover(state.project)}
             onProjectUnhover={() => setHoveredProject(null)}
           />
         ))}
