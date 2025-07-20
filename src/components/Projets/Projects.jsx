@@ -4,8 +4,8 @@ import { useThree } from '@react-three/fiber'
 import Project from './Project'
 import projectsData from '../../data/projects.json'
 import { useFrame } from '@react-three/fiber'
-import { useStore } from '../../stores/store'
-import useThemeStore from '../../stores/themeStore'
+import { useStore } from '@/stores/store'
+import useThemeStore from '@/stores/themeStore'
 import ProjectInfoFloating from '../Interface/ProjectInfoFloating'
 
 export default function Projects() {
@@ -16,8 +16,6 @@ function ProjectsContent() {
   const groupRef = useRef(null)
   const { camera, raycaster, pointer, scene } = useThree()
   const isProjectsArranged = useStore((state) => state.isProjectsArranged)
-  const setProjectsArranged = useStore((state) => state.setProjectsArranged)
-  const setSelectedProject = useStore((state) => state.setSelectedProject)
   const isArrangementAnimationComplete = useStore(
     (state) => state.isArrangementAnimationComplete,
   )
@@ -35,7 +33,6 @@ function ProjectsContent() {
   const [borderStates, setBorderStates] = useState([])
   const [animatingProjects, setAnimatingProjects] = useState(new Set())
   const currentPage = useStore((state) => state.currentPage)
-  const selectedProject = useStore((state) => state.selectedProject)
 
   // Ajout de l'état pour le projet survolé
   const [hoveredProject, setHoveredProject] = useState(null)
@@ -298,7 +295,7 @@ function ProjectsContent() {
       })
 
       // Attendre que tous les projets aient commencé leur animation
-      const totalAnimationTime = projectStates.length * 100 + 500
+      const totalAnimationTime = projectStates.length * 100
       setTimeout(() => {
         setArrangementAnimationComplete(true)
       }, totalAnimationTime)
@@ -308,24 +305,21 @@ function ProjectsContent() {
   // Effet pour gérer les rotations une fois l'animation terminée
   useEffect(() => {
     if (isArrangementAnimationComplete) {
-      // Rotation des projets
+     
+      const allProjectIndices = new Set()
       projectStates.forEach((_, index) => {
-        const randomDelay = Math.random() * 500 + 1500 // Entre 1000ms et 2000ms
-        setTimeout(() => {
-          setRotatingProjects((prev) => new Set([...prev, index]))
-        }, randomDelay)
+        allProjectIndices.add(index)
       })
+      setRotatingProjects(allProjectIndices)
 
-      // Rotation des carrés de bordure
       const borderPositions = calculateBorderPositions(
         calculateArrangedDistance(),
       )
+      const allBorderIndices = new Set()
       borderPositions.forEach((_, index) => {
-        const randomDelay = Math.random() * 1000 + 1000 // Entre 1000ms et 2000ms
-        setTimeout(() => {
-          setRotatingBorders((prev) => new Set([...prev, index]))
-        }, randomDelay)
+        allBorderIndices.add(index)
       })
+      setRotatingBorders(allBorderIndices)
     }
   }, [isArrangementAnimationComplete])
 
