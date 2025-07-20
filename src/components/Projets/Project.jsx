@@ -1,4 +1,4 @@
-import React, { useRef, forwardRef, useEffect, useState } from 'react'
+import React, { useRef, forwardRef, useEffect, useState, useImperativeHandle } from 'react'
 import * as THREE from 'three'
 import { useTexture } from '@react-three/drei'
 import { useStore } from '@/stores/store'
@@ -16,6 +16,12 @@ const Project = forwardRef(function Project(
   const backMeshRef = useRef(null)
   const backMaterialRef = useRef(null)
   const frontMaterialRef = useRef(null)
+
+  // Exposer les refs pour le raycasting
+  useImperativeHandle(ref, () => ({
+    frontMeshRef,
+    backMeshRef
+  }))
 
   const texture = useTexture(image || '', (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace

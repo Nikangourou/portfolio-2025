@@ -14,7 +14,7 @@ export default function Projects() {
 
 function ProjectsContent() {
   const groupRef = useRef(null)
-  const { camera } = useThree()
+  const { camera, raycaster, pointer, scene } = useThree()
   const isProjectsArranged = useStore((state) => state.isProjectsArranged)
   const setProjectsArranged = useStore((state) => state.setProjectsArranged)
   const setSelectedProject = useStore((state) => state.setSelectedProject)
@@ -39,6 +39,48 @@ function ProjectsContent() {
 
   // Ajout de l'état pour le projet survolé
   const [hoveredProject, setHoveredProject] = useState(null)
+  
+  // État pour savoir si on doit faire du raycasting
+  const [needsRaycasting, setNeedsRaycasting] = useState(false)
+  const lastMouseMoveTime = useRef(0)
+  
+  // Refs pour stocker les meshes des projets pour le raycasting
+  const projectMeshesRef = useRef([])
+
+  // Nettoyer les refs quand les projets changent
+  useEffect(() => {
+    // Chaque projet a 2 meshes (front et back), donc on crée un array 2D
+    projectMeshesRef.current = new Array(projectStates.length).fill(null).map(() => ({ front: null, back: null }))
+  }, [projectStates.length])
+
+  // Détecter quand la souris bouge pour activer le raycasting temporairement
+  useEffect(() => {
+    const handleMouseMove = () => {
+      lastMouseMoveTime.current = Date.now()
+      setNeedsRaycasting(false) // Désactiver le raycasting quand la souris bouge (les events natifs prennent le relais)
+    }
+
+    const handleWheel = (event) => {
+      setNeedsRaycasting(true) // Activer le raycasting pendant les rotations
+      const screenFactor = Math.min(window.innerWidth / 1920, 1)
+      const delta = event.deltaY * 0.0007 * screenFactor
+      setRotationY((prev) => prev + delta)
+      
+      // Désactiver le raycasting après 500ms sans rotation
+      setTimeout(() => {
+        if (Date.now() - lastMouseMoveTime.current > 500) {
+          setNeedsRaycasting(false)
+        }
+      }, 500)
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('wheel', handleWheel)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('wheel', handleWheel)
+    }
+  }, [])
 
   // Fonction pour gérer le hover avec transition forcée
   const handleProjectHover = (project) => {
@@ -387,6 +429,78 @@ function ProjectsContent() {
         })
       })
     }
+
+    // Gestion de la rotation du groupe
+    if (groupRef.current) {
+      const currentRotation = groupRef.current.rotation.y
+      const targetRotation = isProjectsArranged ? 0 : rotationY
+
+      // Normaliser les rotations entre -π et π
+      const normalizedCurrent =
+        ((currentRotation + Math.PI) % (2 * Math.PI)) - Math.PI
+      const normalizedTarget =
+        ((targetRotation + Math.PI) % (2 * Math.PI)) - Math.PI
+
+      // Trouver le chemin le plus court vers la rotation cible
+      let shortestPath = normalizedTarget - normalizedCurrent
+      if (Math.abs(shortestPath) > Math.PI) {
+        shortestPath =
+          shortestPath > 0
+            ? shortestPath - 2 * Math.PI
+            : shortestPath + 2 * Math.PI
+      }
+
+      const adaptiveSpeed = Math.min(baseSpeed * delta, 0.1)
+      groupRef.current.rotation.y =
+        currentRotation + shortestPath * adaptiveSpeed
+    }
+
+    // Raycasting pour détecter le projet sous le curseur quand les objets bougent
+    // SEULEMENT quand c'est nécessaire (rotation, etc.) pour optimiser les performances
+    if (!isProjectsArranged && needsRaycasting && projectMeshesRef.current.length > 0 && groupRef.current) {
+      // Créer un raycaster temporaire pour éviter les conflits
+      const tempRaycaster = new THREE.Raycaster()
+      tempRaycaster.setFromCamera(pointer, camera)
+      
+      // Obtenir tous les meshes valides (front ET back) avec leurs index de projet
+      const allMeshes = []
+      
+      projectMeshesRef.current.forEach((projectMeshes, projectIndex) => {
+        if (projectMeshes.front && projectMeshes.front.parent) {
+          projectMeshes.front.updateMatrixWorld(true)
+          allMeshes.push({ mesh: projectMeshes.front, projectIndex })
+        }
+        if (projectMeshes.back && projectMeshes.back.parent) {
+          projectMeshes.back.updateMatrixWorld(true)
+          allMeshes.push({ mesh: projectMeshes.back, projectIndex })
+        }
+      })
+
+      if (allMeshes.length > 0) {
+        const intersects = tempRaycaster.intersectObjects(
+          allMeshes.map(item => item.mesh), 
+          false
+        )
+        
+        if (intersects.length > 0) {
+          // Trouver l'index du projet du mesh intersecté
+          const intersectedMesh = intersects[0].object
+          const meshData = allMeshes.find(item => item.mesh === intersectedMesh)
+          
+          if (meshData && projectStates[meshData.projectIndex]) {
+            const project = projectStates[meshData.projectIndex].project
+            if (!hoveredProject || hoveredProject.id !== project.id) {
+              handleProjectHover(project)
+            }
+          }
+        } else {
+          // Aucun projet sous le curseur
+          if (hoveredProject) {
+            setHoveredProject(null)
+          }
+        }
+      }
+    }
   })
 
   const projectPositions = useMemo(() => {
@@ -455,49 +569,12 @@ function ProjectsContent() {
     return initialStates
   }, [camera])
 
-  useEffect(() => {
-    const handleWheel = (event) => {
-      const screenFactor = Math.min(window.innerWidth / 1920, 1)
-      const delta = event.deltaY * 0.0007 * screenFactor
-      setRotationY((prev) => prev + delta)
-    }
-
-    window.addEventListener('wheel', handleWheel)
-    return () => window.removeEventListener('wheel', handleWheel)
-  }, [])
-
   // Initialiser la rotation du groupe au montage du composant
   useEffect(() => {
     if (groupRef.current) {
       groupRef.current.rotation.y = rotationY
     }
   }, [])
-
-  useFrame((state, delta) => {
-    if (groupRef.current) {
-      const currentRotation = groupRef.current.rotation.y
-      const targetRotation = isProjectsArranged ? 0 : rotationY
-
-      // Normaliser les rotations entre -π et π
-      const normalizedCurrent =
-        ((currentRotation + Math.PI) % (2 * Math.PI)) - Math.PI
-      const normalizedTarget =
-        ((targetRotation + Math.PI) % (2 * Math.PI)) - Math.PI
-
-      // Trouver le chemin le plus court vers la rotation cible
-      let shortestPath = normalizedTarget - normalizedCurrent
-      if (Math.abs(shortestPath) > Math.PI) {
-        shortestPath =
-          shortestPath > 0
-            ? shortestPath - 2 * Math.PI
-            : shortestPath + 2 * Math.PI
-      }
-
-      const adaptiveSpeed = Math.min(baseSpeed * delta, 0.1)
-      groupRef.current.rotation.y =
-        currentRotation + shortestPath * adaptiveSpeed
-    }
-  })
 
   useEffect(() => {
     projectStates.forEach((state, i) => {
@@ -544,6 +621,17 @@ function ProjectsContent() {
         {projectStates.map((state, i) => (
           <Project
             key={state.project.id}
+            ref={(el) => {
+              if (el?.frontMeshRef?.current && el?.backMeshRef?.current) {
+                // S'assurer que l'objet existe
+                if (!projectMeshesRef.current[i]) {
+                  projectMeshesRef.current[i] = { front: null, back: null }
+                }
+                // Assigner les deux meshes
+                projectMeshesRef.current[i].front = el.frontMeshRef.current
+                projectMeshesRef.current[i].back = el.backMeshRef.current
+              }
+            }}
             gridPosition={i}
             position={state.position}
             rotation={[
