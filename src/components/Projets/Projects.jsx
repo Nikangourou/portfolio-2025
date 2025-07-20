@@ -105,17 +105,23 @@ function ProjectsContent() {
       const deltaY = touchStartY - touchCurrentY
       const touchTime = Date.now() - touchStartTime
       
-      // Utiliser le plus grand mouvement (horizontal ou vertical)
-      // Inverser le deltaX pour inverser le sens horizontal
-      const delta = Math.abs(deltaX) > Math.abs(deltaY) ? -deltaX : deltaY
+      // Séparer le traitement horizontal et vertical pour une vitesse équilibrée
+      const isHorizontal = Math.abs(deltaX) > Math.abs(deltaY)
       
-      // Calculer la vitesse du mouvement tactile
-      const velocity = Math.abs(delta) / Math.max(touchTime, 1)
-      const scaledDelta = delta * 0.05 * Math.min(velocity / 5, 2) // Augmenté de 0.003 à 0.008 et velocity/10 à velocity/5
+      let finalDelta
+      if (isHorizontal) {
+        // Scroll horizontal : inverser le sens et augmenter légèrement la sensibilité
+        const velocity = Math.abs(deltaX) / Math.max(touchTime, 1)
+        finalDelta = -deltaX * 0.06 * Math.min(velocity / 4, 2.5)
+      } else {
+        // Scroll vertical : garder le sens normal
+        const velocity = Math.abs(deltaY) / Math.max(touchTime, 1)
+        finalDelta = deltaY * 0.05 * Math.min(velocity / 5, 2)
+      }
       
       setNeedsRaycasting(true)
       const screenFactor = Math.min(window.innerWidth / 1920, 1)
-      setRotationY((prev) => prev + scaledDelta * screenFactor)
+      setRotationY((prev) => prev + finalDelta * screenFactor)
       
       touchStartX = touchCurrentX
       touchStartY = touchCurrentY
