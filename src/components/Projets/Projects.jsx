@@ -39,6 +39,7 @@ function ProjectsContent() {
 
   // Ajout de l'état pour le projet survolé
   const [hoveredProject, setHoveredProject] = useState(null)
+  const [displayedProject, setDisplayedProject] = useState(null) // Projet affiché avec délai pour l'animation
   
   // État pour savoir si on doit faire du raycasting
   const [needsRaycasting, setNeedsRaycasting] = useState(false)
@@ -46,6 +47,20 @@ function ProjectsContent() {
   
   // Refs pour stocker les meshes des projets pour le raycasting
   const projectMeshesRef = useRef([])
+
+  // Gérer l'affichage du projet avec animation de sortie
+  useEffect(() => {
+    if (hoveredProject) {
+      // Projet survolé : afficher immédiatement
+      setDisplayedProject(hoveredProject)
+    } else {
+      // Plus de projet survolé : attendre 300ms pour l'animation de sortie
+      const timer = setTimeout(() => {
+        setDisplayedProject(null)
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [hoveredProject])
 
   // Nettoyer les refs quand les projets changent
   useEffect(() => {
@@ -84,14 +99,8 @@ function ProjectsContent() {
 
   // Fonction pour gérer le hover avec transition forcée
   const handleProjectHover = (project) => {
-    if (hoveredProject && hoveredProject.id !== project.id) {
-      // Si on passe d'un projet à un autre, forcer une transition
-      setHoveredProject(null)
-      // Petit délai pour permettre l'animation de sortie
-      setTimeout(() => setHoveredProject(project), 50)
-    } else {
-      setHoveredProject(project)
-    }
+    // Toujours mettre à jour directement, ProjectInfoFloating gère les transitions
+    setHoveredProject(project)
   }
 
   const distance = -5
@@ -613,8 +622,8 @@ function ProjectsContent() {
         </group>
       )}
 
-      {!isProjectsArranged && hoveredProject && (
-        <ProjectInfoFloating project={hoveredProject} />
+      {!isProjectsArranged && displayedProject && (
+        <ProjectInfoFloating project={displayedProject} isVisible={!!hoveredProject} />
       )}
 
       <group ref={groupRef} position={[0, 0, distance]}>
