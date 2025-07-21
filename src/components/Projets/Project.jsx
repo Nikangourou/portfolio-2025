@@ -7,6 +7,7 @@ import { Navigation } from '@/components/Interface/Interface'
 import ProjectOverlay from './ProjectOverlay'
 import { useContentTexture, useContentText } from '@/utils/contentLoader'
 import projectsData from '@/data/projects.json'
+import { isMobile } from '@/utils/deviceUtils'
 
 const Project = forwardRef(function Project(
   { gridPosition, position, rotation, camera, image, project, onProjectHover, onProjectUnhover },
@@ -58,12 +59,18 @@ const Project = forwardRef(function Project(
 
   // Fonction pour gérer le hover et arrêter la propagation
   const handlePointerOver = (event) => {
+    // Désactiver le hover sur mobile
+    if (isMobile()) return
+    
     event.stopPropagation()
     onProjectHover()
   }
 
   // Fonction pour gérer le unhover et arrêter la propagation
   const handlePointerOut = (event) => {
+    // Désactiver le hover sur mobile
+    if (isMobile()) return
+    
     event.stopPropagation()
     onProjectUnhover()
   }
@@ -130,8 +137,10 @@ const Project = forwardRef(function Project(
       <mesh
         ref={frontMeshRef}
         onClick={handleMeshClick}
-        onPointerOver={handlePointerOver}
-        onPointerOut={handlePointerOut}
+        {...(!isMobile() && {
+          onPointerOver: handlePointerOver,
+          onPointerOut: handlePointerOut
+        })}
       >
         <planeGeometry args={[projectSize.width, projectSize.height]} />
         <meshBasicMaterial
@@ -143,8 +152,10 @@ const Project = forwardRef(function Project(
       <mesh
         ref={backMeshRef}
         onClick={handleMeshClick}
-        onPointerOver={handlePointerOver}
-        onPointerOut={handlePointerOut}
+        {...(!isMobile() && {
+          onPointerOver: handlePointerOver,
+          onPointerOut: handlePointerOut
+        })}
         rotation-y={Math.PI}
       >
         <planeGeometry args={[projectSize.width, projectSize.height]} />

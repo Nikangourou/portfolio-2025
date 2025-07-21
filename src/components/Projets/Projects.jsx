@@ -7,6 +7,7 @@ import { useFrame } from '@react-three/fiber'
 import { useStore } from '@/stores/store'
 import useThemeStore from '@/stores/themeStore'
 import ProjectInfoFloating from '../Interface/ProjectInfoFloating'
+import { isMobile, deviceInfo } from '@/utils/deviceUtils'
 
 export default function Projects() {
   return <ProjectsContent />
@@ -34,13 +35,12 @@ function ProjectsContent() {
   const [animatingProjects, setAnimatingProjects] = useState(new Set())
   const currentPage = useStore((state) => state.currentPage)
 
+  // Détection mobile avec méthode globale
+  const isMobileDevice = useRef(isMobile())
+  
   // Ajout de l'état pour le projet survolé
   const [hoveredProject, setHoveredProject] = useState(null)
   const [displayedProject, setDisplayedProject] = useState(null) // Projet affiché avec délai pour l'animation
-  
-  // État pour savoir si on doit faire du raycasting
-  const [needsRaycasting, setNeedsRaycasting] = useState(false)
-  const lastMouseMoveTime = useRef(0)
   
   // Refs pour stocker les meshes des projets pour le raycasting
   const projectMeshesRef = useRef([])
@@ -65,25 +65,17 @@ function ProjectsContent() {
     projectMeshesRef.current = new Array(projectStates.length).fill(null).map(() => ({ front: null, back: null }))
   }, [projectStates.length])
 
-  // Détecter quand la souris bouge pour activer le raycasting temporairement
+  // Détecter les événements de rotation
   useEffect(() => {
-    const handleMouseMove = () => {
-      lastMouseMoveTime.current = Date.now()
-      setNeedsRaycasting(false) // Désactiver le raycasting quand la souris bouge (les events natifs prennent le relais)
+    // Sur mobile, on désactive complètement les événements de hover
+    if (isMobileDevice.current) {
+      return
     }
 
     const handleWheel = (event) => {
-      setNeedsRaycasting(true) // Activer le raycasting pendant les rotations
       const screenFactor = Math.min(window.innerWidth / 1920, 1)
       const delta = event.deltaY * 0.0007 * screenFactor
       setRotationY((prev) => prev + delta)
-      
-      // Désactiver le raycasting après 500ms sans rotation
-      setTimeout(() => {
-        if (Date.now() - lastMouseMoveTime.current > 500) {
-          setNeedsRaycasting(false)
-        }
-      }, 500)
     }
 
     // Gestion du touch pour mobile
@@ -119,7 +111,6 @@ function ProjectsContent() {
         finalDelta = deltaY * 0.1 * Math.min(velocity / 5, 2)
       }
       
-      setNeedsRaycasting(true)
       const screenFactor = Math.min(window.innerWidth / 1920, 1)
       setRotationY((prev) => prev + finalDelta * screenFactor)
       
@@ -129,19 +120,15 @@ function ProjectsContent() {
     }
 
     const handleTouchEnd = () => {
-      setTimeout(() => {
-        setNeedsRaycasting(false)
-      }, 500)
+      // Pas besoin de gérer le raycasting sur mobile
     }
 
-    window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('wheel', handleWheel, { passive: false })
     window.addEventListener('touchstart', handleTouchStart, { passive: true })
     window.addEventListener('touchmove', handleTouchMove, { passive: false })
     window.addEventListener('touchend', handleTouchEnd, { passive: true })
     
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('wheel', handleWheel)
       window.removeEventListener('touchstart', handleTouchStart)
       window.removeEventListener('touchmove', handleTouchMove)
@@ -381,7 +368,7 @@ function ProjectsContent() {
       })
 
       // Attendre que tous les projets aient commencé leur animation
-      const totalAnimationTime = projectStates.length * 100 
+      const totalAnimationTime = projectStates.length * 100 + 1000
       setTimeout(() => {
         setArrangementAnimationComplete(true)
       }, totalAnimationTime)
@@ -545,9 +532,10 @@ function ProjectsContent() {
         currentRotation + shortestPath * adaptiveSpeed
     }
 
-    // Raycasting pour détecter le projet sous le curseur quand les objets bougent
-    // SEULEMENT quand c'est nécessaire (rotation, etc.) pour optimiser les performances
-    if (!isProjectsArranged && needsRaycasting && projectMeshesRef.current.length > 0 && groupRef.current) {
+    // Raycasting pour détecter le projet sous le curseur (hover)
+    // UNIQUEMENT sur desktop - désactivé sur mobile
+    // Toujours actif en mode libre car les projets peuvent bouger même si la souris est immobile
+    if (!isMobileDevice.current && !isProjectsArranged && projectMeshesRef.current.length > 0 && groupRef.current) {
       // Créer un raycaster temporaire pour éviter les conflits
       const tempRaycaster = new THREE.Raycaster()
       tempRaycaster.setFromCamera(pointer, camera)
