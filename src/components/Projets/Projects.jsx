@@ -67,11 +67,6 @@ function ProjectsContent() {
 
   // Détecter les événements de rotation
   useEffect(() => {
-    // Sur mobile, on désactive complètement les événements de hover
-    if (isMobileDevice.current) {
-      return
-    }
-
     const handleWheel = (event) => {
       const screenFactor = Math.min(window.innerWidth / 1920, 1)
       const delta = event.deltaY * 0.0007 * screenFactor
