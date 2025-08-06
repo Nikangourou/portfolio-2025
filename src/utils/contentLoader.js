@@ -19,8 +19,18 @@ export const getGridPositionsFromSpan = (span, startPosition, currentPosition = 
   const [width, height] = span.split('-').map(Number)
   const isMobileDevice = isMobile()
   const cols = isMobileDevice ? 3 : 5
-  const startRow = Math.floor(startPosition / cols)
-  const startCol = startPosition % cols
+  
+  // Gérer la nouvelle structure de position (objet avec desktop/mobile)
+  let adaptedStartPosition
+  if (typeof startPosition === 'object' && startPosition.desktop !== undefined) {
+    adaptedStartPosition = isMobileDevice ? startPosition.mobile : startPosition.desktop
+  } else {
+    // Fallback pour l'ancienne structure (nombre simple)
+    adaptedStartPosition = startPosition
+  }
+  
+  const startRow = Math.floor(adaptedStartPosition / cols)
+  const startCol = adaptedStartPosition % cols
   
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
@@ -147,6 +157,7 @@ export const useContentTexture = (gridPosition) => {
 export const useContentText = (gridPosition) => {
   const selectedProject = useStore((state) => state.selectedProject)
   const currentPage = useStore((state) => state.currentPage)
+  const isMobileDevice = isMobile()
   
   // Trouver le texte correspondant à cette position de grille
   const contentText = useMemo(() => {
@@ -158,7 +169,16 @@ export const useContentText = (gridPosition) => {
     
     // Chercher le texte qui correspond à cette position
     for (const text of currentContent.texts) {
-      if (text.position === gridPosition) {
+      // Gérer la nouvelle structure de position (objet avec desktop/mobile)
+      let textPosition
+      if (typeof text.position === 'object' && text.position.desktop !== undefined) {
+        textPosition = isMobileDevice ? text.position.mobile : text.position.desktop
+      } else {
+        // Fallback pour l'ancienne structure (nombre simple)
+        textPosition = text.position
+      }
+      
+      if (textPosition === gridPosition) {
         return {
           text: text.text,
           position: text.position
@@ -167,7 +187,7 @@ export const useContentText = (gridPosition) => {
     }
     
     return null
-  }, [selectedProject, currentPage, gridPosition])
+  }, [selectedProject, currentPage, gridPosition, isMobileDevice])
 
   return { contentText }
 } 
