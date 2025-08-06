@@ -118,16 +118,6 @@ export function useProjectPositions() {
     const totalCols = cols + finalBorderColsLeft + finalBorderColsRight
     const totalRows = rows + finalBorderRowsTop + finalBorderRowsBottom
     
-    // Logs pour debug
-    console.log('=== BORDURES DEBUG ===')
-    console.log(`Appareil: ${isMobileDevice ? 'Mobile' : 'Desktop'}`)
-    console.log(`Aspect ratio: ${(visibleWidth / visibleHeight).toFixed(2)}`)
-    console.log(`Grille projets: ${cols}x${rows} (${projectGridWidth.toFixed(2)}x${projectGridHeight.toFixed(2)})`)
-    console.log(`Bordures colonnes - Gauche: ${finalBorderColsLeft}, Droite: ${finalBorderColsRight}`)
-    console.log(`Bordures lignes - Haut: ${finalBorderRowsTop}, Bas: ${finalBorderRowsBottom}`)
-    console.log(`Grille totale: ${totalCols} colonnes x ${totalRows} lignes`)
-    console.log(`Nombre total de bordures: ${(totalCols * totalRows) - (cols * rows)}`)
-    console.log('=======================')
     const totalWidth = totalCols * width + (totalCols - 1) * gap
     const totalHeight = totalRows * height + (totalRows - 1) * gap
 
