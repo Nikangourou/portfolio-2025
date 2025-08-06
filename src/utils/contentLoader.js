@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useStore } from '@/stores/store'
 import { createTextureWithBackground, configureTexture } from './textureUtils'
+import { isMobile } from './deviceUtils'
 
 /**
  * Détermine les positions de grille à affecter en fonction du span
@@ -16,7 +17,8 @@ export const getGridPositionsFromSpan = (span, startPosition, currentPosition = 
 
   const positions = []
   const [width, height] = span.split('-').map(Number)
-  const cols = 5
+  const isMobileDevice = isMobile()
+  const cols = isMobileDevice ? 3 : 5
   const startRow = Math.floor(startPosition / cols)
   const startCol = startPosition % cols
   

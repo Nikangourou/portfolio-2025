@@ -1,6 +1,7 @@
 import { useStore } from '@/stores/store'
 import ProjectOverlay from '@/components/Projets/ProjectOverlay'
 import styles from './Interface.module.scss'
+import { isMobile } from '@/utils/deviceUtils'
 
 function Cross() {
   const resetProjectState = useStore((state) => state.resetProjectState)
@@ -60,13 +61,19 @@ export function Navigation({
   gridPosition,
   projectSize,
 }) {
+  const isMobileDevice = isMobile()
+  
+  // Positions adaptatives selon le type d'appareil
+  const arrowUpPosition = isMobileDevice ? 12 : 4
+  const crossPosition = isMobileDevice ? 13 : 9
+  
   return (
     <>
       {selectedProject.contents?.length > 1 && (
         <>
           {currentPage > 1 && (
             <ProjectOverlay
-              condition={selectedProject && gridPosition === 4}
+              condition={selectedProject && gridPosition === arrowUpPosition}
               projectSize={projectSize}
               reverse={true}
             >
@@ -85,7 +92,7 @@ export function Navigation({
         </>
       )}
       <ProjectOverlay
-        condition={selectedProject && gridPosition === 9}
+        condition={selectedProject && gridPosition === crossPosition}
         projectSize={projectSize}
       >
         <Cross />

@@ -39,11 +39,6 @@ function ProjectsContent() {
   const currentPage = useStore((state) => state.currentPage)
 
 
-
-
-
-
-
   // Hook pour la gestion des positions
   const {
     predefinedPositions,

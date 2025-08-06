@@ -12,8 +12,9 @@ export function useProjectPositions() {
   const projectSize = 1
   const width = projectSize
   const height = projectSize
-  const cols = 5
-  const rows = 3
+  const isMobileDevice = isMobile()
+  const cols = isMobileDevice ? 3 : 5
+  const rows = isMobileDevice ? 5 : 3
   const gap = 0.005
   const margin = 0.5
   const distance = -5
