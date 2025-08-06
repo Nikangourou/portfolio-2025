@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useThree } from '@react-three/fiber'
 import projectsData from '../data/projects.json'
+import { isMobile } from '../utils/deviceUtils'
 
 export function useProjectPositions() {
   const { camera } = useThree()
@@ -63,12 +64,70 @@ export function useProjectPositions() {
   const calculateBorderPositions = (arrangedDistance) => {
     const positions = []
 
-    // Créer une bordure plus large
-    const borderSize = 2 // Nombre de carrés de bordure de chaque côté
-
-    // Calculer les dimensions de la grille totale (projets + bordure)
-    const totalCols = cols + borderSize * 2
-    const totalRows = rows + borderSize * 2
+    // Calculer l'espace visible de l'écran
+    const fov = camera.fov * (Math.PI / 180)
+    const aspect = camera.aspect
+    const cameraDistance = Math.abs(distance)
+    
+    // Calculer la largeur et hauteur visibles à la distance de la caméra
+    const visibleWidth = 2 * cameraDistance * Math.tan(fov / 2) * aspect
+    const visibleHeight = 2 * cameraDistance * Math.tan(fov / 2)
+    
+    // Calculer les dimensions de la grille des projets
+    const projectGridWidth = cols * width + (cols - 1) * gap
+    const projectGridHeight = rows * height + (rows - 1) * gap
+    
+    // Approche simple : créer une grille de bordures plus large que les projets
+    const isMobileDevice = isMobile()
+    
+    // Déterminer la taille des bordures selon le type d'appareil
+    let borderColsLeft, borderColsRight, borderRowsTop, borderRowsBottom
+    
+    if (isMobileDevice) {
+      // Sur mobile, plus de bordures pour couvrir l'espace
+      borderColsLeft = 4
+      borderColsRight = 4
+      borderRowsTop = 6
+      borderRowsBottom = 6
+    } else {
+      // Sur desktop, bordures modérées
+      borderColsLeft = 3
+      borderColsRight = 3
+      borderRowsTop = 4
+      borderRowsBottom = 4
+    }
+    
+    // Ajuster selon l'aspect ratio pour éviter les bordures excessives
+    const aspectRatio = visibleWidth / visibleHeight
+    if (aspectRatio > 1.5) {
+      // Écran très large, réduire les bordures verticales
+      borderRowsTop = Math.min(borderRowsTop, 2)
+      borderRowsBottom = borderRowsTop
+    } else if (aspectRatio < 0.7) {
+      // Écran très haut, réduire les bordures horizontales
+      borderColsLeft = Math.min(borderColsLeft, 2)
+      borderColsRight = borderColsLeft
+    }
+    
+    let finalBorderColsLeft = borderColsLeft
+    let finalBorderColsRight = borderColsRight
+    let finalBorderRowsTop = borderRowsTop
+    let finalBorderRowsBottom = borderRowsBottom
+    
+    // Calculer les dimensions de la grille totale (projets + bordures)
+    const totalCols = cols + finalBorderColsLeft + finalBorderColsRight
+    const totalRows = rows + finalBorderRowsTop + finalBorderRowsBottom
+    
+    // Logs pour debug
+    console.log('=== BORDURES DEBUG ===')
+    console.log(`Appareil: ${isMobileDevice ? 'Mobile' : 'Desktop'}`)
+    console.log(`Aspect ratio: ${(visibleWidth / visibleHeight).toFixed(2)}`)
+    console.log(`Grille projets: ${cols}x${rows} (${projectGridWidth.toFixed(2)}x${projectGridHeight.toFixed(2)})`)
+    console.log(`Bordures colonnes - Gauche: ${finalBorderColsLeft}, Droite: ${finalBorderColsRight}`)
+    console.log(`Bordures lignes - Haut: ${finalBorderRowsTop}, Bas: ${finalBorderRowsBottom}`)
+    console.log(`Grille totale: ${totalCols} colonnes x ${totalRows} lignes`)
+    console.log(`Nombre total de bordures: ${(totalCols * totalRows) - (cols * rows)}`)
+    console.log('=======================')
     const totalWidth = totalCols * width + (totalCols - 1) * gap
     const totalHeight = totalRows * height + (totalRows - 1) * gap
 
@@ -84,10 +143,10 @@ export function useProjectPositions() {
 
         // Vérifier si la position est dans la zone des projets
         const isInProjectArea =
-          col >= borderSize &&
-          col < borderSize + cols &&
-          row >= borderSize &&
-          row < borderSize + rows
+          col >= finalBorderColsLeft &&
+          col < finalBorderColsLeft + cols &&
+          row >= finalBorderRowsTop &&
+          row < finalBorderRowsTop + rows
 
         if (!isInProjectArea) {
           positions.push([x, y, arrangedDistance])
@@ -131,7 +190,7 @@ export function useProjectPositions() {
 
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  }, [camera])
 
   return {
     predefinedPositions,
