@@ -250,6 +250,7 @@ function ProjectsContent() {
   })
 
   const projectPositions = useMemo(() => {
+    console.log('projectPositions')
     const totalProjects = projectsData.projects.length
 
     // Définir les limites de la zone de placement
@@ -257,40 +258,11 @@ function ProjectsContent() {
     const yRange = [-projectSize.height / 4, projectSize.height / 4]
     const zRange = [10, 10]
 
-    let minDistance = 1.0
-
-    const isPositionValid = (newPos, existingPositions) => {
-      return !existingPositions.some((existingPos) => {
-        const dx = newPos[0] - existingPos[0]
-        const dy = newPos[1] - existingPos[1]
-        const dz = newPos[2] - existingPos[2]
-        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz)
-        return distance < minDistance
-      })
-    }
-
     const positions = []
-    const maxAttempts = 100
 
     for (let i = 0; i < totalProjects; i++) {
-      let attempts = 0
-      let position
-
-      do {
-        position = [
-          Math.random() * (xRange[1] - xRange[0]) + xRange[0],
-          Math.random() * (yRange[1] - yRange[0]) + yRange[0],
-          Math.random() * (zRange[1] - zRange[0]) + zRange[0],
-        ]
-        attempts++
-
-        if (attempts > maxAttempts) {
-          minDistance *= 0.9
-          attempts = 0
-        }
-      } while (!isPositionValid(position, positions))
-
-      positions.push(position)
+      const newPosition = findValidPosition(positions)
+      positions.push(newPosition)
     }
 
     // Initialiser les états des projets
