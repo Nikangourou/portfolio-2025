@@ -1,7 +1,5 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react'
-import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
-import Project from './Project'
 import ProjectList from './ProjectList'
 import ProjectBorders from './ProjectBorders'
 import projectsData from '../../data/projects.json'
@@ -9,7 +7,6 @@ import { useFrame } from '@react-three/fiber'
 import { useStore } from '@/stores/store'
 import useThemeStore from '@/stores/themeStore'
 import ProjectInfoFloating from '../Interface/ProjectInfoFloating'
-import { isMobile, deviceInfo } from '@/utils/deviceUtils'
 import { useProjectPositions } from '@/hooks/useProjectPositions'
 import { useRotationControl } from '@/hooks/useRotationControl'
 import { useProjectInteraction } from '@/hooks/useProjectInteraction'
@@ -21,7 +18,7 @@ export default function Projects() {
 
 function ProjectsContent() {
   const groupRef = useRef(null)
-  const { camera, raycaster, pointer, scene } = useThree()
+  const { camera} = useThree()
   const isProjectsArranged = useStore((state) => state.isProjectsArranged)
   const isArrangementAnimationComplete = useStore(
     (state) => state.isArrangementAnimationComplete,
@@ -60,7 +57,6 @@ function ProjectsContent() {
     setHoveredProject,
     displayedProject,
     projectMeshesRef,
-    isMobileDevice,
     handleProjectHover,
     updateProjectMeshesRef,
     performRaycasting
@@ -249,14 +245,8 @@ function ProjectsContent() {
     performRaycasting(projectStates, isProjectsArranged, groupRef)
   })
 
-  const projectPositions = useMemo(() => {
-    console.log('projectPositions')
+  useMemo(() => {
     const totalProjects = projectsData.projects.length
-
-    // Définir les limites de la zone de placement
-    const xRange = [-projectSize.width / 4, projectSize.width / 4]
-    const yRange = [-projectSize.height / 4, projectSize.height / 4]
-    const zRange = [10, 10]
 
     const positions = []
 
@@ -283,8 +273,6 @@ function ProjectsContent() {
     })
 
     setProjectStates(initialStates)
-
-    return initialStates
   }, [camera])
 
   // Initialiser la rotation du groupe au montage du composant
