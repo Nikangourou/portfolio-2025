@@ -24,13 +24,6 @@ export function useProjectInteraction() {
     }
   }, [hoveredProject])
 
-  // Nettoyer les refs quand les projets changent
-  const updateProjectMeshesRef = (projectCount) => {
-    projectMeshesRef.current = new Array(projectCount)
-      .fill(null)
-      .map(() => ({ front: null, back: null }))
-  }
-
   // Fonction pour gérer le hover avec transition forcée
   const handleProjectHover = (project) => {
     setHoveredProject(project)
@@ -98,7 +91,6 @@ export function useProjectInteraction() {
     projectMeshesRef,
     isMobileDevice,
     handleProjectHover,
-    updateProjectMeshesRef,
     performRaycasting,
   }
 } 

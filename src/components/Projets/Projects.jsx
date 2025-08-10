@@ -58,7 +58,6 @@ function ProjectsContent() {
     displayedProject,
     projectMeshesRef,
     handleProjectHover,
-    updateProjectMeshesRef,
     performRaycasting
   } = useProjectInteraction()
 
@@ -66,13 +65,6 @@ function ProjectsContent() {
   const { animateProjects, animateBorders, animateGroupRotation } = useProjectAnimations()
 
   const baseSpeed = 3
-
-  // Nettoyer les refs quand les projets changent
-  useEffect(() => {
-    if (projectStates && projectStates.length > 0) {
-      updateProjectMeshesRef(projectStates.length)
-    }
-  }, [projectStates?.length, updateProjectMeshesRef])
 
   // Gérer le redimensionnement de la fenêtre pour les positions cibles
   useEffect(() => {
