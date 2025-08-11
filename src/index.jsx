@@ -1,9 +1,9 @@
-import './style.css'
 import ReactDOM from 'react-dom/client'
-import ThemeProvider from './components/Theme/ThemeProvider'
 import { Canvas } from '@react-three/fiber'
+import ThemeProvider from './components/Theme/ThemeProvider'
 import Experience from './Experience.jsx'
 import Name from './components/Interface/Name'
+import './style.css'
 
 const root = ReactDOM.createRoot(document.querySelector('#root'))
 
