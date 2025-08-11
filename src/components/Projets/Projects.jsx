@@ -233,35 +233,30 @@ function ProjectsContent() {
     performRaycasting(projectStates, isProjectsArranged, groupRef)
   })
 
+  // Initialiser les états des projets une seule fois au montage
   useMemo(() => {
-    const totalProjects = projectsData.projects.length
-
+    // Générer les positions aléatoires initiales
     const positions = []
-
-    for (let i = 0; i < totalProjects; i++) {
-      const newPosition = findValidPosition(positions)
-      positions.push(newPosition)
+    for (let i = 0; i < projectsData.projects.length; i++) {
+      positions.push(findValidPosition(positions))
     }
 
     // Initialiser les états des projets
-    const initialStates = projectsData.projects.map((project, index) => {
-      const position = positions[index]
-      const rotationX = Math.random() * Math.PI * 2
-      const rotationY = Math.random() * Math.PI * 2
-      const rotationZ = Math.random() * Math.PI * 2
-
-      return {
-        position,
-        rotation: [rotationX, rotationY, rotationZ],
-        project,
-        pageRotationX: (currentPage - 1) * Math.PI,
-        targetPageRotationX: (currentPage - 1) * Math.PI,
-        pageRotationDelay: Math.random() * 0.5,
-      }
-    })
+    const initialStates = projectsData.projects.map((project, index) => ({
+      position: positions[index],
+      rotation: [
+        Math.random() * Math.PI * 2,
+        Math.random() * Math.PI * 2,
+        Math.random() * Math.PI * 2
+      ],
+      project,
+      pageRotationX: (currentPage - 1) * Math.PI,
+      targetPageRotationX: (currentPage - 1) * Math.PI,
+      pageRotationDelay: Math.random() * 0.5,
+    }))
 
     setProjectStates(initialStates)
-  }, [camera])
+  }, [])
 
   // Initialiser la rotation du groupe au montage du composant
   useEffect(() => {

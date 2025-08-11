@@ -147,7 +147,7 @@ export function useProjectPositions() {
         rotation: [0, 0, 0],
       })),
     )
-  }, [camera])
+  }, [])
 
   // Gérer le redimensionnement de la fenêtre
   useResizeCallback(() => {
