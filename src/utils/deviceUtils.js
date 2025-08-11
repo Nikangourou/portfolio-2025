@@ -1,7 +1,6 @@
 /**
  * Utilitaires pour détecter les capacités de l'appareil
  */
-import { useState, useEffect } from 'react'
 
 /**
  * Détecte si l'utilisateur est sur un appareil mobile
@@ -58,25 +57,6 @@ export const getRecommendedFPS = () => {
     return 30 // 30 FPS pour les appareils peu puissants
   }
   return 60 // 60 FPS pour les appareils performants
-}
-
-/**
- * Hook React pour détecter les changements de taille d'écran
- * @returns {boolean} true si mobile
- */
-export const useIsMobile = () => {
-  const [mobile, setMobile] = useState(isMobile())
-  
-  useEffect(() => {
-    const handleResize = () => {
-      setMobile(isMobile())
-    }
-    
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-  
-  return mobile
 }
 
 // Export d'une instance globale pour éviter les recalculs

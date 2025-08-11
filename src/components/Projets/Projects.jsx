@@ -11,6 +11,7 @@ import { useProjectPositions } from '@/hooks/useProjectPositions'
 import { useRotationControl } from '@/hooks/useRotationControl'
 import { useProjectInteraction } from '@/hooks/useProjectInteraction'
 import { useProjectAnimations } from '@/hooks/useProjectAnimations'
+import { useResizeCallback } from '@/hooks/useResize'
 
 export default function Projects() {
   return <ProjectsContent />
@@ -66,24 +67,19 @@ function ProjectsContent() {
 
   const baseSpeed = 3
 
-  // Gérer le redimensionnement de la fenêtre pour les positions cibles
-  useEffect(() => {
-    const handleResize = () => {
-      // Si on est en mode arrangé, mettre à jour les positions cibles immédiatement
-      if (isProjectsArranged && predefinedPositions.length > 0) {
-        const dist = calculateArrangedDistance()
-        setTargetStates((prevStates) =>
-          prevStates.map((state, index) => ({
-            ...state,
-            position: calculatePredefinedPositions(dist)[index] || state.position,
-          }))
-        )
-      }
+  // Gérer le redimensionnement pour les positions des projets arrangés
+  useResizeCallback(() => {
+    // Si on est en mode arrangé, mettre à jour les positions cibles
+    if (isProjectsArranged && predefinedPositions.length > 0) {
+      const dist = calculateArrangedDistance()
+      setTargetStates((prevStates) =>
+        prevStates.map((state, index) => ({
+          ...state,
+          position: calculatePredefinedPositions(dist)[index] || state.position,
+        }))
+      )
     }
-
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [isProjectsArranged, predefinedPositions.length, calculateArrangedDistance, calculatePredefinedPositions, setTargetStates])
+  })
 
   const findValidPosition = (positions, maxAttempts = 100) => {
     const xRange = [-2, 2]

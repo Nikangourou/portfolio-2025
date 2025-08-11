@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { isMobile } from '@/utils/deviceUtils'
+import { useResizeCallback } from './useResize'
 
 /**
  * Hook centralisé pour la configuration de la grille selon le type d'appareil
@@ -8,14 +9,9 @@ import { isMobile } from '@/utils/deviceUtils'
 export const useGridConfig = () => {
   const [isMobileDevice, setIsMobileDevice] = useState(isMobile())
   
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobileDevice(isMobile())
-    }
-    
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  useResizeCallback(() => {
+    setIsMobileDevice(isMobile())
+  })
   
   return useMemo(() => {
     return {

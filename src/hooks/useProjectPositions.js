@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useThree } from '@react-three/fiber'
 import projectsData from '../data/projects.json'
 import { useGridConfig } from './useGridConfig'
+import { useResizeCallback } from './useResize'
 
 export function useProjectPositions() {
   const { camera } = useThree()
@@ -149,24 +150,19 @@ export function useProjectPositions() {
   }, [camera])
 
   // Gérer le redimensionnement de la fenêtre
-  useEffect(() => {
-    const handleResize = () => {
-      const dist = calculateArrangedDistance()
-      setPredefinedPositions(calculatePredefinedPositions(dist))
-      
-      // Recalculer les bordures
-      const borderPositions = calculateBorderPositions(dist)
-      setBorderStates(
-        borderPositions.map((pos) => ({
-          position: pos,
-          rotation: [0, 0, 0],
-        })),
-      )
-    }
-
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [camera])
+  useResizeCallback(() => {
+    const dist = calculateArrangedDistance()
+    setPredefinedPositions(calculatePredefinedPositions(dist))
+    
+    // Recalculer les bordures
+    const borderPositions = calculateBorderPositions(dist)
+    setBorderStates(
+      borderPositions.map((pos) => ({
+        position: pos,
+        rotation: [0, 0, 0],
+      })),
+    )
+  })
 
   return {
     predefinedPositions,
