@@ -107,6 +107,18 @@ export const useContentTexture = (gridPosition) => {
   const selectedProject = useStore((state) => state.selectedProject)
   const currentPage = useStore((state) => state.currentPage)
   
+  // Nettoyer le cache si il devient trop volumineux
+  useEffect(() => {
+    if (contentCache.size > 20) {
+      const entries = Array.from(contentCache.entries())
+      // Garder les 10 plus récents
+      contentCache.clear()
+      entries.slice(-10).forEach(([key, value]) => {
+        contentCache.set(key, value)
+      })
+    }
+  }, [selectedProject?.id, currentPage])
+
   // Trouver l'image correspondant à cette position de grille et calculer ses positions
   const { contentImage, validPositions } = useMemo(() => {
     if (!selectedProject?.contents) return { contentImage: null, validPositions: { positions: [], offsetX: 0, offsetY: 0 } }
@@ -178,6 +190,16 @@ export const useContentTexture = (gridPosition) => {
         console.warn('Error loading content texture:', error)
         setContentTexture(null)
       })
+
+    // Cleanup : libérer l'ancienne texture
+    return () => {
+      setContentTexture((prevTexture) => {
+        if (prevTexture && prevTexture.dispose) {
+          prevTexture.dispose()
+        }
+        return null
+      })
+    }
   }, [contentImage?.url, gridPosition, validPositions, targetFace, selectedProject?.color?.background])
 
   return { contentTexture, targetFace }
