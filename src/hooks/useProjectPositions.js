@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useThree } from '@react-three/fiber'
 import projectsData from '../data/projects.json'
 import { useGridConfig } from './useGridConfig'
@@ -20,8 +20,8 @@ export function useProjectPositions() {
   const margin = gridConfig.margin
   const distance = gridConfig.distance
 
-  // Calcul dynamique de arrangedDistance
-  const calculateArrangedDistance = () => {
+  // Calcul dynamique de arrangedDistance - mémorisé avec useCallback
+  const calculateArrangedDistance = useCallback(() => {
     const totalWidth = width * cols + gap * (cols - 1)
     const totalHeight = height * rows + gap * (rows - 1)
     const fov = camera.fov * (Math.PI / 180)
@@ -38,10 +38,10 @@ export function useProjectPositions() {
     const distanceMax = Math.max(distanceForWidth, distanceForHeight)
 
     return -distanceMax - distance
-  }
+  }, [width, height, cols, rows, gap, margin, distance, camera.fov, camera.aspect])
 
-  // Positions prédéfinies pour l'arrangement
-  const calculatePredefinedPositions = (arrangedDistance) => {
+  // Positions prédéfinies pour l'arrangement - mémorisé avec useCallback
+  const calculatePredefinedPositions = useCallback((arrangedDistance) => {
     const positions = []
     const totalProjects = projectsData.projects.length
 
@@ -58,9 +58,9 @@ export function useProjectPositions() {
     }
 
     return positions
-  }
+  }, [width, height, cols, rows, gap])
 
-  const calculateBorderPositions = (arrangedDistance) => {
+  const calculateBorderPositions = useCallback((arrangedDistance) => {
     const positions = []
 
     // Calculer l'espace visible de l'écran
@@ -132,10 +132,10 @@ export function useProjectPositions() {
     }
 
     return positions
-  }
+  }, [width, height, cols, rows, gap, camera.fov, camera.aspect, distance, gridConfig.borderColsLeft, gridConfig.borderColsRight, gridConfig.borderRowsTop, gridConfig.borderRowsBottom])
 
-  // Initialiser les positions
-  useEffect(() => {
+  // Fonction pour initialiser les positions - mémorisée
+  const initializePositions = useCallback(() => {
     const dist = calculateArrangedDistance()
     setPredefinedPositions(calculatePredefinedPositions(dist))
     
@@ -147,21 +147,16 @@ export function useProjectPositions() {
         rotation: [0, 0, 0],
       })),
     )
-  }, [])
+  }, [calculateArrangedDistance, calculatePredefinedPositions, calculateBorderPositions])
+
+  // Initialiser les positions
+  useEffect(() => {
+    initializePositions()
+  }, [initializePositions])
 
   // Gérer le redimensionnement de la fenêtre
   useResizeCallback(() => {
-    const dist = calculateArrangedDistance()
-    setPredefinedPositions(calculatePredefinedPositions(dist))
-    
-    // Recalculer les bordures
-    const borderPositions = calculateBorderPositions(dist)
-    setBorderStates(
-      borderPositions.map((pos) => ({
-        position: pos,
-        rotation: [0, 0, 0],
-      })),
-    )
+    initializePositions()
   })
 
   return {
