@@ -181,21 +181,10 @@ function ProjectsContent() {
   // Effet pour gérer les rotations une fois l'animation terminée
   useEffect(() => {
     if (isArrangementAnimationComplete) {
-     
-      const allProjectIndices = new Set()
-      projectStates.forEach((_, index) => {
-        allProjectIndices.add(index)
-      })
-      setRotatingProjects(allProjectIndices)
+      setRotatingProjects(new Set(projectStates.map((_, index) => index)))
 
-      const borderPositions = calculateBorderPositions(
-        calculateArrangedDistance(),
-      )
-      const allBorderIndices = new Set()
-      borderPositions.forEach((_, index) => {
-        allBorderIndices.add(index)
-      })
-      setRotatingBorders(allBorderIndices)
+      const borderPositions = calculateBorderPositions(calculateArrangedDistance())
+      setRotatingBorders(new Set(borderPositions.map((_, index) => index)))
     }
   }, [isArrangementAnimationComplete])
 
