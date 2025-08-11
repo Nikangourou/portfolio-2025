@@ -81,10 +81,10 @@ export function useProjectPositions() {
     // Approche simple : créer une grille de bordures plus large que les projets
     
     // Déterminer la taille des bordures selon le type d'appareil
-    const borderColsLeft = gridConfig.borderColsLeft
-    const borderColsRight = gridConfig.borderColsRight
-    const borderRowsTop = gridConfig.borderRowsTop
-    const borderRowsBottom = gridConfig.borderRowsBottom
+    let borderColsLeft = gridConfig.borderColsLeft
+    let borderColsRight = gridConfig.borderColsRight
+    let borderRowsTop = gridConfig.borderRowsTop
+    let borderRowsBottom = gridConfig.borderRowsBottom
     
     // Ajuster selon l'aspect ratio pour éviter les bordures excessives
     const aspectRatio = visibleWidth / visibleHeight
