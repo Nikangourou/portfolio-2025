@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useThree } from '@react-three/fiber'
 import projectsData from '../data/projects.json'
-import { isMobile } from '../utils/deviceUtils'
+import { useGridConfig } from './useGridConfig'
 
 export function useProjectPositions() {
   const { camera } = useThree()
@@ -9,15 +9,15 @@ export function useProjectPositions() {
   const [borderStates, setBorderStates] = useState([])
 
   // Configuration de la grille
-  const projectSize = 1
+  const gridConfig = useGridConfig()
+  const projectSize = gridConfig.projectSize
   const width = projectSize
   const height = projectSize
-  const isMobileDevice = isMobile()
-  const cols = isMobileDevice ? 3 : 5
-  const rows = isMobileDevice ? 5 : 3
-  const gap = 0.005
-  const margin = 0.5
-  const distance = -5
+  const cols = gridConfig.cols
+  const rows = gridConfig.rows
+  const gap = gridConfig.gap
+  const margin = gridConfig.margin
+  const distance = gridConfig.distance
 
   // Calcul dynamique de arrangedDistance
   const calculateArrangedDistance = () => {
@@ -79,24 +79,12 @@ export function useProjectPositions() {
     const projectGridHeight = rows * height + (rows - 1) * gap
     
     // Approche simple : créer une grille de bordures plus large que les projets
-    const isMobileDevice = isMobile()
     
     // Déterminer la taille des bordures selon le type d'appareil
-    let borderColsLeft, borderColsRight, borderRowsTop, borderRowsBottom
-    
-    if (isMobileDevice) {
-      // Sur mobile, plus de bordures pour couvrir l'espace
-      borderColsLeft = 4
-      borderColsRight = 4
-      borderRowsTop = 6
-      borderRowsBottom = 6
-    } else {
-      // Sur desktop, bordures modérées
-      borderColsLeft = 3
-      borderColsRight = 3
-      borderRowsTop = 4
-      borderRowsBottom = 4
-    }
+    const borderColsLeft = gridConfig.borderColsLeft
+    const borderColsRight = gridConfig.borderColsRight
+    const borderRowsTop = gridConfig.borderRowsTop
+    const borderRowsBottom = gridConfig.borderRowsBottom
     
     // Ajuster selon l'aspect ratio pour éviter les bordures excessives
     const aspectRatio = visibleWidth / visibleHeight

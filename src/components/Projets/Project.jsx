@@ -7,7 +7,7 @@ import { Navigation } from '@/components/Interface/Interface'
 import ProjectOverlay from './ProjectOverlay'
 import { useContentTexture, useContentText } from '@/utils/contentLoader'
 import projectsData from '@/data/projects.json'
-import { isMobile } from '@/utils/deviceUtils'
+import { useGridConfig } from '@/hooks/useGridConfig'
 
 const Project = forwardRef(function Project(
   { gridPosition, position, rotation, camera, image, project, onProjectHover, onProjectUnhover },
@@ -46,6 +46,7 @@ const Project = forwardRef(function Project(
   // Utiliser les hooks personnalisés
   const { contentTexture, targetFace } = useContentTexture(gridPosition)
   const { contentText } = useContentText(gridPosition)
+  const gridConfig = useGridConfig()
 
   // Fonction pour gérer le clic et arrêter la propagation
   const handleMeshClick = (event) => {
@@ -60,7 +61,7 @@ const Project = forwardRef(function Project(
   // Fonction pour gérer le hover et arrêter la propagation
   const handlePointerOver = (event) => {
     // Désactiver le hover sur mobile
-    if (isMobile()) return
+    if (gridConfig.isMobile) return
     
     event.stopPropagation()
     onProjectHover()
@@ -69,7 +70,7 @@ const Project = forwardRef(function Project(
   // Fonction pour gérer le unhover et arrêter la propagation
   const handlePointerOut = (event) => {
     // Désactiver le hover sur mobile
-    if (isMobile()) return
+    if (gridConfig.isMobile) return
     
     event.stopPropagation()
     onProjectUnhover()
@@ -137,7 +138,7 @@ const Project = forwardRef(function Project(
       <mesh
         ref={frontMeshRef}
         onClick={handleMeshClick}
-        {...(!isMobile() && {
+        {...(!gridConfig.isMobile && {
           onPointerOver: handlePointerOver,
           onPointerOut: handlePointerOut
         })}
@@ -152,7 +153,7 @@ const Project = forwardRef(function Project(
       <mesh
         ref={backMeshRef}
         onClick={handleMeshClick}
-        {...(!isMobile() && {
+        {...(!gridConfig.isMobile && {
           onPointerOver: handlePointerOver,
           onPointerOut: handlePointerOut
         })}

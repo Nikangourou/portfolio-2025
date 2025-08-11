@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useStore } from '@/stores/store'
 import { createTextureWithBackground, configureTexture } from './textureUtils'
-import { isMobile } from './deviceUtils'
+import { useGridConfig } from '../hooks/useGridConfig'
 
 /**
  * Détermine les positions de grille à affecter en fonction du span
@@ -10,19 +10,21 @@ import { isMobile } from './deviceUtils'
  * @param {number} currentPosition - Position actuelle pour calculer l'offset
  * @returns {Object} - { positions: number[], offsetX: number, offsetY: number }
  */
-export const getGridPositionsFromSpan = (span, startPosition, currentPosition = null) => {
+export const getGridPositionsFromSpan = (span, startPosition, currentPosition = null, gridConfig = null) => {
   if (!span || startPosition === undefined) {
     return { positions: [], offsetX: 0, offsetY: 0 }
   }
 
   const positions = []
   const [width, height] = span.split('-').map(Number)
-  const isMobileDevice = isMobile()
-  const cols = isMobileDevice ? 3 : 5
+  
+  // Utiliser la configuration passée en paramètre ou une valeur par défaut
+  const cols = gridConfig ? gridConfig.cols : 5
   
   // Gérer la nouvelle structure de position (objet avec desktop/mobile)
   let adaptedStartPosition
   if (typeof startPosition === 'object' && startPosition.desktop !== undefined) {
+    const isMobileDevice = gridConfig ? gridConfig.isMobile : false
     adaptedStartPosition = isMobileDevice ? startPosition.mobile : startPosition.desktop
   } else {
     // Fallback pour l'ancienne structure (nombre simple)
@@ -106,6 +108,7 @@ export const useContentTexture = (gridPosition) => {
   const [contentTexture, setContentTexture] = useState(null)
   const selectedProject = useStore((state) => state.selectedProject)
   const currentPage = useStore((state) => state.currentPage)
+  const gridConfig = useGridConfig()
   
   // Nettoyer le cache si il devient trop volumineux
   useEffect(() => {
@@ -128,8 +131,7 @@ export const useContentTexture = (gridPosition) => {
     if (!currentContent?.images) return { contentImage: null, validPositions: { positions: [], offsetX: 0, offsetY: 0 } }
     
     // Générer la clé de cache
-    const isMobileDevice = isMobile()
-    const cacheKey = getCacheKey(selectedProject.id, currentPage, isMobileDevice)
+    const cacheKey = getCacheKey(selectedProject.id, currentPage, gridConfig.isMobile)
     
     // Vérifier si on a déjà calculé cette page
     let cachedData = contentCache.get(cacheKey)
@@ -140,11 +142,11 @@ export const useContentTexture = (gridPosition) => {
       const offsetCache = new Map()
       
       for (const image of currentContent.images) {
-        const allPositions = getGridPositionsFromSpan(image.span, image.position)
+        const allPositions = getGridPositionsFromSpan(image.span, image.position, null, gridConfig)
         allPositions.positions.forEach(pos => {
           imageMap.set(pos, image)
           // Calculer et cacher les offsets pour cette position spécifique
-          const positionOffsets = getGridPositionsFromSpan(image.span, image.position, pos)
+          const positionOffsets = getGridPositionsFromSpan(image.span, image.position, pos, gridConfig)
           offsetCache.set(pos, positionOffsets)
         })
       }
@@ -166,7 +168,7 @@ export const useContentTexture = (gridPosition) => {
     }
     
     return { contentImage: null, validPositions: { positions: [], offsetX: 0, offsetY: 0 } }
-  }, [selectedProject?.id, currentPage, gridPosition])
+  }, [selectedProject?.id, currentPage, gridPosition, gridConfig.isMobile])
 
 
   // Déterminer quelle face utiliser selon la parité de la page
@@ -211,7 +213,7 @@ export const useContentTexture = (gridPosition) => {
 export const useContentText = (gridPosition) => {
   const selectedProject = useStore((state) => state.selectedProject)
   const currentPage = useStore((state) => state.currentPage)
-  const isMobileDevice = isMobile()
+  const gridConfig = useGridConfig()
   
   // Trouver le texte correspondant à cette position de grille
   const contentText = useMemo(() => {
@@ -226,7 +228,7 @@ export const useContentText = (gridPosition) => {
       // Gérer la nouvelle structure de position (objet avec desktop/mobile)
       let textPosition
       if (typeof text.position === 'object' && text.position.desktop !== undefined) {
-        textPosition = isMobileDevice ? text.position.mobile : text.position.desktop
+        textPosition = gridConfig.isMobile ? text.position.mobile : text.position.desktop
       } else {
         // Fallback pour l'ancienne structure (nombre simple)
         textPosition = text.position
@@ -241,7 +243,7 @@ export const useContentText = (gridPosition) => {
     }
     
     return null
-  }, [selectedProject, currentPage, gridPosition, isMobileDevice])
+  }, [selectedProject, currentPage, gridPosition, gridConfig.isMobile])
 
   return { contentText }
 } 

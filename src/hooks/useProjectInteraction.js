@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { isMobile } from '../utils/deviceUtils'
+import { useGridConfig } from './useGridConfig'
 
 export function useProjectInteraction() {
   const { camera, pointer } = useThree()
   const [hoveredProject, setHoveredProject] = useState(null)
   const [displayedProject, setDisplayedProject] = useState(null)
   const projectMeshesRef = useRef([])
-  const isMobileDevice = useRef(isMobile())
+  const gridConfig = useGridConfig()
 
   // Gérer l'affichage du projet avec animation de sortie
   useEffect(() => {
@@ -32,7 +32,7 @@ export function useProjectInteraction() {
   // Fonction pour gérer le raycasting
   const performRaycasting = (projectStates, isProjectsArranged, groupRef) => {
     if (
-      isMobileDevice.current ||
+      gridConfig.isMobile ||
       isProjectsArranged ||
       projectMeshesRef.current.length === 0 ||
       !groupRef.current
@@ -89,7 +89,7 @@ export function useProjectInteraction() {
     setHoveredProject,
     displayedProject,
     projectMeshesRef,
-    isMobileDevice,
+    isMobileDevice: gridConfig.isMobile,
     handleProjectHover,
     performRaycasting,
   }
