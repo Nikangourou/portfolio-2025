@@ -56,9 +56,6 @@ export function useProjectPositions() {
       positions.push([x, y, arrangedDistance])
     }
 
-    // Stocker la taille des projets pour l'utiliser dans le composant Projet
-    window.projectSize = { width, height }
-
     return positions
   }
 

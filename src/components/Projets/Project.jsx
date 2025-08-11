@@ -40,13 +40,13 @@ const Project = forwardRef(function Project(
   const setProjectsArranged = useStore((state) => state.setProjectsArranged)
   const setSelectedProject = useStore((state) => state.setSelectedProject)
 
-  // Utiliser la taille calculée ou une taille par défaut
-  const projectSize = window.projectSize || { width: 1, height: 1 }
-
   // Utiliser les hooks personnalisés
   const { contentTexture, targetFace } = useContentTexture(gridPosition)
   const { contentText } = useContentText(gridPosition)
   const gridConfig = useGridConfig()
+  
+  // Utiliser la taille du projet depuis la configuration centralisée
+  const projectSize = { width: gridConfig.projectSize, height: gridConfig.projectSize }
 
   // Fonction pour gérer le clic et arrêter la propagation
   const handleMeshClick = (event) => {
