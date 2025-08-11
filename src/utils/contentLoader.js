@@ -89,6 +89,16 @@ export const getGridPositionsFromSpan = (span, startPosition, currentPosition = 
   return { positions, offsetX: 0, offsetY: 0 }
 }
 
+// Cache global pour éviter de recalculer les Maps à chaque render
+const contentCache = new Map()
+
+/**
+ * Génère une clé unique pour le cache basée sur le projet et la page
+ */
+const getCacheKey = (projectId, page, isMobile) => {
+  return `${projectId}-${page}-${isMobile ? 'mobile' : 'desktop'}`
+}
+
 /**
  * Hook pour charger les textures de contenu
  */
@@ -97,33 +107,55 @@ export const useContentTexture = (gridPosition) => {
   const selectedProject = useStore((state) => state.selectedProject)
   const currentPage = useStore((state) => state.currentPage)
   
-  // Trouver l'image correspondant à cette position de grille
-  const contentImage = useMemo(() => {
-    if (!selectedProject?.contents) return null
+  // Trouver l'image correspondant à cette position de grille et calculer ses positions
+  const { contentImage, validPositions } = useMemo(() => {
+    if (!selectedProject?.contents) return { contentImage: null, validPositions: { positions: [], offsetX: 0, offsetY: 0 } }
     
     // Récupérer le contenu de la page actuelle
     const currentContent = selectedProject.contents[currentPage - 1]
-    if (!currentContent?.images) return null
+    if (!currentContent?.images) return { contentImage: null, validPositions: { positions: [], offsetX: 0, offsetY: 0 } }
     
-    // Chercher l'image qui correspond à cette position
-    for (const image of currentContent.images) {
-      const validPositions = getGridPositionsFromSpan(image.span, image.position)
-      if (validPositions.positions.includes(gridPosition)) {
-        return {
-          url: image.url,
-          span: image.span,
-          position: image.position
-        }
+    // Générer la clé de cache
+    const isMobileDevice = isMobile()
+    const cacheKey = getCacheKey(selectedProject.id, currentPage, isMobileDevice)
+    
+    // Vérifier si on a déjà calculé cette page
+    let cachedData = contentCache.get(cacheKey)
+    
+    if (!cachedData) {
+      // Calculer et mettre en cache
+      const imageMap = new Map()
+      const offsetCache = new Map()
+      
+      for (const image of currentContent.images) {
+        const allPositions = getGridPositionsFromSpan(image.span, image.position)
+        allPositions.positions.forEach(pos => {
+          imageMap.set(pos, image)
+          // Calculer et cacher les offsets pour cette position spécifique
+          const positionOffsets = getGridPositionsFromSpan(image.span, image.position, pos)
+          offsetCache.set(pos, positionOffsets)
+        })
       }
+      
+      cachedData = { imageMap, offsetCache }
+      contentCache.set(cacheKey, cachedData)
     }
-    return null
-  }, [selectedProject, currentPage, gridPosition])
+    
+    // Lookup direct dans le cache
+    const foundImage = cachedData.imageMap.get(gridPosition)
+    if (foundImage) {
+      const validPositions = cachedData.offsetCache.get(gridPosition)
+      const contentImage = {
+        url: foundImage.url,
+        span: foundImage.span,
+        position: foundImage.position
+      }
+      return { contentImage, validPositions }
+    }
+    
+    return { contentImage: null, validPositions: { positions: [], offsetX: 0, offsetY: 0 } }
+  }, [selectedProject?.id, currentPage, gridPosition])
 
-  // Déterminer les positions valides pour cette image
-  const validPositions = useMemo(() => 
-    contentImage ? getGridPositionsFromSpan(contentImage.span, contentImage.position, gridPosition) : { positions: [], offsetX: 0, offsetY: 0 }, 
-    [contentImage, gridPosition]
-  )
 
   // Déterminer quelle face utiliser selon la parité de la page
   const isEvenPage = currentPage % 2 === 0
