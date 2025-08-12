@@ -10,7 +10,6 @@ const ProjectOverlay = ({ condition, children, projectSize }) => {
   const currentPage = useStore((state) => state.currentPage)
   const evenPage = currentPage % 2
 
-
   return (
     <Html
       occlude

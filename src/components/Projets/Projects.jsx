@@ -23,12 +23,20 @@ export default function Projects() {
   const setArrangementAnimationComplete = useStore(
     (state) => state.setArrangementAnimationComplete,
   )
-  const [projectStates, setProjectStates] = useState([])
-  const [targetStates, setTargetStates] = useState([])
+  
+  // Remplacer les states par des refs pour les animations
+  const projectStatesRef = useRef([])
+  const targetStatesRef = useRef([])
+  const borderStatesRef = useRef([])
+  const rotatingProjectsRef = useRef(new Set())
+  const rotatingBordersRef = useRef(new Set())
+  const animatingProjectsRef = useRef(new Set())
+  
+  // State minimal pour les données initiales (pas pour les animations)
+  const [initialProjectStates, setInitialProjectStates] = useState([])
+  
+  // Garder quelques states pour les interactions et l'interface
   const [minDistance, setMinDistance] = useState(2.0)
-  const [rotatingProjects, setRotatingProjects] = useState(new Set())
-  const [rotatingBorders, setRotatingBorders] = useState(new Set())
-  const [animatingProjects, setAnimatingProjects] = useState(new Set())
   const currentTheme = useThemeStore((state) => state.currentTheme)
   const currentPage = useStore((state) => state.currentPage)
 
@@ -43,6 +51,11 @@ export default function Projects() {
     borderPositions
   } = useProjectPositions()
 
+  // Synchroniser borderStatesRef avec borderStates
+  useEffect(() => {
+    borderStatesRef.current = borderStates
+  }, [borderStates])
+
   // Hook pour la gestion des contrôles de rotation
   const { rotationY, setRotationY } = useRotationControl()
 
@@ -56,6 +69,9 @@ export default function Projects() {
     performRaycasting
   } = useProjectInteraction()
 
+  // Ref pour les meshes des bordures
+  const borderMeshesRef = useRef([])
+
   // Hook pour la gestion des animations
   const { animateProjects, animateBorders, animateGroupRotation } = useProjectAnimations()
 
@@ -65,12 +81,10 @@ export default function Projects() {
   useResizeCallback(() => {
     // Si on est en mode arrangé, mettre à jour les positions cibles
     if (isProjectsArranged && predefinedPositions.length > 0) {
-      setTargetStates((prevStates) =>
-        prevStates.map((state, index) => ({
-          ...state,
-          position: predefinedPositions[index] || state.position,
-        }))
-      )
+      targetStatesRef.current = targetStatesRef.current.map((state, index) => ({
+        ...state,
+        position: predefinedPositions[index] || state.position,
+      }))
     }
   })
 
@@ -113,7 +127,7 @@ export default function Projects() {
   useEffect(() => {
     if (!isProjectsArranged) {
       const newPositions = []
-      const newTargetStates = projectStates.map((state) => {
+      const newTargetStates = projectStatesRef.current.map((state) => {
         const newPosition = findValidPosition(newPositions)
         newPositions.push(newPosition)
 
@@ -130,41 +144,41 @@ export default function Projects() {
           targetPageRotationX: 0,
         }
       })
-      setTargetStates(newTargetStates)
-      setRotatingProjects(new Set())
-      setRotatingBorders(new Set())
-      setAnimatingProjects(new Set())
+      targetStatesRef.current = newTargetStates
+      rotatingProjectsRef.current = new Set()
+      rotatingBordersRef.current = new Set()
+      animatingProjectsRef.current = new Set()
+      // Nettoyer les refs des bordures
+      borderMeshesRef.current = []
       setArrangementAnimationComplete(false)
     } else {
       // Animation séquentielle pour éviter les superpositions
-      setAnimatingProjects(new Set())
+      animatingProjectsRef.current = new Set()
 
       // Définir les positions cibles immédiatement
-      setTargetStates(
-        predefinedPositions.map((pos, index) => ({
-          ...projectStates[index],
-          position: pos,
-          rotation: [0, 0, 0],
-          pageRotationX: 0,
-          targetPageRotationX: 0,
-        })),
-      )
+      targetStatesRef.current = predefinedPositions.map((pos, index) => ({
+        ...projectStatesRef.current[index],
+        position: pos,
+        rotation: [0, 0, 0],
+        pageRotationX: 0,
+        targetPageRotationX: 0,
+      }))
 
       // Créer un ordre aléatoire pour l'animation
       const randomOrder = Array.from(
-        { length: projectStates.length },
+        { length: projectStatesRef.current.length },
         (_, i) => i,
       ).sort(() => Math.random() - 0.5)
 
       // Démarrer l'animation des projets dans un ordre aléatoire
       randomOrder.forEach((projectIndex, animationIndex) => {
         setTimeout(() => {
-          setAnimatingProjects((prev) => new Set([...prev, projectIndex]))
+          animatingProjectsRef.current = new Set([...animatingProjectsRef.current, projectIndex])
         }, animationIndex * 100) // 100ms de délai entre chaque projet
       })
 
       // Attendre que tous les projets aient commencé leur animation
-      const totalAnimationTime = projectStates.length * 100 + 1000
+      const totalAnimationTime = projectStatesRef.current.length * 100 + 1000
       setTimeout(() => {
         setArrangementAnimationComplete(true)
       }, totalAnimationTime)
@@ -174,30 +188,30 @@ export default function Projects() {
   // Effet pour gérer les rotations une fois l'animation terminée
   useEffect(() => {
     if (isArrangementAnimationComplete) {
-      setRotatingProjects(new Set(projectStates.map((_, index) => index)))
+      rotatingProjectsRef.current = new Set(projectStatesRef.current.map((_, index) => index))
 
       // Utiliser les positions mémorisées au lieu de recalculer
-      setRotatingBorders(new Set(borderPositions.map((_, index) => index)))
+      rotatingBordersRef.current = new Set(borderPositions.map((_, index) => index))
     }
   }, [isArrangementAnimationComplete, borderPositions])
 
   useFrame((state, delta) => {
     // Animer les projets
     animateProjects(
-      projectStates,
-      setProjectStates,
-      targetStates,
-      rotatingProjects,
-      animatingProjects,
+      projectStatesRef,
+      targetStatesRef,
+      rotatingProjectsRef,
+      animatingProjectsRef,
+      projectMeshesRef,
       baseSpeed,
       delta
     )
 
     // Animer les bordures
     animateBorders(
-      borderStates,
-      setBorderStates,
-      rotatingBorders,
+      borderStatesRef,
+      rotatingBordersRef,
+      borderMeshesRef,
       baseSpeed,
       delta
     )
@@ -212,7 +226,7 @@ export default function Projects() {
     )
 
     // Raycasting pour détecter le projet sous le curseur
-    performRaycasting(projectStates, isProjectsArranged, groupRef)
+    performRaycasting(projectStatesRef.current, isProjectsArranged, groupRef)
   })
 
   // Initialiser les états des projets une seule fois au montage
@@ -237,7 +251,8 @@ export default function Projects() {
       pageRotationDelay: Math.random() * 0.5,
     }))
 
-    setProjectStates(initialStates)
+    projectStatesRef.current = initialStates
+    setInitialProjectStates(initialStates) // Pour déclencher le premier render
   }, [])
 
   // Initialiser la rotation du groupe au montage du composant
@@ -248,14 +263,12 @@ export default function Projects() {
   }, [])
 
   useEffect(() => {
-    projectStates.forEach((state, i) => {
+    projectStatesRef.current.forEach((state, i) => {
       setTimeout(() => {
-        setProjectStates((prev) =>
-          prev.map((s, j) =>
-            j === i
-              ? { ...s, targetPageRotationX: (currentPage - 1) * Math.PI }
-              : s,
-          ),
+        projectStatesRef.current = projectStatesRef.current.map((s, j) =>
+          j === i
+            ? { ...s, targetPageRotationX: (currentPage - 1) * Math.PI }
+            : s,
         )
       }, (state.pageRotationDelay || 0) * 1000)
     })
@@ -269,6 +282,7 @@ export default function Projects() {
         projectSize={projectSize}
         currentTheme={currentTheme}
         distance={distance}
+        borderMeshesRef={borderMeshesRef}
       />
 
       {!isProjectsArranged && displayedProject && (
@@ -276,7 +290,7 @@ export default function Projects() {
       )}
 
       <ProjectList
-        projectStates={projectStates}
+        projectStates={initialProjectStates}
         projectMeshesRef={projectMeshesRef}
         camera={camera}
         handleProjectHover={handleProjectHover}

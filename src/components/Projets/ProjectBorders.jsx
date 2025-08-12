@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef, useEffect } from 'react'
 import * as THREE from 'three'
 
 const ProjectBorders = ({
@@ -6,8 +6,16 @@ const ProjectBorders = ({
   borderStates,
   projectSize,
   currentTheme,
-  distance
+  distance,
+  borderMeshesRef
 }) => {
+  // Nettoyer les refs quand le composant se démonte ou change
+  useEffect(() => {
+    if (!isProjectsArranged) {
+      borderMeshesRef.current = []
+    }
+  }, [isProjectsArranged])
+
   if (!isProjectsArranged) return null
 
   return (
@@ -15,8 +23,15 @@ const ProjectBorders = ({
       {borderStates.map((state, index) => (
         <mesh
           key={`square-${index}`}
-          position={state.position}
-          rotation={state.rotation}
+          ref={(el) => {
+            if (el && borderMeshesRef) {
+              // Toujours assigner la ref, même si elle existe déjà
+              borderMeshesRef.current[index] = el
+              // Initialiser la position et rotation
+              el.position.set(...state.position)
+              el.rotation.set(...state.rotation)
+            }
+          }}
         >
           <planeGeometry args={[projectSize.width, projectSize.height]} />
           <meshBasicMaterial
