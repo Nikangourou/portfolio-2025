@@ -1,28 +1,56 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useThree } from '@react-three/fiber'
 import projectsData from '../data/projects.json'
 import { useGridConfig } from './useGridConfig'
 import { useResizeCallback } from './useResize'
+
+// Cache global pour éviter les recalculs entre différentes instances du hook
+let globalCache = {
+  lastKey: null,
+  arrangedDistance: null,
+  predefinedPositions: null,
+  borderPositions: null
+}
 
 export function useProjectPositions() {
   const { camera } = useThree()
   const [predefinedPositions, setPredefinedPositions] = useState([])
   const [borderStates, setBorderStates] = useState([])
 
-  // Configuration de la grille
+  // Configuration de la grille - déstructurer pour éviter les changements de référence
   const gridConfig = useGridConfig()
-  const projectSize = gridConfig.projectSize
+  const {
+    projectSize,
+    cols,
+    rows,
+    gap,
+    margin,
+    distance,
+    borderColsLeft,
+    borderColsRight,
+    borderRowsTop,
+    borderRowsBottom
+  } = gridConfig
+  
   const width = projectSize
   const height = projectSize
-  const cols = gridConfig.cols
-  const rows = gridConfig.rows
-  const gap = gridConfig.gap
-  const margin = gridConfig.margin
-  const distance = gridConfig.distance
 
-  // Calcul dynamique de arrangedDistance - mémorisé avec useCallback
-  const calculateArrangedDistance = useCallback(() => {
-    console.log('calculateArrangedDistance')
+  // Mémoriser les dimensions de la grille pour éviter les recalculs
+  const gridDimensions = useMemo(() => ({
+    totalWidth: width * cols + gap * (cols - 1),
+    totalHeight: height * rows + gap * (rows - 1)
+  }), [width, height, cols, rows, gap])
+
+  // Calcul dynamique de arrangedDistance avec cache global
+  const arrangedDistance = useMemo(() => {
+    // Créer une clé unique basée sur toutes les dépendances
+    const dependencyKey = `${width}-${height}-${cols}-${rows}-${gap}-${margin}-${distance}-${Math.round(camera.fov * 100)}-${Math.round(camera.aspect * 10000)}`
+    
+    // Si la clé n'a pas changé, utiliser le cache global
+    if (globalCache.lastKey === dependencyKey && globalCache.arrangedDistance !== null) {
+      return globalCache.arrangedDistance
+    }
+        
     const totalWidth = width * cols + gap * (cols - 1)
     const totalHeight = height * rows + gap * (rows - 1)
     const fov = camera.fov * (Math.PI / 180)
@@ -37,18 +65,23 @@ export function useProjectPositions() {
       margin
 
     const distanceMax = Math.max(distanceForWidth, distanceForHeight)
+    const result = -distanceMax - distance
+    
+    // Mettre à jour le cache global
+    globalCache.lastKey = dependencyKey
+    globalCache.arrangedDistance = result
 
-    return -distanceMax - distance
+    return result
   }, [width, height, cols, rows, gap, margin, distance, camera.fov, camera.aspect])
 
-  // Mémoriser les dimensions de la grille pour éviter les recalculs
-  const gridDimensions = useMemo(() => ({
-    totalWidth: width * cols + gap * (cols - 1),
-    totalHeight: height * rows + gap * (rows - 1)
-  }), [width, height, cols, rows, gap])
-
-  // Positions prédéfinies pour l'arrangement - mémorisé avec useCallback
-  const calculatePredefinedPositions = useCallback((arrangedDistance) => {
+  // Positions prédéfinies pour l'arrangement - avec cache global
+  const predefinedPositionsCalculated = useMemo(() => {
+    const cacheKey = `${arrangedDistance}-${cols}-${rows}-${width}-${height}-${gap}`
+    
+    if (globalCache.predefinedPositions && globalCache.lastKey?.includes(cacheKey)) {
+      return globalCache.predefinedPositions
+    }
+    
     const positions = []
     const totalProjects = projectsData.projects.length
 
@@ -59,11 +92,18 @@ export function useProjectPositions() {
       const y = -(row * (height + gap)) + gridDimensions.totalHeight / 2 - height / 2
       positions.push([x, y, arrangedDistance])
     }
-
+    
+    globalCache.predefinedPositions = positions
     return positions
-  }, [width, height, cols, rows, gap, gridDimensions])
+  }, [arrangedDistance, cols, rows, width, height, gap, gridDimensions])
 
   const calculateBorderPositions = useCallback((arrangedDistance) => {
+    const cacheKey = `border-${arrangedDistance}-${cols}-${rows}-${width}-${height}-${gap}-${camera.fov}-${camera.aspect}`
+    
+    if (globalCache.borderPositions && globalCache.lastKey?.includes(cacheKey)) {
+      return globalCache.borderPositions
+    }
+    
     const positions = []
 
     // Calculer l'espace visible de l'écran
@@ -76,26 +116,26 @@ export function useProjectPositions() {
     const visibleHeight = 2 * cameraDistance * Math.tan(fov / 2)
     
     // Déterminer la taille des bordures selon le type d'appareil
-    let borderColsLeft = gridConfig.borderColsLeft
-    let borderColsRight = gridConfig.borderColsRight
-    let borderRowsTop = gridConfig.borderRowsTop
-    let borderRowsBottom = gridConfig.borderRowsBottom
+    let finalBorderColsLeft = borderColsLeft
+    let finalBorderColsRight = borderColsRight
+    let finalBorderRowsTop = borderRowsTop
+    let finalBorderRowsBottom = borderRowsBottom
     
     // Ajuster selon l'aspect ratio pour éviter les bordures excessives
     const aspectRatio = visibleWidth / visibleHeight
     if (aspectRatio > 1.5) {
       // Écran très large, réduire les bordures verticales
-      borderRowsTop = Math.min(borderRowsTop, 2)
-      borderRowsBottom = borderRowsTop
+      finalBorderRowsTop = Math.min(finalBorderRowsTop, 2)
+      finalBorderRowsBottom = finalBorderRowsTop
     } else if (aspectRatio < 0.7) {
       // Écran très haut, réduire les bordures horizontales
-      borderColsLeft = Math.min(borderColsLeft, 2)
-      borderColsRight = borderColsLeft
+      finalBorderColsLeft = Math.min(finalBorderColsLeft, 2)
+      finalBorderColsRight = finalBorderColsLeft
     }
     
     // Calculer les dimensions de la grille totale (projets + bordures)
-    const totalCols = cols + borderColsLeft + borderColsRight
-    const totalRows = rows + borderRowsTop + borderRowsBottom
+    const totalCols = cols + finalBorderColsLeft + finalBorderColsRight
+    const totalRows = rows + finalBorderRowsTop + finalBorderRowsBottom
     
     const totalWidth = totalCols * width + (totalCols - 1) * gap
     const totalHeight = totalRows * height + (totalRows - 1) * gap
@@ -112,30 +152,29 @@ export function useProjectPositions() {
 
         // Vérifier si la position est dans la zone des projets
         const isInProjectArea =
-          col >= borderColsLeft &&
-          col < borderColsLeft + cols &&
-          row >= borderRowsTop &&
-          row < borderRowsTop + rows
+          col >= finalBorderColsLeft &&
+          col < finalBorderColsLeft + cols &&
+          row >= finalBorderRowsTop &&
+          row < finalBorderRowsTop + rows
 
         if (!isInProjectArea) {
           positions.push([x, y, arrangedDistance])
         }
       }
     }
-
+    
+    globalCache.borderPositions = positions
     return positions
-  }, [width, height, cols, rows, gap, camera.fov, camera.aspect, distance, gridConfig.borderColsLeft, gridConfig.borderColsRight, gridConfig.borderRowsTop, gridConfig.borderRowsBottom])
+  }, [width, height, cols, rows, gap, camera.fov, camera.aspect, distance, borderColsLeft, borderColsRight, borderRowsTop, borderRowsBottom])
 
   // Mémoriser les positions des bordures pour éviter les recalculs
   const borderPositions = useMemo(() => {
-    const dist = calculateArrangedDistance()
-    return calculateBorderPositions(dist)
-  }, [calculateArrangedDistance, calculateBorderPositions])
+    return calculateBorderPositions(arrangedDistance)
+  }, [calculateBorderPositions, arrangedDistance])
 
-  // Fonction pour initialiser les positions - mémorisée
-  const initializePositions = useCallback(() => {
-    const dist = calculateArrangedDistance()
-    setPredefinedPositions(calculatePredefinedPositions(dist))
+  // Initialiser les positions
+  useEffect(() => {
+    setPredefinedPositions(predefinedPositionsCalculated)
     
     // Initialiser les états des carrés de bordure avec les positions mémorisées
     setBorderStates(
@@ -144,16 +183,18 @@ export function useProjectPositions() {
         rotation: [0, 0, 0],
       })),
     )
-  }, [calculateArrangedDistance, calculatePredefinedPositions, borderPositions])
-
-  // Initialiser les positions
-  useEffect(() => {
-    initializePositions()
-  }, [initializePositions])
+  }, [predefinedPositionsCalculated, borderPositions])
 
   // Gérer le redimensionnement de la fenêtre
   useResizeCallback(() => {
-    initializePositions()
+    setPredefinedPositions(predefinedPositionsCalculated)
+    
+    setBorderStates(
+      borderPositions.map((pos) => ({
+        position: pos,
+        rotation: [0, 0, 0],
+      })),
+    )
   })
 
   return {

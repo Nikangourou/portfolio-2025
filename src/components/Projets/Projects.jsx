@@ -14,10 +14,6 @@ import { useProjectAnimations } from '@/hooks/useProjectAnimations'
 import { useResizeCallback } from '@/hooks/useResize'
 
 export default function Projects() {
-  return <ProjectsContent />
-}
-
-function ProjectsContent() {
   const groupRef = useRef(null)
   const { camera} = useThree()
   const isProjectsArranged = useStore((state) => state.isProjectsArranged)
