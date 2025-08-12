@@ -22,6 +22,7 @@ export function useProjectPositions() {
 
   // Calcul dynamique de arrangedDistance - mémorisé avec useCallback
   const calculateArrangedDistance = useCallback(() => {
+    console.log('calculateArrangedDistance')
     const totalWidth = width * cols + gap * (cols - 1)
     const totalHeight = height * rows + gap * (rows - 1)
     const fov = camera.fov * (Math.PI / 180)
@@ -40,25 +41,27 @@ export function useProjectPositions() {
     return -distanceMax - distance
   }, [width, height, cols, rows, gap, margin, distance, camera.fov, camera.aspect])
 
+  // Mémoriser les dimensions de la grille pour éviter les recalculs
+  const gridDimensions = useMemo(() => ({
+    totalWidth: width * cols + gap * (cols - 1),
+    totalHeight: height * rows + gap * (rows - 1)
+  }), [width, height, cols, rows, gap])
+
   // Positions prédéfinies pour l'arrangement - mémorisé avec useCallback
   const calculatePredefinedPositions = useCallback((arrangedDistance) => {
     const positions = []
     const totalProjects = projectsData.projects.length
 
-    // Calculer la taille totale de la grille
-    const totalWidth = width * cols + gap * (cols - 1)
-    const totalHeight = height * rows + gap * (rows - 1)
-
     for (let i = 0; i < totalProjects; i++) {
       const row = Math.floor(i / cols)
       const col = i % cols
-      const x = col * (width + gap) - totalWidth / 2 + width / 2
-      const y = -(row * (height + gap)) + totalHeight / 2 - height / 2
+      const x = col * (width + gap) - gridDimensions.totalWidth / 2 + width / 2
+      const y = -(row * (height + gap)) + gridDimensions.totalHeight / 2 - height / 2
       positions.push([x, y, arrangedDistance])
     }
 
     return positions
-  }, [width, height, cols, rows, gap])
+  }, [width, height, cols, rows, gap, gridDimensions])
 
   const calculateBorderPositions = useCallback((arrangedDistance) => {
     const positions = []
@@ -71,12 +74,6 @@ export function useProjectPositions() {
     // Calculer la largeur et hauteur visibles à la distance de la caméra
     const visibleWidth = 2 * cameraDistance * Math.tan(fov / 2) * aspect
     const visibleHeight = 2 * cameraDistance * Math.tan(fov / 2)
-    
-    // Calculer les dimensions de la grille des projets
-    const projectGridWidth = cols * width + (cols - 1) * gap
-    const projectGridHeight = rows * height + (rows - 1) * gap
-    
-    // Approche simple : créer une grille de bordures plus large que les projets
     
     // Déterminer la taille des bordures selon le type d'appareil
     let borderColsLeft = gridConfig.borderColsLeft
@@ -96,14 +93,9 @@ export function useProjectPositions() {
       borderColsRight = borderColsLeft
     }
     
-    let finalBorderColsLeft = borderColsLeft
-    let finalBorderColsRight = borderColsRight
-    let finalBorderRowsTop = borderRowsTop
-    let finalBorderRowsBottom = borderRowsBottom
-    
     // Calculer les dimensions de la grille totale (projets + bordures)
-    const totalCols = cols + finalBorderColsLeft + finalBorderColsRight
-    const totalRows = rows + finalBorderRowsTop + finalBorderRowsBottom
+    const totalCols = cols + borderColsLeft + borderColsRight
+    const totalRows = rows + borderRowsTop + borderRowsBottom
     
     const totalWidth = totalCols * width + (totalCols - 1) * gap
     const totalHeight = totalRows * height + (totalRows - 1) * gap
@@ -120,10 +112,10 @@ export function useProjectPositions() {
 
         // Vérifier si la position est dans la zone des projets
         const isInProjectArea =
-          col >= finalBorderColsLeft &&
-          col < finalBorderColsLeft + cols &&
-          row >= finalBorderRowsTop &&
-          row < finalBorderRowsTop + rows
+          col >= borderColsLeft &&
+          col < borderColsLeft + cols &&
+          row >= borderRowsTop &&
+          row < borderRowsTop + rows
 
         if (!isInProjectArea) {
           positions.push([x, y, arrangedDistance])
@@ -134,20 +126,25 @@ export function useProjectPositions() {
     return positions
   }, [width, height, cols, rows, gap, camera.fov, camera.aspect, distance, gridConfig.borderColsLeft, gridConfig.borderColsRight, gridConfig.borderRowsTop, gridConfig.borderRowsBottom])
 
+  // Mémoriser les positions des bordures pour éviter les recalculs
+  const borderPositions = useMemo(() => {
+    const dist = calculateArrangedDistance()
+    return calculateBorderPositions(dist)
+  }, [calculateArrangedDistance, calculateBorderPositions])
+
   // Fonction pour initialiser les positions - mémorisée
   const initializePositions = useCallback(() => {
     const dist = calculateArrangedDistance()
     setPredefinedPositions(calculatePredefinedPositions(dist))
     
-    // Initialiser les états des carrés de bordure
-    const borderPositions = calculateBorderPositions(dist)
+    // Initialiser les états des carrés de bordure avec les positions mémorisées
     setBorderStates(
       borderPositions.map((pos) => ({
         position: pos,
         rotation: [0, 0, 0],
       })),
     )
-  }, [calculateArrangedDistance, calculatePredefinedPositions, calculateBorderPositions])
+  }, [calculateArrangedDistance, calculatePredefinedPositions, borderPositions])
 
   // Initialiser les positions
   useEffect(() => {
@@ -163,9 +160,7 @@ export function useProjectPositions() {
     predefinedPositions,
     borderStates,
     setBorderStates,
-    calculateArrangedDistance,
-    calculatePredefinedPositions,
-    calculateBorderPositions,
+    borderPositions, 
     projectSize: { width, height },
     distance,
     cols,

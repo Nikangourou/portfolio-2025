@@ -42,11 +42,9 @@ function ProjectsContent() {
     predefinedPositions,
     borderStates,
     setBorderStates,
-    calculateArrangedDistance,
-    calculatePredefinedPositions,
-    calculateBorderPositions,
     projectSize,
-    distance
+    distance,
+    borderPositions
   } = useProjectPositions()
 
   // Hook pour la gestion des contrôles de rotation
@@ -71,11 +69,10 @@ function ProjectsContent() {
   useResizeCallback(() => {
     // Si on est en mode arrangé, mettre à jour les positions cibles
     if (isProjectsArranged && predefinedPositions.length > 0) {
-      const dist = calculateArrangedDistance()
       setTargetStates((prevStates) =>
         prevStates.map((state, index) => ({
           ...state,
-          position: calculatePredefinedPositions(dist)[index] || state.position,
+          position: predefinedPositions[index] || state.position,
         }))
       )
     }
@@ -183,10 +180,10 @@ function ProjectsContent() {
     if (isArrangementAnimationComplete) {
       setRotatingProjects(new Set(projectStates.map((_, index) => index)))
 
-      const borderPositions = calculateBorderPositions(calculateArrangedDistance())
+      // Utiliser les positions mémorisées au lieu de recalculer
       setRotatingBorders(new Set(borderPositions.map((_, index) => index)))
     }
-  }, [isArrangementAnimationComplete])
+  }, [isArrangementAnimationComplete, borderPositions])
 
   useFrame((state, delta) => {
     // Animer les projets
