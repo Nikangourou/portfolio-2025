@@ -1,47 +1,55 @@
-import React, { useRef, useEffect } from 'react'
+import { useSprings, animated, config } from '@react-spring/three'
 import * as THREE from 'three'
+import { useProjectPositions } from '@/hooks/useProjectPositions'
+import { useStore } from '@/stores/store'
 
 const ProjectBorders = ({
   isProjectsArranged,
-  borderStates,
   projectSize,
   currentTheme,
-  distance,
-  borderMeshesRef
+  distance
 }) => {
-  // Nettoyer les refs quand le composant se démonte ou change
-  useEffect(() => {
-    if (!isProjectsArranged) {
-      borderMeshesRef.current = []
-    }
-  }, [isProjectsArranged])
 
-  if (!isProjectsArranged) return null
+  const { borderStates } = useProjectPositions()
+
+  // États du store
+  const isArrangementAnimationComplete = useStore(
+    (state) => state.isArrangementAnimationComplete
+  )
+
+  // Utiliser useSprings avec des délais individuels pour chaque bordure
+  const springs = useSprings(
+    borderStates?.length || 0,
+    borderStates?.map((_, index) => ({
+      rotation: isArrangementAnimationComplete ? [Math.PI, 0, 0] : [0, 0, 0],
+      delay: isArrangementAnimationComplete ? Math.random() * 1000 : 0, // Délai aléatoire jusqu'à 1s
+      config: config.slow
+    })) || []
+  )
+
+  if (!isProjectsArranged || !borderStates || borderStates.length === 0) return null
 
   return (
     <group position={[0, 0, distance]}>
-      {borderStates.map((state, index) => (
-        <mesh
-          key={`square-${index}`}
-          ref={(el) => {
-            if (el && borderMeshesRef) {
-              // Toujours assigner la ref, même si elle existe déjà
-              borderMeshesRef.current[index] = el
-              // Initialiser la position et rotation
-              el.position.set(...state.position)
-              el.rotation.set(...state.rotation)
-            }
-          }}
-        >
-          <planeGeometry args={[projectSize.width, projectSize.height]} />
-          <meshBasicMaterial
-            side={THREE.BackSide}
-            color={currentTheme.background}
-            opacity={1}
-            transparent={true}
-          />
-        </mesh>
-      ))}
+      {springs.map((spring, index) => {
+        const state = borderStates[index]
+
+        return (
+          <animated.mesh
+            key={`border-${index}`}
+            position={state.position}
+            rotation={spring.rotation}
+          >
+            <planeGeometry args={[projectSize.width, projectSize.height]} />
+            <meshBasicMaterial
+              side={THREE.BackSide}
+              color={currentTheme.background}
+              opacity={1}
+              transparent={true}
+            />
+          </animated.mesh>
+        )
+      })}
     </group>
   )
 }

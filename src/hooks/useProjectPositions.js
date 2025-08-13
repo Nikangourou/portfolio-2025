@@ -201,7 +201,6 @@ export function useProjectPositions() {
     predefinedPositions,
     borderStates,
     setBorderStates,
-    borderPositions, 
     projectSize: { width, height },
     distance,
     cols,

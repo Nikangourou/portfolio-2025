@@ -104,55 +104,7 @@ export function useProjectAnimations() {
     })
   }
 
-  const animateBorders = (
-    borderStatesRef,
-    rotatingBordersRef,
-    borderMeshesRef,
-    baseSpeed = 3,
-    delta = 0.016
-  ) => {
-    if (!borderStatesRef.current || !borderMeshesRef.current) return
-
-    const adaptiveSpeed = Math.min(baseSpeed * delta, 0.1)
-
-    // Modifier directement les valeurs des refs ET les meshes Three.js
-    borderStatesRef.current = borderStatesRef.current.map((state, index) => {
-      const targetRotation = rotatingBordersRef.current.has(index)
-        ? [Math.PI, 0, 0]
-        : [0, 0, 0]
-
-      // Interpolation linéaire pour la rotation
-      const newRotX = THREE.MathUtils.lerp(
-        state.rotation[0],
-        targetRotation[0],
-        adaptiveSpeed,
-      )
-      const newRotY = THREE.MathUtils.lerp(
-        state.rotation[1],
-        targetRotation[1],
-        adaptiveSpeed,
-      )
-      const newRotZ = THREE.MathUtils.lerp(
-        state.rotation[2],
-        targetRotation[2],
-        adaptiveSpeed,
-      )
-
-      // Animer directement le mesh Three.js si il existe
-      const borderMesh = borderMeshesRef.current[index]
-      if (borderMesh) {
-        borderMesh.rotation.set(newRotX, newRotY, newRotZ)
-      }
-
-      return {
-        ...state,
-        rotation: [newRotX, newRotY, newRotZ],
-      }
-    })
-  }
-
   return {
     animateProjects,
-    animateBorders
   }
 } 

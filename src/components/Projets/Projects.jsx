@@ -29,9 +29,7 @@ export default function Projects() {
   // Remplacer les states par des refs pour les animations
   const projectStatesRef = useRef([])
   const targetStatesRef = useRef([])
-  const borderStatesRef = useRef([])
   const rotatingProjectsRef = useRef(new Set())
-  const rotatingBordersRef = useRef(new Set())
   const animatingProjectsRef = useRef(new Set())
   
   // State minimal pour les données initiales (pas pour les animations)
@@ -46,16 +44,9 @@ export default function Projects() {
   // Hook pour la gestion des positions
   const {
     predefinedPositions,
-    borderStates,
     projectSize,
-    distance,
-    borderPositions
+    distance
   } = useProjectPositions()
-
-  // Synchroniser borderStatesRef avec borderStates
-  useEffect(() => {
-    borderStatesRef.current = borderStates
-  }, [borderStates])
 
   // Hook pour la gestion des interactions
   const {
@@ -64,9 +55,6 @@ export default function Projects() {
     projectMeshesRef,
     performRaycasting
   } = useProjectInteraction()
-
-  // Ref pour les meshes des bordures
-  const borderMeshesRef = useRef([])
 
   // Hook pour la gestion des animations
   const { animateProjects, animateBorders } = useProjectAnimations()
@@ -142,10 +130,7 @@ export default function Projects() {
       })
       targetStatesRef.current = newTargetStates
       rotatingProjectsRef.current.clear()
-      rotatingBordersRef.current.clear()
       animatingProjectsRef.current.clear()
-      // Nettoyer les refs des bordures
-      borderMeshesRef.current = []
       setArrangementAnimationComplete(false)
     } else {
       // Animation séquentielle pour éviter les superpositions
@@ -189,14 +174,8 @@ export default function Projects() {
       projectStatesRef.current.forEach((_, index) => {
         rotatingProjectsRef.current.add(index)
       })
-
-      // Utiliser les positions mémorisées au lieu de recalculer
-      rotatingBordersRef.current.clear()
-      borderPositions.forEach((_, index) => {
-        rotatingBordersRef.current.add(index)
-      })
     }
-  }, [isArrangementAnimationComplete, borderPositions])
+  }, [isArrangementAnimationComplete])
 
   useFrame((state, delta) => {
     // Animer les projets
@@ -210,14 +189,7 @@ export default function Projects() {
       delta
     )
 
-    // Animer les bordures
-    animateBorders(
-      borderStatesRef,
-      rotatingBordersRef,
-      borderMeshesRef,
-      baseSpeed,
-      delta
-    )
+    // Les bordures sont maintenant animées par React Spring dans ProjectBorders
 
     // Raycasting pour détecter le projet sous le curseur
     performRaycasting(projectStatesRef.current, isProjectsArranged, groupRef)
@@ -265,11 +237,9 @@ export default function Projects() {
     <>
       <ProjectBorders
         isProjectsArranged={isProjectsArranged}
-        borderStates={borderStates}
         projectSize={projectSize}
         currentTheme={currentTheme}
         distance={distance}
-        borderMeshesRef={borderMeshesRef}
       />
 
       {!isProjectsArranged && displayedProject && (
