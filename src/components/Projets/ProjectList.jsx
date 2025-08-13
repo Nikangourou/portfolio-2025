@@ -13,10 +13,9 @@ const ProjectList = ({
           key={state.project.id}
           ref={(el) => {
             if (el?.projectRef?.current) {
-              if (!projectMeshesRef.current[i]) {
-                projectMeshesRef.current[i] = { projectRef: null }
-              }
-              projectMeshesRef.current[i].projectRef = el.projectRef.current
+              projectMeshesRef.current[i] = el.projectRef.current
+            } else {
+              projectMeshesRef.current[i] = null
             }
           }}
           gridPosition={i}

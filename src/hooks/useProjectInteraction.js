@@ -42,11 +42,11 @@ export function useProjectInteraction() {
     // Obtenir tous les meshes valides avec leurs index de projet
     const allMeshes = []
 
-    projectMeshesRef.current.forEach((projectMeshes, projectIndex) => {
-      if (projectMeshes && projectMeshes.projectRef && projectMeshes.projectRef.children) {
+    projectMeshesRef.current.forEach((projectGroup, projectIndex) => {
+      if (projectGroup && projectGroup.children) {
         // Parcourir les enfants du groupe principal pour trouver les meshes
-        projectMeshes.projectRef.children.forEach((child) => {
-          if (child.isMesh) {
+        projectGroup.children.forEach((child) => {
+          if (child.isMesh && child.geometry && child.material) {
             child.updateMatrixWorld(true)
             allMeshes.push({ mesh: child, projectIndex })
           }
@@ -77,6 +77,9 @@ export function useProjectInteraction() {
           setHoveredProject(null)
         }
       }
+    } else if (hoveredProject) {
+      // Si aucun mesh n'est disponible, nettoyer le hover
+      setHoveredProject(null)
     }
   }
 

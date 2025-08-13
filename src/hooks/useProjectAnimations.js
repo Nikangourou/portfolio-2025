@@ -83,15 +83,15 @@ export function useProjectAnimations() {
         newPageRotationX = state.targetPageRotationX
       }
 
-      // Animer directement les meshes Three.js via projectRef
-      const projectMeshes = projectMeshesRef.current[index]
-      if (projectMeshes && projectMeshes.projectRef) {
+      // Animer directement les meshes Three.js via la ref du groupe
+      const projectGroup = projectMeshesRef.current[index]
+      if (projectGroup) {
         // Mettre à jour la position du groupe principal
-        projectMeshes.projectRef.position.set(newX, newY, newZ)
+        projectGroup.position.set(newX, newY, newZ)
         
         // Mettre à jour les rotations avec pageRotationX inclus
         const finalRotX = newRotX + newPageRotationX
-        projectMeshes.projectRef.rotation.set(finalRotX, newRotY, newRotZ)
+        projectGroup.rotation.set(finalRotX, newRotY, newRotZ)
       }
 
       return {

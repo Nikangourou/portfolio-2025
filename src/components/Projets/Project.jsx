@@ -23,7 +23,7 @@ const Project = forwardRef(function Project(
   // Exposer la ref du groupe principal pour le raycasting
   useImperativeHandle(ref, () => ({
     projectRef,
-  }))
+  }), [])
 
   const texture = useTexture(image || '', (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace
