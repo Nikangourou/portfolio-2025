@@ -1,4 +1,4 @@
-import React, { useRef, forwardRef, useEffect, useState, useImperativeHandle, useMemo, useCallback } from 'react'
+import React, { useRef, forwardRef, useEffect, useState, useImperativeHandle } from 'react'
 import * as THREE from 'three'
 import { useTexture } from '@react-three/drei'
 import { useStore } from '@/stores/store'
@@ -9,17 +9,8 @@ import { useContentTexture, useContentText } from '@/utils/contentLoader'
 import projectsData from '@/data/projects.json'
 import { useGridConfig } from '@/hooks/useGridConfig'
 
-// Fonction de comparaison personnalisée pour React.memo
-const arePropsEqual = (prevProps, nextProps) => {
-  // Comparer uniquement les props importantes, ignorer les positions/rotations qui changent constamment
-  return (
-    prevProps.gridPosition === nextProps.gridPosition &&
-    prevProps.image === nextProps.image
-  )
-}
-
-const Project = React.memo(forwardRef(function Project(
-  { gridPosition, initialPosition, initialRotation, image },
+const Project = forwardRef(function Project(
+  { gridPosition, initialPosition, initialRotation, camera, image, project },
   ref,
 ) {
   const frontMeshRef = useRef(null)
@@ -28,78 +19,8 @@ const Project = React.memo(forwardRef(function Project(
   const frontMaterialRef = useRef(null)
   const overlayGroupRef = useRef(null)
 
-  // Variables du store
-  const selectedProject = useStore((state) => state.selectedProject)
-  const currentPage = useStore((state) => state.currentPage)
-  const evenPage = currentPage % 2
-  const isArrangementAnimationComplete = useStore(
-    (state) => state.isArrangementAnimationComplete,
-  )
-  const isProjectsArranged = useStore((state) => state.isProjectsArranged)
-  const setProjectsArranged = useStore((state) => state.setProjectsArranged)
-  const setSelectedProject = useStore((state) => state.setSelectedProject)
-
-  // Utiliser les hooks personnalisés avec mémorisation
-  const { contentTexture, targetFace } = useContentTexture(gridPosition)
-  const { contentText } = useContentText(gridPosition)
-  const gridConfig = useGridConfig()
-  
-  // Mémoriser la taille du projet pour éviter les re-renders
-  const projectSize = useMemo(() => ({ 
-    width: gridConfig.projectSize, 
-    height: gridConfig.projectSize 
-  }), [gridConfig.projectSize])
-
-  // Mémoriser la configuration du grid pour éviter les changements de référence
-  const memoizedGridConfig = useMemo(() => gridConfig, [
-    gridConfig.projectSize,
-    gridConfig.cols,
-    gridConfig.rows,
-    gridConfig.gap,
-    gridConfig.isMobile
-  ])
-
-  // Charger la texture avant de l'utiliser dans les logs
-  const texture = useTexture(image || '', (texture) => {
-    texture.colorSpace = THREE.SRGBColorSpace
-    texture.minFilter = THREE.LinearFilter
-    texture.magFilter = THREE.LinearFilter
-  })
-
-  // Log de debug amélioré pour identifier les changements
-  const prevRender = useRef({})
-  if(gridPosition === 1) {
-    const currentRender = {
-      selectedProjectId: selectedProject?.id,
-      currentPage,
-      isProjectsArranged,
-      isArrangementAnimationComplete,
-      hasContentTexture: !!contentTexture,
-      hasTexture: !!texture,
-      gridConfigRef: memoizedGridConfig === prevRender.current.gridConfig,
-      contentTextureRef: contentTexture === prevRender.current.contentTexture,
-      textureRef: texture === prevRender.current.texture,
-      projectSizeRef: projectSize === prevRender.current.projectSize
-    }
-    
-    console.log('Project rendered - causes possibles:', currentRender)
-    console.log('Changes detected:', {
-      gridConfig: memoizedGridConfig !== prevRender.current.gridConfig,
-      contentTexture: contentTexture !== prevRender.current.contentTexture,
-      texture: texture !== prevRender.current.texture,
-      projectSize: projectSize !== prevRender.current.projectSize,
-      contentText: contentText !== prevRender.current.contentText
-    })
-    
-    prevRender.current = {
-      ...currentRender,
-      gridConfig: memoizedGridConfig,
-      contentTexture,
-      texture,
-      projectSize,
-      contentText
-    }
-  }
+  if(gridPosition == 1)
+  console.log('Project rendered')
 
   // Exposer les refs pour le raycasting
   useImperativeHandle(ref, () => ({
@@ -129,55 +50,60 @@ const Project = React.memo(forwardRef(function Project(
     }
   }, [initialPosition, initialRotation]) // Garder les dépendances pour l'initialisation
 
-  // Mémoriser la fonction de clic pour éviter les re-renders
-  const handleMeshClick = useCallback((event) => {
+  const texture = useTexture(image || '', (texture) => {
+    texture.colorSpace = THREE.SRGBColorSpace
+    texture.minFilter = THREE.LinearFilter
+    texture.magFilter = THREE.LinearFilter
+  })
+
+  const selectedProject = useStore((state) => state.selectedProject)
+  const currentPage = useStore((state) => state.currentPage)
+  const evenPage = currentPage % 2
+  const isArrangementAnimationComplete = useStore(
+    (state) => state.isArrangementAnimationComplete,
+  )
+  const isProjectsArranged = useStore((state) => state.isProjectsArranged)
+  const setProjectsArranged = useStore((state) => state.setProjectsArranged)
+  const setSelectedProject = useStore((state) => state.setSelectedProject)
+
+  // Utiliser les hooks personnalisés
+  const { contentTexture, targetFace } = useContentTexture(gridPosition)
+  const { contentText } = useContentText(gridPosition)
+  const gridConfig = useGridConfig()
+  
+  // Utiliser la taille du projet depuis la configuration centralisée
+  const projectSize = { width: gridConfig.projectSize, height: gridConfig.projectSize }
+
+  // Fonction pour gérer le clic et arrêter la propagation
+  const handleMeshClick = (event) => {
     event.stopPropagation()
     // Logique de sélection du projet
     if (!isProjectsArranged) {
       setProjectsArranged(true)
       setSelectedProject(projectsData.projects[gridPosition])
     }
-  }, [isProjectsArranged, setProjectsArranged, setSelectedProject, gridPosition])
+  }
 
-  // Optimiser le useEffect avec mémorisation des dépendances
-  const memoizedEffectDeps = useMemo(() => ({
-    isArrangementAnimationComplete,
-    isProjectsArranged,
-    hasTexture: !!texture,
-    hasContentTexture: !!contentTexture,
-    selectedProjectId: selectedProject?.id,
-    selectedProjectColor: selectedProject?.color?.background,
-    currentPage,
-    evenPage
-  }), [
-    isArrangementAnimationComplete,
-    isProjectsArranged,
-    texture,
-    contentTexture,
-    selectedProject?.id,
-    selectedProject?.color?.background,
-    currentPage,
-    evenPage
-  ])
-
+  // Optimiser le useEffect pour éviter les re-renders inutiles
   useEffect(() => {
     if (!backMaterialRef.current || !frontMaterialRef.current) return
 
     let newMap = null
     let newColor = 'white'
 
-    if (contentTexture && memoizedEffectDeps.isArrangementAnimationComplete) {
+    if (contentTexture && isArrangementAnimationComplete) {
       newMap = contentTexture
     } else if (
       texture &&
-      (!memoizedEffectDeps.isArrangementAnimationComplete || !memoizedEffectDeps.isProjectsArranged)
+      (!isArrangementAnimationComplete || !isProjectsArranged)
     ) {
       newMap = texture
     } else {
-      newColor = memoizedEffectDeps.selectedProjectColor || 'white'
+      newColor = selectedProject?.color?.background || 'white'
     }
 
-    if (memoizedEffectDeps.evenPage || memoizedEffectDeps.currentPage === 0) {
+
+    if (evenPage || currentPage === 0) {
       if (backMaterialRef.current.map !== newMap) {
         backMaterialRef.current.map = newMap
       }
@@ -192,7 +118,7 @@ const Project = React.memo(forwardRef(function Project(
       backMaterialRef.current.needsUpdate = true
     }
     
-    if (!memoizedEffectDeps.evenPage || memoizedEffectDeps.currentPage === 0) {
+    if (!evenPage || currentPage === 0) {
       if (frontMaterialRef.current.map !== newMap) {
         frontMaterialRef.current.map = newMap
       }
@@ -205,7 +131,15 @@ const Project = React.memo(forwardRef(function Project(
       }
       frontMaterialRef.current.needsUpdate = true
     }    
-  }, [memoizedEffectDeps, texture, contentTexture])
+  }, [
+    isArrangementAnimationComplete,
+    isProjectsArranged,
+    texture,
+    contentTexture,
+    targetFace,
+    selectedProject,
+    gridPosition,
+  ])
 
   return (
     <group>
@@ -318,6 +252,6 @@ const Project = React.memo(forwardRef(function Project(
       </group>
     </group>
   )
-}), arePropsEqual)
+})
 
 export default Project
