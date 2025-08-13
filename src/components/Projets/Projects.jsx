@@ -144,15 +144,15 @@ export default function Projects() {
         }
       })
       targetStatesRef.current = newTargetStates
-      rotatingProjectsRef.current = new Set()
-      rotatingBordersRef.current = new Set()
-      animatingProjectsRef.current = new Set()
+      rotatingProjectsRef.current.clear()
+      rotatingBordersRef.current.clear()
+      animatingProjectsRef.current.clear()
       // Nettoyer les refs des bordures
       borderMeshesRef.current = []
       setArrangementAnimationComplete(false)
     } else {
       // Animation séquentielle pour éviter les superpositions
-      animatingProjectsRef.current = new Set()
+      animatingProjectsRef.current.clear()
 
       // Définir les positions cibles immédiatement
       targetStatesRef.current = predefinedPositions.map((pos, index) => ({
@@ -172,7 +172,7 @@ export default function Projects() {
       // Démarrer l'animation des projets dans un ordre aléatoire
       randomOrder.forEach((projectIndex, animationIndex) => {
         setTimeout(() => {
-          animatingProjectsRef.current = new Set([...animatingProjectsRef.current, projectIndex])
+          animatingProjectsRef.current.add(projectIndex)
         }, animationIndex * 100) // 100ms de délai entre chaque projet
       })
 
@@ -187,10 +187,17 @@ export default function Projects() {
   // Effet pour gérer les rotations une fois l'animation terminée
   useEffect(() => {
     if (isArrangementAnimationComplete) {
-      rotatingProjectsRef.current = new Set(projectStatesRef.current.map((_, index) => index))
+      // Vider et repeupler les Sets au lieu de les recréer
+      rotatingProjectsRef.current.clear()
+      projectStatesRef.current.forEach((_, index) => {
+        rotatingProjectsRef.current.add(index)
+      })
 
       // Utiliser les positions mémorisées au lieu de recalculer
-      rotatingBordersRef.current = new Set(borderPositions.map((_, index) => index))
+      rotatingBordersRef.current.clear()
+      borderPositions.forEach((_, index) => {
+        rotatingBordersRef.current.add(index)
+      })
     }
   }, [isArrangementAnimationComplete, borderPositions])
 

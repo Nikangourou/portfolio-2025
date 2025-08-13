@@ -17,9 +17,6 @@ const Project = forwardRef(function Project(
   const frontMaterialRef = useRef(null)
   const projectRef = useRef(null)
 
-  if (gridPosition == 1)
-    console.log('Project rendered')
-
   // Exposer la ref du groupe principal pour le raycasting
   useImperativeHandle(ref, () => ({
     projectRef,
