@@ -10,7 +10,7 @@ import projectsData from '@/data/projects.json'
 import { useGridConfig } from '@/hooks/useGridConfig'
 
 const Project = forwardRef(function Project(
-  { gridPosition, initialPosition, initialRotation, image },
+  { gridPosition, image },
   ref,
 ) {
   const backMaterialRef = useRef(null)
@@ -24,21 +24,6 @@ const Project = forwardRef(function Project(
   useImperativeHandle(ref, () => ({
     projectRef,
   }))
-
-  // Initialiser les positions et rotations du groupe principal une seule fois
-  useEffect(() => {
-    if (projectRef.current && initialPosition && initialRotation) {
-      // Définir les positions et rotations initiales seulement si ce n'est pas déjà fait
-      if (projectRef.current.userData.initialized !== true) {
-        // Positionner le groupe principal
-        projectRef.current.position.set(...initialPosition)
-        projectRef.current.rotation.set(...initialRotation)
-
-        // Marquer comme initialisé pour éviter les réinitialisations
-        projectRef.current.userData.initialized = true
-      }
-    }
-  }, [initialPosition, initialRotation]) // Garder les dépendances pour l'initialisation
 
   const texture = useTexture(image || '', (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace

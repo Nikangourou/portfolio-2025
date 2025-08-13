@@ -1,4 +1,3 @@
-import React from 'react'
 import Project from './Project'
 
 const ProjectList = ({
@@ -21,12 +20,6 @@ const ProjectList = ({
             }
           }}
           gridPosition={i}
-          initialPosition={state.position}
-          initialRotation={[
-            state.rotation[0] + (state.pageRotationX || 0),
-            state.rotation[1],
-            state.rotation[2],
-          ]}
           image={state.project.cover}
         />
       ))}
