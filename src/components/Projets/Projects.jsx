@@ -285,13 +285,12 @@ export default function Projects() {
       />
 
       {!isProjectsArranged && displayedProject && (
-        <ProjectInfoFloating project={displayedProject} isVisible={!!hoveredProject} />
+        <ProjectInfoFloating project={displayedProject} isVisible={hoveredProject} />
       )}
 
       <ProjectList
         projectStates={initialProjectStates}
         projectMeshesRef={projectMeshesRef}
-        camera={camera}
         groupRef={groupRef}
         distance={distance}
       />

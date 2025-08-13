@@ -4,7 +4,6 @@ import Project from './Project'
 const ProjectList = ({
   projectStates,
   projectMeshesRef,
-  camera,
   groupRef,
   distance
 }) => {
@@ -32,9 +31,7 @@ const ProjectList = ({
             state.rotation[1],
             state.rotation[2],
           ]}
-          camera={camera}
           image={state.project.cover}
-          project={state.project}
         />
       ))}
     </group>
