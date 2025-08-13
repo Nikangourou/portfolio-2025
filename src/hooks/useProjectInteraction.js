@@ -39,17 +39,18 @@ export function useProjectInteraction() {
     const tempRaycaster = new THREE.Raycaster()
     tempRaycaster.setFromCamera(pointer, camera)
 
-    // Obtenir tous les meshes valides (front ET back) avec leurs index de projet
+    // Obtenir tous les meshes valides avec leurs index de projet
     const allMeshes = []
 
     projectMeshesRef.current.forEach((projectMeshes, projectIndex) => {
-      if (projectMeshes.front && projectMeshes.front.parent) {
-        projectMeshes.front.updateMatrixWorld(true)
-        allMeshes.push({ mesh: projectMeshes.front, projectIndex })
-      }
-      if (projectMeshes.back && projectMeshes.back.parent) {
-        projectMeshes.back.updateMatrixWorld(true)
-        allMeshes.push({ mesh: projectMeshes.back, projectIndex })
+      if (projectMeshes && projectMeshes.projectRef && projectMeshes.projectRef.children) {
+        // Parcourir les enfants du groupe principal pour trouver les meshes
+        projectMeshes.projectRef.children.forEach((child) => {
+          if (child.isMesh) {
+            child.updateMatrixWorld(true)
+            allMeshes.push({ mesh: child, projectIndex })
+          }
+        })
       }
     })
 

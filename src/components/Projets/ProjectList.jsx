@@ -13,15 +13,11 @@ const ProjectList = ({
         <Project
           key={state.project.id}
           ref={(el) => {
-            if (el?.frontMeshRef?.current && el?.backMeshRef?.current && el?.overlayGroupRef?.current) {
-              // S'assurer que l'objet existe
+            if (el?.projectRef?.current) {
               if (!projectMeshesRef.current[i]) {
-                projectMeshesRef.current[i] = { front: null, back: null, overlayGroupRef: null }
+                projectMeshesRef.current[i] = { projectRef: null }
               }
-              // Assigner les deux meshes et le groupe d'overlays
-              projectMeshesRef.current[i].front = el.frontMeshRef.current
-              projectMeshesRef.current[i].back = el.backMeshRef.current
-              projectMeshesRef.current[i].overlayGroupRef = el.overlayGroupRef.current
+              projectMeshesRef.current[i].projectRef = el.projectRef.current
             }
           }}
           gridPosition={i}

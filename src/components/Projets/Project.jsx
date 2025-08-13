@@ -13,39 +13,34 @@ const Project = forwardRef(function Project(
   { gridPosition, initialPosition, initialRotation, camera, image, project },
   ref,
 ) {
-  const frontMeshRef = useRef(null)
-  const backMeshRef = useRef(null)
   const backMaterialRef = useRef(null)
   const frontMaterialRef = useRef(null)
   const overlayGroupRef = useRef(null)
+  const projectRef = useRef(null)
 
-  if(gridPosition == 1)
-  console.log('Project rendered')
+  if (gridPosition == 1)
+    console.log('Project rendered')
 
-  // Exposer les refs pour le raycasting
+  // Exposer la ref du groupe principal pour le raycasting
   useImperativeHandle(ref, () => ({
-    frontMeshRef,
-    backMeshRef,
-    overlayGroupRef
+    projectRef,
   }))
 
-  // Initialiser les positions et rotations des meshes une seule fois
+  // Initialiser les positions et rotations du groupe principal une seule fois
   useEffect(() => {
-    if (frontMeshRef.current && backMeshRef.current && overlayGroupRef.current && initialPosition && initialRotation) {
+    if (projectRef.current && overlayGroupRef.current && initialPosition && initialRotation) {
       // Définir les positions et rotations initiales seulement si ce n'est pas déjà fait
-      if (frontMeshRef.current.userData.initialized !== true) {
-        frontMeshRef.current.position.set(...initialPosition)
-        backMeshRef.current.position.set(...initialPosition)
-        overlayGroupRef.current.position.set(...initialPosition)
-        
-        frontMeshRef.current.rotation.set(...initialRotation)
-        backMeshRef.current.rotation.set(initialRotation[0], initialRotation[1] + Math.PI, initialRotation[2])
-        overlayGroupRef.current.rotation.set(...initialRotation)
-        
+      if (projectRef.current.userData.initialized !== true) {
+        // Positionner le groupe principal
+        projectRef.current.position.set(...initialPosition)
+        projectRef.current.rotation.set(...initialRotation)
+
+        // S'assurer que le groupe des overlays est positionné relativement au groupe principal
+        overlayGroupRef.current.position.set(0, 0, 0)
+        overlayGroupRef.current.rotation.set(0, 0, 0)
+
         // Marquer comme initialisé pour éviter les réinitialisations
-        frontMeshRef.current.userData.initialized = true
-        backMeshRef.current.userData.initialized = true
-        overlayGroupRef.current.userData.initialized = true
+        projectRef.current.userData.initialized = true
       }
     }
   }, [initialPosition, initialRotation]) // Garder les dépendances pour l'initialisation
@@ -70,7 +65,7 @@ const Project = forwardRef(function Project(
   const { contentTexture, targetFace } = useContentTexture(gridPosition)
   const { contentText } = useContentText(gridPosition)
   const gridConfig = useGridConfig()
-  
+
   // Utiliser la taille du projet depuis la configuration centralisée
   const projectSize = { width: gridConfig.projectSize, height: gridConfig.projectSize }
 
@@ -117,7 +112,7 @@ const Project = forwardRef(function Project(
 
       backMaterialRef.current.needsUpdate = true
     }
-    
+
     if (!evenPage || currentPage === 0) {
       if (frontMaterialRef.current.map !== newMap) {
         frontMaterialRef.current.map = newMap
@@ -130,7 +125,7 @@ const Project = forwardRef(function Project(
         frontMaterialRef.current.color.set(newColor)
       }
       frontMaterialRef.current.needsUpdate = true
-    }    
+    }
   }, [
     isArrangementAnimationComplete,
     isProjectsArranged,
@@ -142,31 +137,30 @@ const Project = forwardRef(function Project(
   ])
 
   return (
-    <group>
-      <mesh
-        ref={frontMeshRef}
-        onClick={handleMeshClick}
-      >
-        <planeGeometry args={[projectSize.width, projectSize.height]} />
-        <meshBasicMaterial
-          ref={frontMaterialRef}
-          side={THREE.FrontSide}
-          toneMapped={true}
-        />
-      </mesh>
-      <mesh
-        ref={backMeshRef}
-        onClick={handleMeshClick}
-        rotation-y={Math.PI}
-      >
-        <planeGeometry args={[projectSize.width, projectSize.height]} />
-        <meshBasicMaterial
-          ref={backMaterialRef}
-          side={THREE.FrontSide}
-          toneMapped={true}
-        />
-      </mesh>
-      
+    <group ref={projectRef}>
+   
+        <mesh
+          onClick={handleMeshClick}
+        >
+          <planeGeometry args={[projectSize.width, projectSize.height]} />
+          <meshBasicMaterial
+            ref={frontMaterialRef}
+            side={THREE.FrontSide}
+            toneMapped={true}
+          />
+        </mesh>
+        <mesh
+          onClick={handleMeshClick}
+          rotation-y={Math.PI}
+        >
+          <planeGeometry args={[projectSize.width, projectSize.height]} />
+          <meshBasicMaterial
+            ref={backMaterialRef}
+            side={THREE.FrontSide}
+            toneMapped={true}
+          />
+        </mesh>
+
       {/* Groupe séparé pour les overlays qui suivra les animations */}
       <group ref={overlayGroupRef}>
         {isArrangementAnimationComplete && (
@@ -221,9 +215,9 @@ const Project = forwardRef(function Project(
                   }
                   projectSize={projectSize}
                 >
-                  <a 
-                    href={selectedProject?.link} 
-                    target="_blank" 
+                  <a
+                    href={selectedProject?.link}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className={styles.linkButton}
                   >
@@ -232,7 +226,7 @@ const Project = forwardRef(function Project(
                 </ProjectOverlay>
               </>
             )}
-            <Navigation 
+            <Navigation
               selectedProject={selectedProject}
               currentPage={currentPage}
               gridPosition={gridPosition}
