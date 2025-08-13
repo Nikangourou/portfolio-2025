@@ -151,41 +151,8 @@ export function useProjectAnimations() {
     })
   }
 
-  const animateGroupRotation = (
-    groupRef,
-    rotationY,
-    isProjectsArranged,
-    baseSpeed = 3,
-    delta = 0.016
-  ) => {
-    if (!groupRef.current) return
-
-    const currentRotation = groupRef.current.rotation.y
-    const targetRotation = isProjectsArranged ? 0 : rotationY
-
-    // Normaliser les rotations entre -π et π
-    const normalizedCurrent =
-      ((currentRotation + Math.PI) % (2 * Math.PI)) - Math.PI
-    const normalizedTarget =
-      ((targetRotation + Math.PI) % (2 * Math.PI)) - Math.PI
-
-    // Trouver le chemin le plus court vers la rotation cible
-    let shortestPath = normalizedTarget - normalizedCurrent
-    if (Math.abs(shortestPath) > Math.PI) {
-      shortestPath =
-        shortestPath > 0
-          ? shortestPath - 2 * Math.PI
-          : shortestPath + 2 * Math.PI
-    }
-
-    const adaptiveSpeed = Math.min(baseSpeed * delta, 0.1)
-    groupRef.current.rotation.y =
-      currentRotation + shortestPath * adaptiveSpeed
-  }
-
   return {
     animateProjects,
-    animateBorders,
-    animateGroupRotation,
+    animateBorders
   }
 } 

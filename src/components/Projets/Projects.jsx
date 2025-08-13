@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react'
 import { useThree } from '@react-three/fiber'
+import { useSpring, animated } from '@react-spring/three'
 import ProjectList from './ProjectList'
 import ProjectBorders from './ProjectBorders'
 import projectsData from '../../data/projects.json'
@@ -8,7 +9,6 @@ import { useStore } from '@/stores/store'
 import useThemeStore from '@/stores/themeStore'
 import ProjectInfoFloating from '../Interface/ProjectInfoFloating'
 import { useProjectPositions } from '@/hooks/useProjectPositions'
-import { useRotationControl } from '@/hooks/useRotationControl'
 import { useProjectInteraction } from '@/hooks/useProjectInteraction'
 import { useProjectAnimations } from '@/hooks/useProjectAnimations'
 import { useResizeCallback } from '@/hooks/useResize'
@@ -57,9 +57,6 @@ export default function Projects() {
     borderStatesRef.current = borderStates
   }, [borderStates])
 
-  // Hook pour la gestion des contrôles de rotation
-  const { rotationY, setRotationY } = useRotationControl()
-
   // Hook pour la gestion des interactions
   const {
     hoveredProject,
@@ -72,7 +69,7 @@ export default function Projects() {
   const borderMeshesRef = useRef([])
 
   // Hook pour la gestion des animations
-  const { animateProjects, animateBorders, animateGroupRotation } = useProjectAnimations()
+  const { animateProjects, animateBorders } = useProjectAnimations()
 
   const baseSpeed = 3
 
@@ -222,15 +219,6 @@ export default function Projects() {
       delta
     )
 
-    // Animer la rotation du groupe
-    animateGroupRotation(
-      groupRef,
-      rotationY,
-      isProjectsArranged,
-      baseSpeed,
-      delta
-    )
-
     // Raycasting pour détecter le projet sous le curseur
     performRaycasting(projectStatesRef.current, isProjectsArranged, groupRef)
   })
@@ -259,13 +247,6 @@ export default function Projects() {
 
     projectStatesRef.current = initialStates
     setInitialProjectStates(initialStates) // Pour déclencher le premier render
-  }, [])
-
-  // Initialiser la rotation du groupe au montage du composant
-  useEffect(() => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y = rotationY
-    }
   }, [])
 
   useEffect(() => {
