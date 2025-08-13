@@ -10,12 +10,11 @@ import projectsData from '@/data/projects.json'
 import { useGridConfig } from '@/hooks/useGridConfig'
 
 const Project = forwardRef(function Project(
-  { gridPosition, initialPosition, initialRotation, camera, image, project },
+  { gridPosition, initialPosition, initialRotation, image },
   ref,
 ) {
   const backMaterialRef = useRef(null)
   const frontMaterialRef = useRef(null)
-  const overlayGroupRef = useRef(null)
   const projectRef = useRef(null)
 
   if (gridPosition == 1)
@@ -28,16 +27,12 @@ const Project = forwardRef(function Project(
 
   // Initialiser les positions et rotations du groupe principal une seule fois
   useEffect(() => {
-    if (projectRef.current && overlayGroupRef.current && initialPosition && initialRotation) {
+    if (projectRef.current && initialPosition && initialRotation) {
       // Définir les positions et rotations initiales seulement si ce n'est pas déjà fait
       if (projectRef.current.userData.initialized !== true) {
         // Positionner le groupe principal
         projectRef.current.position.set(...initialPosition)
         projectRef.current.rotation.set(...initialRotation)
-
-        // S'assurer que le groupe des overlays est positionné relativement au groupe principal
-        overlayGroupRef.current.position.set(0, 0, 0)
-        overlayGroupRef.current.rotation.set(0, 0, 0)
 
         // Marquer comme initialisé pour éviter les réinitialisations
         projectRef.current.userData.initialized = true
@@ -162,7 +157,7 @@ const Project = forwardRef(function Project(
         </mesh>
 
       {/* Groupe séparé pour les overlays qui suivra les animations */}
-      <group ref={overlayGroupRef}>
+      <group>
         {isArrangementAnimationComplete && (
           <>
             {currentPage === 1 && (
