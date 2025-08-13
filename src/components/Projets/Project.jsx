@@ -10,7 +10,7 @@ import projectsData from '@/data/projects.json'
 import { useGridConfig } from '@/hooks/useGridConfig'
 
 const Project = forwardRef(function Project(
-  { gridPosition, initialPosition, initialRotation, camera, image, project, onProjectHover, onProjectUnhover },
+  { gridPosition, initialPosition, initialRotation, camera, image, project },
   ref,
 ) {
   const frontMeshRef = useRef(null)
@@ -18,6 +18,9 @@ const Project = forwardRef(function Project(
   const backMaterialRef = useRef(null)
   const frontMaterialRef = useRef(null)
   const overlayGroupRef = useRef(null)
+
+  // if(gridPosition == 1)
+  // console.log('Project rendered')
 
   // Exposer les refs pour le raycasting
   useImperativeHandle(ref, () => ({
@@ -79,24 +82,6 @@ const Project = forwardRef(function Project(
       setProjectsArranged(true)
       setSelectedProject(projectsData.projects[gridPosition])
     }
-  }
-
-  // Fonction pour gérer le hover et arrêter la propagation
-  const handlePointerOver = (event) => {
-    // Désactiver le hover sur mobile
-    if (gridConfig.isMobile) return
-    
-    event.stopPropagation()
-    onProjectHover()
-  }
-
-  // Fonction pour gérer le unhover et arrêter la propagation
-  const handlePointerOut = (event) => {
-    // Désactiver le hover sur mobile
-    if (gridConfig.isMobile) return
-    
-    event.stopPropagation()
-    onProjectUnhover()
   }
 
   // Optimiser le useEffect pour éviter les re-renders inutiles
@@ -161,10 +146,6 @@ const Project = forwardRef(function Project(
       <mesh
         ref={frontMeshRef}
         onClick={handleMeshClick}
-        {...(!gridConfig.isMobile && {
-          onPointerOver: handlePointerOver,
-          onPointerOut: handlePointerOut
-        })}
       >
         <planeGeometry args={[projectSize.width, projectSize.height]} />
         <meshBasicMaterial
@@ -176,10 +157,6 @@ const Project = forwardRef(function Project(
       <mesh
         ref={backMeshRef}
         onClick={handleMeshClick}
-        {...(!gridConfig.isMobile && {
-          onPointerOver: handlePointerOver,
-          onPointerOut: handlePointerOut
-        })}
         rotation-y={Math.PI}
       >
         <planeGeometry args={[projectSize.width, projectSize.height]} />

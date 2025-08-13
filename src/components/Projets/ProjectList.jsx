@@ -5,8 +5,6 @@ const ProjectList = ({
   projectStates,
   projectMeshesRef,
   camera,
-  handleProjectHover,
-  setHoveredProject,
   groupRef,
   distance
 }) => {
@@ -37,8 +35,6 @@ const ProjectList = ({
           camera={camera}
           image={state.project.cover}
           project={state.project}
-          onProjectHover={() => handleProjectHover(state.project)}
-          onProjectUnhover={() => setHoveredProject(null)}
         />
       ))}
     </group>

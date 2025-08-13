@@ -14,6 +14,8 @@ import { useProjectAnimations } from '@/hooks/useProjectAnimations'
 import { useResizeCallback } from '@/hooks/useResize'
 
 export default function Projects() {
+  // console.log('Projects rendered')
+
   const groupRef = useRef(null)
   const { camera} = useThree()
   const isProjectsArranged = useStore((state) => state.isProjectsArranged)
@@ -45,7 +47,6 @@ export default function Projects() {
   const {
     predefinedPositions,
     borderStates,
-    setBorderStates,
     projectSize,
     distance,
     borderPositions
@@ -62,10 +63,8 @@ export default function Projects() {
   // Hook pour la gestion des interactions
   const {
     hoveredProject,
-    setHoveredProject,
     displayedProject,
     projectMeshesRef,
-    handleProjectHover,
     performRaycasting
   } = useProjectInteraction()
 
@@ -293,8 +292,6 @@ export default function Projects() {
         projectStates={initialProjectStates}
         projectMeshesRef={projectMeshesRef}
         camera={camera}
-        handleProjectHover={handleProjectHover}
-        setHoveredProject={setHoveredProject}
         groupRef={groupRef}
         distance={distance}
       />

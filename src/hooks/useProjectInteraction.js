@@ -24,11 +24,6 @@ export function useProjectInteraction() {
     }
   }, [hoveredProject])
 
-  // Fonction pour gérer le hover avec transition forcée
-  const handleProjectHover = (project) => {
-    setHoveredProject(project)
-  }
-
   // Fonction pour gérer le raycasting
   const performRaycasting = (projectStates, isProjectsArranged, groupRef) => {
     if (
@@ -72,7 +67,7 @@ export function useProjectInteraction() {
         if (meshData && projectStates[meshData.projectIndex]) {
           const project = projectStates[meshData.projectIndex].project
           if (!hoveredProject || hoveredProject.id !== project.id) {
-            handleProjectHover(project)
+            setHoveredProject(project)
           }
         }
       } else {
@@ -86,11 +81,9 @@ export function useProjectInteraction() {
 
   return {
     hoveredProject,
-    setHoveredProject,
     displayedProject,
     projectMeshesRef,
     isMobileDevice: gridConfig.isMobile,
-    handleProjectHover,
     performRaycasting,
   }
 } 
