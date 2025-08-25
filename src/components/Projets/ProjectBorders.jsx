@@ -1,7 +1,8 @@
 import { useSprings, animated, config } from '@react-spring/three'
 import * as THREE from 'three'
-import { useProjectPositions } from '@/hooks/useProjectPositions'
+import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
 import { useStore } from '@/stores/store'
+import { useMemo } from 'react'
 
 const ProjectBorders = ({
   isProjectsArranged,
@@ -10,7 +11,16 @@ const ProjectBorders = ({
   distance
 }) => {
 
-  const { borderStates } = useProjectPositions()
+  // Récupérer les positions des bordures depuis le store
+  const { borderPositions } = useProjectPositionsStore()
+  
+  // Créer les borderStates avec rotation à partir des positions
+  const borderStates = useMemo(() => {
+    return borderPositions.map((pos) => ({
+      position: pos,
+      rotation: [0, 0, 0],
+    }))
+  }, [borderPositions])
 
   // États du store
   const isArrangementAnimationComplete = useStore(

@@ -2,16 +2,19 @@ import React, { useMemo, useRef, useState, useEffect } from 'react'
 import ProjectList from './ProjectList'
 import ProjectBorders from './ProjectBorders'
 import projectsData from '../../data/projects.json'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { useStore } from '@/stores/store'
 import useThemeStore from '@/stores/themeStore'
 import ProjectInfoFloating from '../Interface/ProjectInfoFloating'
-import { useProjectPositions } from '@/hooks/useProjectPositions'
+import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
+import { useGridConfig } from '@/hooks/useGridConfig'
 import { useProjectInteraction } from '@/hooks/useProjectInteraction'
 
 export default function Projects() {
   // console.log('Projects rendered')
 
+  const { camera } = useThree()
+  const gridConfig = useGridConfig()
   const groupRef = useRef(null)
   const isProjectsArranged = useStore((state) => state.isProjectsArranged)
  
@@ -22,11 +25,27 @@ export default function Projects() {
   const [minDistance, setMinDistance] = useState(2.0)
   const currentTheme = useThemeStore((state) => state.currentTheme)
 
-  // Hook pour la gestion des positions
-  const {
-    projectSize,
-    distance
-  } = useProjectPositions()
+  // Utiliser directement le store pour les positions
+  const { projectSize, recalculateAll } = useProjectPositionsStore()
+
+  // Calculer les positions une seule fois au niveau parent
+  useEffect(() => {
+    recalculateAll(camera, gridConfig)
+  }, [
+    camera.fov,
+    camera.aspect,
+    gridConfig.projectSize,
+    gridConfig.cols,
+    gridConfig.rows,
+    gridConfig.gap,
+    gridConfig.margin,
+    gridConfig.distance,
+    gridConfig.borderColsLeft,
+    gridConfig.borderColsRight,
+    gridConfig.borderRowsTop,
+    gridConfig.borderRowsBottom,
+    recalculateAll
+  ])
 
   // Hook pour la gestion des interactions
   const {
@@ -112,7 +131,7 @@ export default function Projects() {
         isProjectsArranged={isProjectsArranged}
         projectSize={projectSize}
         currentTheme={currentTheme}
-        distance={distance}
+        distance={gridConfig.distance}
       />
 
       {!isProjectsArranged && displayedProject && (
@@ -128,7 +147,7 @@ export default function Projects() {
         projectStates={projectData}
         projectGroupsRef={projectGroupsRef}
         groupRef={groupRef}
-        distance={distance}
+        distance={gridConfig.distance}
       />
     </>
   )

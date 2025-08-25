@@ -8,7 +8,7 @@ import { Navigation } from '@/components/Interface/Interface'
 import ProjectOverlay from './ProjectOverlay'
 import { useContentTexture, useContentText } from '@/utils/contentLoader'
 import projectsData from '@/data/projects.json'
-import { useProjectPositions } from '@/hooks/useProjectPositions'
+import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
 
 const Project = forwardRef(function Project(
   { gridPosition, image, initialPosition, initialRotation },
@@ -42,8 +42,8 @@ const Project = forwardRef(function Project(
     (state) => state.setArrangementAnimationComplete,
   )
 
-  // Obtenir les positions d'arrangement depuis le hook
-  const { predefinedPositions, projectSize } = useProjectPositions()
+  // Obtenir les positions d'arrangement directement depuis le store
+  const { predefinedPositions, projectSize } = useProjectPositionsStore()
 
   // Position cible pour l'arrangement
   const targetArrangedPosition = useMemo(() => {
