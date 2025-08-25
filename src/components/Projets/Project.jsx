@@ -1,18 +1,21 @@
-import React, { useRef, forwardRef, useEffect, useState, useImperativeHandle } from 'react'
+import { useRef, forwardRef, useEffect, useState, useImperativeHandle, useMemo } from 'react'
 import * as THREE from 'three'
 import { useTexture } from '@react-three/drei'
+import { animated, useSpring, config } from '@react-spring/three'
 import { useStore } from '@/stores/store'
 import styles from './Project.module.scss'
 import { Navigation } from '@/components/Interface/Interface'
 import ProjectOverlay from './ProjectOverlay'
 import { useContentTexture, useContentText } from '@/utils/contentLoader'
 import projectsData from '@/data/projects.json'
-import { useGridConfig } from '@/hooks/useGridConfig'
+import { useProjectPositions } from '@/hooks/useProjectPositions'
 
 const Project = forwardRef(function Project(
-  { gridPosition, image },
+  { gridPosition, image, initialPosition, initialRotation },
   ref,
 ) {
+
+  
   const backMaterialRef = useRef(null)
   const frontMaterialRef = useRef(null)
   const projectRef = useRef(null)
@@ -37,14 +40,43 @@ const Project = forwardRef(function Project(
   const isProjectsArranged = useStore((state) => state.isProjectsArranged)
   const setProjectsArranged = useStore((state) => state.setProjectsArranged)
   const setSelectedProject = useStore((state) => state.setSelectedProject)
+  const setArrangementAnimationComplete = useStore(
+    (state) => state.setArrangementAnimationComplete,
+  )
+
+  // Obtenir les positions d'arrangement depuis le hook
+  const { predefinedPositions, projectSize } = useProjectPositions()
+
+  // Position cible pour l'arrangement
+  const targetArrangedPosition = useMemo(() => {
+    return predefinedPositions[gridPosition] || [0, 0, 0]
+  }, [predefinedPositions, gridPosition])
+
+  // Gestion des positions et rotations avec springs
+  const { position, rotation } = useSpring({
+    position: isProjectsArranged ? targetArrangedPosition : (initialPosition || [0, 0, 0]),
+    rotation: isProjectsArranged ? [0, 0, 0] : (initialRotation || [0, 0, 0]),
+    delay: isProjectsArranged ? gridPosition * 100 : gridPosition * 50,
+    config: isProjectsArranged ? config.slow : config.gentle,
+    onRest: () => {
+      // Marquer l'animation comme terminée pour le dernier projet
+      if (isProjectsArranged && gridPosition === projectsData.projects.length - 1) {
+          setArrangementAnimationComplete(true)
+      }
+    }
+  })
+
+  // Spring pour la rotation de page individuelle
+  const { pageRotationX } = useSpring({
+    pageRotationX: (currentPage) * Math.PI,
+    delay: gridPosition * 100, // Délai basé sur la position de la grille
+    config: config.slow
+  })
+
 
   // Utiliser les hooks personnalisés
   const { contentTexture, targetFace } = useContentTexture(gridPosition)
   const { contentText } = useContentText(gridPosition)
-  const gridConfig = useGridConfig()
-
-  // Utiliser la taille du projet depuis la configuration centralisée
-  const projectSize = { width: gridConfig.projectSize, height: gridConfig.projectSize }
 
   // Fonction pour gérer le clic et arrêter la propagation
   const handleMeshClick = (event) => {
@@ -113,32 +145,37 @@ const Project = forwardRef(function Project(
     gridPosition,
   ])
 
-  return (
-    <group ref={projectRef}>
-   
-        <mesh
-          onClick={handleMeshClick}
-        >
-          <planeGeometry args={[projectSize.width, projectSize.height]} />
-          <meshBasicMaterial
-            ref={frontMaterialRef}
-            side={THREE.FrontSide}
-            toneMapped={true}
-          />
-        </mesh>
-        <mesh
-          onClick={handleMeshClick}
-          rotation-y={Math.PI}
-        >
-          <planeGeometry args={[projectSize.width, projectSize.height]} />
-          <meshBasicMaterial
-            ref={backMaterialRef}
-            side={THREE.FrontSide}
-            toneMapped={true}
-          />
-        </mesh>
 
-      {/* Groupe séparé pour les overlays qui suivra les animations */}
+  return (
+    <animated.group 
+      ref={projectRef} 
+      position={position}
+      rotation={rotation}
+    >
+      <animated.group
+        rotation-x={pageRotationX}
+      >
+        <mesh
+          onClick={handleMeshClick}
+        >
+        <planeGeometry args={[projectSize.width, projectSize.height]} />
+        <meshBasicMaterial
+          ref={frontMaterialRef}
+          side={THREE.FrontSide}
+          toneMapped={true}
+        />
+      </mesh>
+      <mesh
+        onClick={handleMeshClick}
+        rotation-y={Math.PI}
+      >
+        <planeGeometry args={[projectSize.width, projectSize.height]} />
+        <meshBasicMaterial
+          ref={backMaterialRef}
+          side={THREE.FrontSide}
+          toneMapped={true}
+        />
+      </mesh>      {/* Groupe séparé pour les overlays qui suivra les animations */}
       <group>
         {isArrangementAnimationComplete && (
           <>
@@ -221,7 +258,8 @@ const Project = forwardRef(function Project(
           </>
         )}
       </group>
-    </group>
+      </animated.group>
+    </animated.group>
   )
 })
 

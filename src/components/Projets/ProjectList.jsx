@@ -21,20 +21,24 @@ const ProjectList = ({
       position={[0, 0, distance]}
       rotation-y={animatedRotationY}
     >
-      {projectStates.map((state, i) => (
-        <Project
-          key={state.project.id}
-          ref={(el) => {
-            if (el?.projectRef?.current) {
-              projectMeshesRef.current[i] = el.projectRef.current
-            } else {
-              projectMeshesRef.current[i] = null
-            }
-          }}
-          gridPosition={i}
-          image={state.project.cover}
-        />
-      ))}
+      {projectStates.map((state, i) => {
+        return (
+          <Project
+            key={state.project.id}
+            ref={(el) => {
+              if (el?.projectRef?.current) {
+                projectMeshesRef.current[i] = el.projectRef.current
+              } else {
+                projectMeshesRef.current[i] = null
+              }
+            }}
+            gridPosition={i}
+            image={state.project.cover}
+            initialPosition={state.initialPosition}
+            initialRotation={state.initialRotation}
+          />
+        )
+      })}
     </animated.group>
   )
 }
