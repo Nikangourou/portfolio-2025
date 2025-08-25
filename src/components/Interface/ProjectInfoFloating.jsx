@@ -3,7 +3,7 @@ import { Html } from '@react-three/drei';
 import { useSpring, animated, config } from '@react-spring/web';
 import styles from './ProjectInfoFloating.module.scss';
 
-export default function ProjectInfoFloating({ project, isVisible = true }) {
+export default function ProjectInfoFloating({ project, isVisible = true, displaySpring, displayApi }) {
   // Animation pour l'opacité et la position
   const [springs, api] = useSpring(() => ({
     opacity: 0,
@@ -19,10 +19,14 @@ export default function ProjectInfoFloating({ project, isVisible = true }) {
     config: config.slow
   }));
 
+  // Utiliser les valeurs d'animation du hook si disponibles
+  const finalSprings = displaySpring && displaySpring.opacity !== undefined ? displaySpring : springs;
+  const finalApi = displayApi || api;
+
   useEffect(() => {
     if (project && isVisible) {
       // Animation d'entrée - tout en même temps
-      api.start({
+      finalApi.start({
         opacity: 1,
         y: 0,
         scale: 1
@@ -40,13 +44,13 @@ export default function ProjectInfoFloating({ project, isVisible = true }) {
         y: 10
       });
       
-      api.start({
+      finalApi.start({
         opacity: 0,
         y: 20,
         scale: 0.95
       });
     }
-  }, [project, isVisible, api, contentApi]);
+  }, [project, isVisible, finalApi, contentApi]);
 
   // Ne pas rendre si pas de projet
   if (!project) return null;
@@ -64,8 +68,10 @@ export default function ProjectInfoFloating({ project, isVisible = true }) {
       <animated.div 
         className={styles.floatingInfo}
         style={{
-          opacity: springs.opacity,
-          transform: springs.y.to(y => `translateY(${y}px) scale(${springs.scale.get()})`)
+          opacity: finalSprings.opacity,
+          transform: finalSprings.y && finalSprings.y.to ? 
+            finalSprings.y.to(y => `translateY(${y}px) scale(${finalSprings.scale && finalSprings.scale.get ? finalSprings.scale.get() : 1})`) :
+            `translateY(0px) scale(1)`
         }}
       >
         <animated.h2 

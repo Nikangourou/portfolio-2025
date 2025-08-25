@@ -40,7 +40,9 @@ export default function Projects() {
     hoveredProject,
     displayedProject,
     projectGroupsRef,
-    performRaycasting
+    performRaycasting,
+    displaySpring,
+    displayApi
   } = useProjectInteraction()
 
   const findValidPosition = (positions = [], maxAttempts = 100) => {
@@ -121,7 +123,12 @@ export default function Projects() {
       />
 
       {!isProjectsArranged && displayedProject && (
-        <ProjectInfoFloating project={displayedProject} isVisible={!!hoveredProject} />
+        <ProjectInfoFloating 
+          project={displayedProject} 
+          isVisible={!!hoveredProject}
+          displaySpring={displaySpring}
+          displayApi={displayApi}
+        />
       )}
 
       <ProjectList

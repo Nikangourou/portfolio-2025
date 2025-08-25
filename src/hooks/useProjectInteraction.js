@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
+import { useSpring } from '@react-spring/web'
 import { useGridConfig } from './useGridConfig'
 
 export function useProjectInteraction() {
@@ -10,19 +11,40 @@ export function useProjectInteraction() {
   const projectGroupsRef = useRef([])
   const gridConfig = useGridConfig()
 
-  // Gérer l'affichage du projet avec animation de sortie
+  // Animation pour l'affichage du projet
+  const [displaySpring, displayApi] = useSpring(() => ({
+    opacity: 0,
+    scale: 0.95,
+    y: 20,
+    config: { tension: 300, friction: 30 },
+    onRest: () => {
+      // Quand l'animation de sortie est terminée, masquer le projet
+      if (!hoveredProject && displayedProject) {
+        setDisplayedProject(null)
+      }
+    }
+  }))
+
+  // Gérer l'affichage du projet avec animation Spring
   useEffect(() => {
     if (hoveredProject) {
-      // Projet survolé : afficher immédiatement
+      // Projet survolé : afficher immédiatement avec animation
       setDisplayedProject(hoveredProject)
+      displayApi.start({
+        opacity: 1,
+        scale: 1,
+        y: 0
+      })
     } else {
-      // Plus de projet survolé : attendre 300ms pour l'animation de sortie
-      const timer = setTimeout(() => {
-        setDisplayedProject(null)
-      }, 300)
-      return () => clearTimeout(timer)
+      // Plus de projet survolé : animation de sortie
+      displayApi.start({
+        opacity: 0,
+        scale: 0.95,
+        y: 20
+      })
+      // Le masquage se fait automatiquement via onRest
     }
-  }, [hoveredProject])
+  }, [hoveredProject, displayApi])
 
   // Fonction pour gérer le raycasting sur les meshes des projets
   const performRaycasting = (projectStates, isProjectsArranged, groupRef) => {
@@ -97,5 +119,7 @@ export function useProjectInteraction() {
     projectGroupsRef,
     isMobileDevice: gridConfig.isMobile,
     performRaycasting,
+    displaySpring,
+    displayApi
   }
 } 
