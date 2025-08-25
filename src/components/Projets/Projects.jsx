@@ -1,5 +1,4 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react'
-import { useThree } from '@react-three/fiber'
 import ProjectList from './ProjectList'
 import ProjectBorders from './ProjectBorders'
 import projectsData from '../../data/projects.json'
@@ -9,28 +8,22 @@ import useThemeStore from '@/stores/themeStore'
 import ProjectInfoFloating from '../Interface/ProjectInfoFloating'
 import { useProjectPositions } from '@/hooks/useProjectPositions'
 import { useProjectInteraction } from '@/hooks/useProjectInteraction'
-import { useResizeCallback } from '@/hooks/useResize'
 
 export default function Projects() {
   // console.log('Projects rendered')
 
   const groupRef = useRef(null)
   const isProjectsArranged = useStore((state) => state.isProjectsArranged)
-  const isArrangementAnimationComplete = useStore(
-    (state) => state.isArrangementAnimationComplete,
-  )
-  
+ 
   // Ref minimal pour le raycasting (ne contient que les données des projets)
   const projectDataRef = useRef([])
   
   // Garder quelques states pour les interactions et l'interface
   const [minDistance, setMinDistance] = useState(2.0)
   const currentTheme = useThemeStore((state) => state.currentTheme)
-  const currentPage = useStore((state) => state.currentPage)
 
   // Hook pour la gestion des positions
   const {
-    predefinedPositions,
     projectSize,
     distance
   } = useProjectPositions()

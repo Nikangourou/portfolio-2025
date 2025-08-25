@@ -56,10 +56,19 @@ const Project = forwardRef(function Project(
     rotation: isProjectsArranged ? [0, 0, 0] : (initialRotation || [0, 0, 0]),
     delay: isProjectsArranged ? gridPosition * 100 : gridPosition * 50,
     config: isProjectsArranged ? config.slow : config.gentle,
-    onRest: () => {
-      // Marquer l'animation comme terminée pour le dernier projet
-      if (isProjectsArranged && gridPosition === projectsData.projects.length - 1) {
-          setArrangementAnimationComplete(true)
+    // onRest: () => {
+    //   // Marquer l'animation comme terminée pour le dernier projet
+    //   if (isProjectsArranged && gridPosition === projectsData.projects.length - 1) {
+    //       setArrangementAnimationComplete(true)
+    //   }
+    // },
+    onChange: (values) => {
+      // Marquer l'animation comme terminée à la moitié pour le dernier projet
+      if (isProjectsArranged && gridPosition === projectsData.projects.length - 1 && targetArrangedPosition) {
+        const progress = values.value.position[0] / targetArrangedPosition[0];
+        if (progress >= 0.3) {
+          setArrangementAnimationComplete(true);
+        }
       }
     }
   })

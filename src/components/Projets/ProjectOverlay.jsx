@@ -1,8 +1,7 @@
 import React from 'react'
 import { Html } from '@react-three/drei'
 import styles from './Project.module.scss'
-import { useStore } from '../../stores/store'
-
+import { useStore } from '@/stores/store'
 
 const ProjectOverlay = ({ condition, children, projectSize }) => {
   if (!condition) return null
