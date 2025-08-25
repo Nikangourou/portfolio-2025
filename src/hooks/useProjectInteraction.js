@@ -7,7 +7,7 @@ export function useProjectInteraction() {
   const { camera, pointer } = useThree()
   const [hoveredProject, setHoveredProject] = useState(null)
   const [displayedProject, setDisplayedProject] = useState(null)
-  const projectMeshesRef = useRef([])
+  const projectGroupsRef = useRef([])
   const gridConfig = useGridConfig()
 
   // Gérer l'affichage du projet avec animation de sortie
@@ -24,49 +24,58 @@ export function useProjectInteraction() {
     }
   }, [hoveredProject])
 
-  // Fonction pour gérer le raycasting
+  // Fonction pour gérer le raycasting sur les meshes des projets
   const performRaycasting = (projectStates, isProjectsArranged, groupRef) => {
     if (
       gridConfig.isMobile ||
       isProjectsArranged ||
-      projectMeshesRef.current.length === 0 ||
+      projectGroupsRef.current.length === 0 ||
       !groupRef.current
     ) {
       return
     }
 
-    // Créer un raycaster temporaire pour éviter les conflits
-    const tempRaycaster = new THREE.Raycaster()
-    tempRaycaster.setFromCamera(pointer, camera)
+    const raycaster = new THREE.Raycaster()
+    raycaster.setFromCamera(pointer, camera)
 
-    // Obtenir tous les meshes valides avec leurs index de projet
+    // Collecter tous les meshes des projets
     const allMeshes = []
-
-    projectMeshesRef.current.forEach((projectGroup, projectIndex) => {
+    
+    projectGroupsRef.current.forEach((projectGroup, projectIndex) => {
       if (projectGroup && projectGroup.children) {
-        // Parcourir les enfants du groupe principal pour trouver les meshes
-        projectGroup.children.forEach((child) => {
-          if (child.isMesh && child.geometry && child.material) {
-            child.updateMatrixWorld(true)
-            allMeshes.push({ mesh: child, projectIndex })
+        // Parcourir récursivement tous les enfants pour trouver les meshes
+        const collectMeshes = (object) => {
+          if (object.isMesh && object.geometry && object.material) {
+            allMeshes.push({ 
+              mesh: object, 
+              projectIndex 
+            })
           }
-        })
+          // Parcourir récursivement les enfants
+          if (object.children) {
+            object.children.forEach(collectMeshes)
+          }
+        }
+        
+        collectMeshes(projectGroup)
       }
     })
 
     if (allMeshes.length > 0) {
-      const intersects = tempRaycaster.intersectObjects(
-        allMeshes.map((item) => item.mesh),
-        false,
+      // Vrai raycasting sur les meshes
+      const intersects = raycaster.intersectObjects(
+        allMeshes.map(item => item.mesh),
+        false
       )
 
       if (intersects.length > 0) {
-        // Trouver l'index du projet du mesh intersecté
+        // Trouver le projet du mesh intersecté
         const intersectedMesh = intersects[0].object
-        const meshData = allMeshes.find((item) => item.mesh === intersectedMesh)
-
+        const meshData = allMeshes.find(item => item.mesh === intersectedMesh)
+        
         if (meshData && projectStates[meshData.projectIndex]) {
           const project = projectStates[meshData.projectIndex].project
+          
           if (!hoveredProject || hoveredProject.id !== project.id) {
             setHoveredProject(project)
           }
@@ -78,7 +87,6 @@ export function useProjectInteraction() {
         }
       }
     } else if (hoveredProject) {
-      // Si aucun mesh n'est disponible, nettoyer le hover
       setHoveredProject(null)
     }
   }
@@ -86,7 +94,7 @@ export function useProjectInteraction() {
   return {
     hoveredProject,
     displayedProject,
-    projectMeshesRef,
+    projectGroupsRef,
     isMobileDevice: gridConfig.isMobile,
     performRaycasting,
   }

@@ -39,7 +39,7 @@ export default function Projects() {
   const {
     hoveredProject,
     displayedProject,
-    projectMeshesRef,
+    projectGroupsRef,
     performRaycasting
   } = useProjectInteraction()
 
@@ -126,7 +126,7 @@ export default function Projects() {
 
       <ProjectList
         projectStates={projectData}
-        projectMeshesRef={projectMeshesRef}
+        projectGroupsRef={projectGroupsRef}
         groupRef={groupRef}
         distance={distance}
       />

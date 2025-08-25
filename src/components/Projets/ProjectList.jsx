@@ -4,7 +4,7 @@ import { useRotationControl } from '@/hooks/useRotationControl'
 
 const ProjectList = ({
   projectStates,
-  projectMeshesRef,
+  projectGroupsRef,
   groupRef,
   distance
 }) => {
@@ -26,11 +26,7 @@ const ProjectList = ({
           <Project
             key={state.project.id}
             ref={(el) => {
-              if (el?.projectRef?.current) {
-                projectMeshesRef.current[i] = el.projectRef.current
-              } else {
-                projectMeshesRef.current[i] = null
-              }
+              projectGroupsRef.current[i] = el
             }}
             gridPosition={i}
             image={state.project.cover}
