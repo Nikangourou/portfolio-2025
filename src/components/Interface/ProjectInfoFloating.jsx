@@ -1,56 +1,58 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Html } from '@react-three/drei';
+import { useSpring, animated, config } from '@react-spring/web';
 import styles from './ProjectInfoFloating.module.scss';
 
 export default function ProjectInfoFloating({ project, isVisible = true }) {
-  const [internalVisible, setInternalVisible] = useState(false);
-  const [shouldRender, setShouldRender] = useState(false);
-  const [currentProject, setCurrentProject] = useState(null);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  // Animation pour l'opacité et la position
+  const [springs, api] = useSpring(() => ({
+    opacity: 0,
+    y: 20,
+    scale: 0.95,
+    config: config.gentle
+  }));
+
+  // Animation pour le contenu (fade in du texte)
+  const [contentSprings, contentApi] = useSpring(() => ({
+    opacity: 0,
+    y: 10,
+    config: config.slow
+  }));
 
   useEffect(() => {
     if (project && isVisible) {
-      if (currentProject && currentProject.id !== project.id) {
-        // Transition entre projets : animation de sortie puis d'entrée
-        setIsTransitioning(true);
-        setInternalVisible(false);
-        
-        setTimeout(() => {
-          setCurrentProject(project);
-          setInternalVisible(true);
-          setIsTransitioning(false);
-        }, 300); // Délai correspondant à la durée de l'animation CSS
-      } else {
-        // Premier affichage ou même projet
-        setShouldRender(true);
-        setCurrentProject(project);
-        const timer = setTimeout(() => setInternalVisible(true), 10);
-        return () => clearTimeout(timer);
-      }
+      // Animation d'entrée - tout en même temps
+      api.start({
+        opacity: 1,
+        y: 0,
+        scale: 1
+      });
+      
+      // Animation du contenu immédiatement
+      contentApi.start({
+        opacity: 1,
+        y: 0
+      });
     } else {
-      setInternalVisible(false);
-      setIsTransitioning(false);
-      // Attendre la fin de l'animation de sortie avant de retirer du DOM
-      const timer = setTimeout(() => {
-        setShouldRender(false);
-        setCurrentProject(null);
-      }, 300);
-      return () => clearTimeout(timer);
+      // Animation de sortie
+      contentApi.start({
+        opacity: 0,
+        y: 10
+      });
+      
+      api.start({
+        opacity: 0,
+        y: 20,
+        scale: 0.95
+      });
     }
-  }, [project, isVisible]);
+  }, [project, isVisible, api, contentApi]);
 
-  // S'assurer que le composant reste affiché pendant les transitions
-  useEffect(() => {
-    if (currentProject) {
-      setShouldRender(true);
-    }
-  }, [currentProject]);
-
-  if (!shouldRender) return null;
+  // Ne pas rendre si pas de projet
+  if (!project) return null;
 
   return (
     <Html
-      className={`${styles.floatingInfo} ${internalVisible ? styles.visible : styles.hidden}`}
       style={{
         pointerEvents: 'none',
         position: 'fixed',
@@ -59,14 +61,57 @@ export default function ProjectInfoFloating({ project, isVisible = true }) {
         zIndex: 100,
       }}
     >
-      <h2 className={styles.title}>{currentProject?.title}</h2>
-      <p className={styles.meta}>{currentProject?.year} — {currentProject?.context}</p>
-      <p className={styles.description}>{currentProject?.description}</p>
-      <div className={styles.techList}>
-        {currentProject?.technologies?.map(tech => (
-          <span key={tech} className={styles.tech}>{tech}</span>
-        ))}
-      </div>
+      <animated.div 
+        className={styles.floatingInfo}
+        style={{
+          opacity: springs.opacity,
+          transform: springs.y.to(y => `translateY(${y}px) scale(${springs.scale.get()})`)
+        }}
+      >
+        <animated.h2 
+          className={styles.title}
+          style={{
+            opacity: contentSprings.opacity,
+            transform: contentSprings.y.to(y => `translateY(${y}px)`)
+          }}
+        >
+          {project.title}
+        </animated.h2>
+        
+        <animated.p 
+          className={styles.meta}
+          style={{
+            opacity: contentSprings.opacity,
+            transform: contentSprings.y.to(y => `translateY(${y}px)`)
+          }}
+        >
+          {project.year} — {project.context}
+        </animated.p>
+        
+        <animated.p 
+          className={styles.description}
+          style={{
+            opacity: contentSprings.opacity,
+            transform: contentSprings.y.to(y => `translateY(${y}px)`)
+          }}
+        >
+          {project.description}
+        </animated.p>
+        
+        <animated.div 
+          className={styles.techList}
+          style={{
+            opacity: contentSprings.opacity,
+            transform: contentSprings.y.to(y => `translateY(${y}px)`)
+          }}
+        >
+          {project.technologies?.map(tech => (
+            <span key={tech} className={styles.tech}>
+              {tech}
+            </span>
+          ))}
+        </animated.div>
+      </animated.div>
     </Html>
   );
 } 
