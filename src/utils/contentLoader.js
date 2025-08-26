@@ -91,14 +91,30 @@ export const getGridPositionsFromSpan = (span, startPosition, currentPosition = 
   return { positions, offsetX: 0, offsetY: 0 }
 }
 
-// Cache global pour éviter de recalculer les Maps à chaque render
+// Cache global optimisé pour éviter de recalculer les Maps à chaque render
 const contentCache = new Map()
+const MAX_CACHE_SIZE = 50 // Augmenter la taille du cache
 
 /**
  * Génère une clé unique pour le cache basée sur le projet et la page
  */
 const getCacheKey = (projectId, page, isMobile) => {
   return `${projectId}-${page}-${isMobile ? 'mobile' : 'desktop'}`
+}
+
+/**
+ * Nettoie le cache de manière plus intelligente
+ */
+const cleanCache = () => {
+  if (contentCache.size > MAX_CACHE_SIZE) {
+    // Garder seulement les 30 entrées les plus récentes
+    const entries = Array.from(contentCache.entries())
+    const toKeep = entries.slice(-30)
+    contentCache.clear()
+    toKeep.forEach(([key, value]) => {
+      contentCache.set(key, value)
+    })
+  }
 }
 
 /**
@@ -110,17 +126,10 @@ export const useContentTexture = (gridPosition) => {
   const currentPage = useStore((state) => state.currentPage)
   const gridConfig = useGridConfig()
   
-  // Nettoyer le cache si il devient trop volumineux
+  // Nettoyer le cache de manière optimisée
   useEffect(() => {
-    if (contentCache.size > 20) {
-      const entries = Array.from(contentCache.entries())
-      // Garder les 10 plus récents
-      contentCache.clear()
-      entries.slice(-10).forEach(([key, value]) => {
-        contentCache.set(key, value)
-      })
-    }
-  }, [selectedProject?.id, currentPage])
+    cleanCache()
+  }, [selectedProject?.id])
 
   // Trouver l'image correspondant à cette position de grille et calculer ses positions
   const { contentImage, validPositions } = useMemo(() => {

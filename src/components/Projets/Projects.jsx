@@ -120,8 +120,8 @@ export default function Projects() {
   }, [projectData])
 
 
-  useFrame((state, delta) => {
-    // Raycasting pour détecter le projet sous le curseur
+  useFrame(() => {
+    // Raycasting optimisé pour détecter le projet sous le curseur
     performRaycasting(projectDataRef.current, isProjectsArranged, groupRef)
   })
 

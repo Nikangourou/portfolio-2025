@@ -1,6 +1,7 @@
 import Project from './Project'
-import { animated, useSpring, config } from '@react-spring/three'
+import { animated, useSpring } from '@react-spring/three'
 import { useRotationControl } from '@/hooks/useRotationControl'
+import { getSpringConfig } from '@/utils/springConfig'
 
 const ProjectList = ({
   projectStates,
@@ -12,7 +13,7 @@ const ProjectList = ({
   
   const { rotationY: animatedRotationY } = useSpring({
     rotationY,
-    config: config.molasses
+    config: getSpringConfig('globalRotation')
   })
 
   return (

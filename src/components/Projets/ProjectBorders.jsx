@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
 import { useStore } from '@/stores/store'
 import { useMemo } from 'react'
+import { getSpringConfig } from '@/utils/springConfig'
 
 const ProjectBorders = ({
   isProjectsArranged,
@@ -33,7 +34,7 @@ const ProjectBorders = ({
     borderStates?.map((_, index) => ({
       rotation: isArrangementAnimationComplete ? [Math.PI, 0, 0] : [0, 0, 0],
       delay: isArrangementAnimationComplete ? Math.random() * 1000 : 0, // Délai aléatoire jusqu'à 1s
-      config: config.slow
+      config: getSpringConfig('projectRotation')
     })) || []
   )
 

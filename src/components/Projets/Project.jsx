@@ -9,6 +9,8 @@ import ProjectOverlay from './ProjectOverlay'
 import { useContentTexture, useContentText } from '@/utils/contentLoader'
 import projectsData from '@/data/projects.json'
 import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
+import { useCachedPlaneGeometry } from './OptimizedGeometry'
+import { getSpringConfig } from '@/utils/springConfig'
 
 const Project = forwardRef(function Project(
   { gridPosition, image, initialPosition, initialRotation },
@@ -45,39 +47,42 @@ const Project = forwardRef(function Project(
   // Obtenir les positions d'arrangement directement depuis le store
   const { predefinedPositions, projectSize } = useProjectPositionsStore()
 
-  // Position cible pour l'arrangement
+  // Géométrie cachée pour éviter la recreation
+  const cachedGeometry = useCachedPlaneGeometry(projectSize.width, projectSize.height)
+
+  // Position cible pour l'arrangement (memoized)
   const targetArrangedPosition = useMemo(() => {
     return predefinedPositions[gridPosition] || [0, 0, 0]
   }, [predefinedPositions, gridPosition])
 
-  // Gestion des positions et rotations avec springs
+  // Delays précalculés pour éviter les recalculs
+  const animationDelays = useMemo(() => ({
+    arrangement: isProjectsArranged ? gridPosition * 100 : gridPosition * 50,
+    pageRotation: gridPosition * 100
+  }), [gridPosition, isProjectsArranged])
+
+  // Gestion des positions et rotations avec springs - OPTIMISÉE
   const { position, rotation } = useSpring({
     position: isProjectsArranged ? targetArrangedPosition : (initialPosition || [0, 0, 0]),
     rotation: isProjectsArranged ? [0, 0, 0] : (initialRotation || [0, 0, 0]),
-    delay: isProjectsArranged ? gridPosition * 100 : gridPosition * 50,
-    config: isProjectsArranged ? config.slow : config.gentle,
-    // onRest: () => {
-    //   // Marquer l'animation comme terminée pour le dernier projet
-    //   if (isProjectsArranged && gridPosition === projectsData.projects.length - 1) {
-    //       setArrangementAnimationComplete(true)
-    //   }
-    // },
+    delay: animationDelays.arrangement,
+    config: isProjectsArranged ? getSpringConfig('arrangement') : getSpringConfig('smooth'),
     onChange: (values) => {
-      // Marquer l'animation comme terminée à la moitié pour le dernier projet
-      if (isProjectsArranged && gridPosition === projectsData.projects.length - 1 && targetArrangedPosition) {
-        const progress = values.value.position[0] / targetArrangedPosition[0];
-        if (progress >= 0.3) {
+      // Marquer l'animation comme terminée à la moitié pour le dernier projet - OPTIMISÉ
+      if (isProjectsArranged && gridPosition === projectsData.projects.length - 1 && targetArrangedPosition[0] !== 0) {
+        const progress = Math.abs(values.value.position[0] / targetArrangedPosition[0]);
+        if (progress >= 0.3 && !isArrangementAnimationComplete) {
           setArrangementAnimationComplete(true);
         }
       }
     }
   })
 
-  // Spring pour la rotation de page individuelle
+  // Spring pour la rotation de page individuelle - OPTIMISÉE
   const { pageRotationX } = useSpring({
     pageRotationX: (currentPage) * Math.PI,
-    delay: gridPosition * 100, // Délai basé sur la position de la grille
-    config: config.slow
+    delay: animationDelays.pageRotation,
+    config: getSpringConfig('projectRotation')
   })
 
 
@@ -113,43 +118,43 @@ const Project = forwardRef(function Project(
       newColor = selectedProject?.color?.background || 'white'
     }
 
+    // Optimisation : vérifier si les valeurs ont vraiment changé avant de mettre à jour
+    const backMaterial = backMaterialRef.current
+    const frontMaterial = frontMaterialRef.current
+    
+    const backNeedsUpdate = (
+      backMaterial.map !== newMap || 
+      backMaterial.color.getHexString() !== newColor.replace('#', '')
+    )
+    
+    const frontNeedsUpdate = (
+      frontMaterial.map !== newMap || 
+      frontMaterial.color.getHexString() !== newColor.replace('#', '')
+    )
 
     if (evenPage || currentPage === 0) {
-      if (backMaterialRef.current.map !== newMap) {
-        backMaterialRef.current.map = newMap
+      if (backNeedsUpdate) {
+        backMaterial.map = newMap
+        backMaterial.color.set(newColor)
+        backMaterial.needsUpdate = true
       }
-
-      if (
-        backMaterialRef.current.color.getHexString() !==
-        newColor.replace('#', '')
-      ) {
-        backMaterialRef.current.color.set(newColor)
-      }
-
-      backMaterialRef.current.needsUpdate = true
     }
 
     if (!evenPage || currentPage === 0) {
-      if (frontMaterialRef.current.map !== newMap) {
-        frontMaterialRef.current.map = newMap
+      if (frontNeedsUpdate) {
+        frontMaterial.map = newMap
+        frontMaterial.color.set(newColor)
+        frontMaterial.needsUpdate = true
       }
-
-      if (
-        frontMaterialRef.current.color.getHexString() !==
-        newColor.replace('#', '')
-      ) {
-        frontMaterialRef.current.color.set(newColor)
-      }
-      frontMaterialRef.current.needsUpdate = true
     }
   }, [
     isArrangementAnimationComplete,
     isProjectsArranged,
     texture,
     contentTexture,
-    targetFace,
-    selectedProject,
-    gridPosition,
+    selectedProject?.color?.background,
+    currentPage,
+    evenPage
   ])
 
 
@@ -165,7 +170,7 @@ const Project = forwardRef(function Project(
         <mesh
           onClick={handleMeshClick}
         >
-        <planeGeometry args={[projectSize.width, projectSize.height]} />
+        <primitive object={cachedGeometry} />
         <meshBasicMaterial
           ref={frontMaterialRef}
           side={THREE.FrontSide}
@@ -176,7 +181,7 @@ const Project = forwardRef(function Project(
         onClick={handleMeshClick}
         rotation-y={Math.PI}
       >
-        <planeGeometry args={[projectSize.width, projectSize.height]} />
+        <primitive object={cachedGeometry} />
         <meshBasicMaterial
           ref={backMaterialRef}
           side={THREE.FrontSide}
