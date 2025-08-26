@@ -11,8 +11,8 @@ export const optimizedSpringConfigs = {
   
   // Configuration pour les animations d'arrangement
   arrangement: {
-    tension: 180,
-    friction: 25,
+    tension: 200,
+    friction: 50,
     mass: 1,
   },
   

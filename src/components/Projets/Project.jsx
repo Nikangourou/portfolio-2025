@@ -57,7 +57,7 @@ const Project = forwardRef(function Project(
 
   // Delays précalculés pour éviter les recalculs
   const animationDelays = useMemo(() => ({
-    arrangement: isProjectsArranged ? gridPosition * 100 : gridPosition * 50,
+    arrangement: isProjectsArranged ? gridPosition * 50 : Math.random() * 500,
     pageRotation: gridPosition * 100
   }), [gridPosition, isProjectsArranged])
 
@@ -71,7 +71,7 @@ const Project = forwardRef(function Project(
       // Marquer l'animation comme terminée à la moitié pour le dernier projet - OPTIMISÉ
       if (isProjectsArranged && gridPosition === projectsData.projects.length - 1 && targetArrangedPosition[0] !== 0) {
         const progress = Math.abs(values.value.position[0] / targetArrangedPosition[0]);
-        if (progress >= 0.3 && !isArrangementAnimationComplete) {
+        if (progress >= 0.7 && !isArrangementAnimationComplete) {
           setArrangementAnimationComplete(true);
         }
       }
