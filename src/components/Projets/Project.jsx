@@ -63,8 +63,11 @@ const Project = forwardRef(function Project(
 
   // Gestion des positions et rotations avec springs - OPTIMISÉE
   const { position, rotation } = useSpring({
-    position: isProjectsArranged ? targetArrangedPosition : (initialPosition || [0, 0, 0]),
-    rotation: isProjectsArranged ? [0, 0, 0] : (initialRotation || [0, 0, 0]),
+    from: { position: [0, 0, 20], rotation: [0, 0, 0] }, // Commencer à l'origine pour tous les projets
+    to: {
+      position: isProjectsArranged ? targetArrangedPosition : (initialPosition || [0, 0, 0]),
+      rotation: isProjectsArranged ? [0, 0, 0] : (initialRotation || [0, 0, 0])
+    },
     delay: animationDelays.arrangement,
     config: isProjectsArranged ? getSpringConfig('arrangement') : getSpringConfig('smooth'),
     onChange: (values) => {
