@@ -664,7 +664,7 @@
       "cover": "/images/Wanderlost/wanderlost.webp",
       "color": {
         "background": "#071A33",
-        "text": "#717C8B"
+        "text": "#B2C5DD"
       },
       "contents": [
         {
@@ -757,8 +757,8 @@
       "link": "https://www.kfc.fr/origins#",
       "cover": "/images/KFC/KFC.webp",
       "color": {
-        "background": "#332D2D",
-        "text": "#BB4755"
+        "background": "#332526",
+        "text": "#D23542"
       },
       "contents": [
         {
@@ -1348,8 +1348,8 @@
       "link": "https://vraiment.netlify.app/",
       "cover": "/images/Vraiment/vraiment.webp",
       "color": {
-        "background": "#252633",
-        "text": "#6264AC"
+        "background": "#131651",
+        "text": "#EDEAE1"
       },
       "contents": [
         {

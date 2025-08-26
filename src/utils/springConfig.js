@@ -4,7 +4,7 @@ import { config } from '@react-spring/three'
 export const optimizedSpringConfigs = {
   // Configuration rapide et fluide pour les animations de base
   smooth: {
-    tension: 280,
+    tension: 200,
     friction: 35,
     mass: 0.8,
   },
