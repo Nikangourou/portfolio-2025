@@ -4,6 +4,42 @@ import { createTextureWithBackground, configureTexture } from './textureUtils'
 import { useGridConfig } from '../hooks/useGridConfig'
 
 /**
+ * Utilitaire pour obtenir l'URL appropriée selon le type d'appareil
+ * @param {string|object} url - URL simple ou objet avec propriétés desktop/mobile
+ * @param {boolean} isMobile - Indique si l'appareil est mobile
+ * @returns {string} URL appropriée
+ */
+const getAdaptiveUrl = (url, isMobile) => {
+  // Si c'est un objet avec desktop/mobile, retourner l'URL appropriée
+  if (typeof url === 'object' && url !== null) {
+    if (url.desktop !== undefined && url.mobile !== undefined) {
+      return isMobile ? url.mobile : url.desktop
+    }
+  }
+  
+  // Sinon, retourner l'URL telle quelle (rétrocompatibilité)
+  return url
+}
+
+/**
+ * Utilitaire pour obtenir le span approprié selon le type d'appareil
+ * @param {string|object} span - Span simple ou objet avec propriétés desktop/mobile
+ * @param {boolean} isMobile - Indique si l'appareil est mobile
+ * @returns {string} Span approprié
+ */
+const getAdaptiveSpan = (span, isMobile) => {
+  // Si c'est un objet avec desktop/mobile, retourner le span approprié
+  if (typeof span === 'object' && span !== null) {
+    if (span.desktop !== undefined && span.mobile !== undefined) {
+      return isMobile ? span.mobile : span.desktop
+    }
+  }
+  
+  // Sinon, retourner le span tel quel (rétrocompatibilité)
+  return span
+}
+
+/**
  * Détermine les positions de grille à affecter en fonction du span
  * @param {string} span - Span du contenu (ex: "2-2", "3-2")
  * @param {number} startPosition - Position de départ (valeur position du JSON)
@@ -53,7 +89,6 @@ export const getGridPositionsFromSpan = (span, startPosition, currentPosition = 
     // Calculer les offsets pour cette position spécifique
     let offsetX, offsetY
 
-    
     switch (width) {
       case 1:
         offsetX = 0
@@ -151,11 +186,12 @@ export const useContentTexture = (gridPosition) => {
       const offsetCache = new Map()
       
       for (const image of currentContent.images) {
-        const allPositions = getGridPositionsFromSpan(image.span, image.position, null, gridConfig)
+        const adaptiveSpan = getAdaptiveSpan(image.span, gridConfig.isMobile)
+        const allPositions = getGridPositionsFromSpan(adaptiveSpan, image.position, null, gridConfig)
         allPositions.positions.forEach(pos => {
           imageMap.set(pos, image)
           // Calculer et cacher les offsets pour cette position spécifique
-          const positionOffsets = getGridPositionsFromSpan(image.span, image.position, pos, gridConfig)
+          const positionOffsets = getGridPositionsFromSpan(adaptiveSpan, image.position, pos, gridConfig)
           offsetCache.set(pos, positionOffsets)
         })
       }
@@ -169,8 +205,8 @@ export const useContentTexture = (gridPosition) => {
     if (foundImage) {
       const validPositions = cachedData.offsetCache.get(gridPosition)
       const contentImage = {
-        url: foundImage.url,
-        span: foundImage.span,
+        url: getAdaptiveUrl(foundImage.url, gridConfig.isMobile),
+        span: getAdaptiveSpan(foundImage.span, gridConfig.isMobile),
         position: foundImage.position
       }
       return { contentImage, validPositions }
