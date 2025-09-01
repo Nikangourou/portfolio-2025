@@ -62,7 +62,7 @@ export const getGridPositionsFromSpan = (span, startPosition, currentPosition = 
         offsetX = relativeCol === 0 ? -0.25 : 0.25
         break
       case 4:
-        offsetX = (1 / width) * (relativeCol - 1) - 0.14
+        offsetX = (1 / width) * (relativeCol - 1) - (1 / 8)
         break
       default:
         offsetX = (1 / width) * (relativeCol - 1)

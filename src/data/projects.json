@@ -1247,7 +1247,7 @@
           "images": [
             {
               "url": "/images/Presage/end.webp",
-              "span": "4-3",
+              "span": "4-2",
               "position": {
                 "desktop": 0,
                 "mobile": 0
@@ -1258,7 +1258,7 @@
             {
               "text": "Environment changes based on players' previous actions.",
               "position": {
-                "desktop": 13,
+                "desktop": 12,
                 "mobile": 10
               }
             }
