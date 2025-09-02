@@ -1437,15 +1437,15 @@
               "span": "1-2",
               "position": {
                 "desktop": 6,
-                "mobile": 6
+                "mobile": 1
               }
             },
             {
               "url": "/images/Vraiment/i3.webp",
               "span": "1-2",
               "position": {
-                "desktop": 2,
-                "mobile": 2
+                "desktop": 1,
+                "mobile": 7
               }
             },
             {
@@ -1462,13 +1462,13 @@
               "text": "A player isolates themselves and describes a memory.",
               "position": {
                 "desktop": 10,
-                "mobile": 10
+                "mobile": 9
               }
             },  {
               "text": "AI generates 2 images of the memory, one true and one false based on the true one.",
               "position": {
                 "desktop": 3,
-                "mobile": 4
+                "mobile": 2
               }
             }
           ]
