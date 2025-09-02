@@ -1,12 +1,61 @@
 import * as THREE from 'three'
 
+// Cache global pour les textures par URL et couleur de fond
+const textureCache = new Map()
+const MAX_CACHE_SIZE = 100
+
 /**
- * Remplace les pixels transparents d'une image par une couleur de fond
+ * Nettoie le cache quand il devient trop volumineux
+ */
+const cleanTextureCache = () => {
+  if (textureCache.size > MAX_CACHE_SIZE) {
+    // Supprimer les 20 entrées les plus anciennes
+    const entries = Array.from(textureCache.entries())
+    const toDelete = entries.slice(0, 20)
+    toDelete.forEach(([key]) => {
+      const cachedTexture = textureCache.get(key)
+      if (cachedTexture?.texture?.dispose) {
+        cachedTexture.texture.dispose()
+      }
+      textureCache.delete(key)
+    })
+  }
+}
+
+/**
+ * Génère une clé unique pour le cache basée sur l'URL, la couleur de fond et optionnellement le projet
+ */
+const getCacheKey = (imageUrl, backgroundColor, projectId = null) => {
+  return projectId ? `${projectId}:${imageUrl}#${backgroundColor}` : `${imageUrl}#${backgroundColor}`
+}
+
+/**
+ * Clone une texture THREE.js de manière optimisée
+ * @param {THREE.Texture} originalTexture - Texture originale à cloner
+ * @returns {THREE.Texture} - Texture clonée
+ */
+const cloneTexture = (originalTexture) => {
+  const clonedTexture = originalTexture.clone()
+  clonedTexture.needsUpdate = true
+  return clonedTexture
+}
+
+/**
+ * Remplace les pixels transparents d'une image par une couleur de fond (avec cache)
  * @param {string} imageUrl - URL de l'image à traiter
  * @param {string} backgroundColor - Couleur de fond en format hex (#ffffff)
- * @returns {Promise<THREE.Texture>} - Texture modifiée
+ * @returns {Promise<THREE.Texture>} - Texture modifiée (clonée du cache si disponible)
  */
 export const createTextureWithBackground = (imageUrl, backgroundColor = '#ffffff') => {
+  const cacheKey = getCacheKey(imageUrl, backgroundColor)
+  
+  // Vérifier si la texture est déjà en cache
+  const cachedEntry = textureCache.get(cacheKey)
+  if (cachedEntry) {
+    // Retourner un clone de la texture cachée
+    return Promise.resolve(cloneTexture(cachedEntry.texture))
+  }
+  
   return new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
@@ -31,9 +80,16 @@ export const createTextureWithBackground = (imageUrl, backgroundColor = '#ffffff
       const g = parseInt(backgroundColor.slice(3, 5), 16)
       const b = parseInt(backgroundColor.slice(5, 7), 16)
       
-      // Remplacer les pixels transparents par la couleur de fond (optimisé)
-      const hasTransparency = data.some((_, i) => i % 4 === 3 && data[i] < 128)
+      // Optimisation : vérifier s'il y a des pixels transparents avant de traiter
+      let hasTransparency = false
+      for (let i = 3; i < data.length; i += 4) {
+        if (data[i] < 128) {
+          hasTransparency = true
+          break
+        }
+      }
       
+      // Remplacer les pixels transparents par la couleur de fond uniquement si nécessaire
       if (hasTransparency) {
         for (let i = 0; i < data.length; i += 4) {
           const alpha = data[i + 3]
@@ -56,12 +112,42 @@ export const createTextureWithBackground = (imageUrl, backgroundColor = '#ffffff
       texture.format = THREE.RGBAFormat
       texture.premultiplyAlpha = false
       
-      resolve(texture)
+      // Mettre en cache la texture originale
+      cleanTextureCache()
+      textureCache.set(cacheKey, {
+        texture: texture,
+        timestamp: Date.now()
+      })
+      
+      // Retourner un clone de la texture pour éviter les conflits de configuration
+      resolve(cloneTexture(texture))
     }
     
     img.onerror = reject
     img.src = imageUrl
   })
+}
+
+/**
+ * Nettoie manuellement le cache des textures (utile lors du changement de projet)
+ */
+export const clearTextureCache = () => {
+  textureCache.forEach((cachedEntry) => {
+    if (cachedEntry.texture?.dispose) {
+      cachedEntry.texture.dispose()
+    }
+  })
+  textureCache.clear()
+}
+
+/**
+ * Retourne les statistiques du cache pour le debug
+ */
+export const getTextureCacheStats = () => {
+  return {
+    size: textureCache.size,
+    keys: Array.from(textureCache.keys())
+  }
 }
 
 /**

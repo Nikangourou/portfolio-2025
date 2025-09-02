@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useStore } from '@/stores/store'
-import { createTextureWithBackground, configureTexture } from './textureUtils'
+import { createTextureWithBackground, configureTexture, clearTextureCache } from './textureUtils'
 import { useGridConfig } from '../hooks/useGridConfig'
 
 /**
@@ -164,9 +164,11 @@ export const useContentTexture = (gridPosition) => {
   const currentPage = useStore((state) => state.currentPage)
   const gridConfig = useGridConfig()
   
-  // Nettoyer le cache de manière optimisée
+  // Nettoyer le cache de contenu de manière optimisée
   useEffect(() => {
     cleanCache()
+    // Note: On garde le cache des textures global pour les performances
+    // Il se nettoie automatiquement quand il atteint MAX_CACHE_SIZE
   }, [selectedProject?.id])
 
   // Trouver l'image correspondant à cette position de grille et calculer ses positions
