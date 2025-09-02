@@ -2,6 +2,8 @@ import * as THREE from 'three'
 
 // Cache global pour les textures par URL et couleur de fond
 const textureCache = new Map()
+// Cache pour les promesses en cours pour éviter les requêtes parallèles
+const pendingPromises = new Map()
 const MAX_CACHE_SIZE = 100
 
 /**
@@ -23,10 +25,10 @@ const cleanTextureCache = () => {
 }
 
 /**
- * Génère une clé unique pour le cache basée sur l'URL, la couleur de fond et optionnellement le projet
+ * Génère une clé unique pour le cache basée sur l'URL et la couleur de fond
  */
-const getCacheKey = (imageUrl, backgroundColor, projectId = null) => {
-  return projectId ? `${projectId}:${imageUrl}#${backgroundColor}` : `${imageUrl}#${backgroundColor}`
+const getCacheKey = (imageUrl, backgroundColor) => {
+  return `${imageUrl}#${backgroundColor}`
 }
 
 /**
@@ -56,7 +58,15 @@ export const createTextureWithBackground = (imageUrl, backgroundColor = '#ffffff
     return Promise.resolve(cloneTexture(cachedEntry.texture))
   }
   
-  return new Promise((resolve, reject) => {
+  // Vérifier si une promesse est déjà en cours pour cette clé
+  const pendingPromise = pendingPromises.get(cacheKey)
+  if (pendingPromise) {
+    // Retourner la promesse en cours qui se résoudra par un clone
+    return pendingPromise.then(texture => cloneTexture(texture))
+  }
+  
+  // Créer une nouvelle promesse pour cette texture
+  const promise = new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
     
@@ -119,13 +129,26 @@ export const createTextureWithBackground = (imageUrl, backgroundColor = '#ffffff
         timestamp: Date.now()
       })
       
-      // Retourner un clone de la texture pour éviter les conflits de configuration
-      resolve(cloneTexture(texture))
+      // Supprimer la promesse en cours du cache
+      pendingPromises.delete(cacheKey)
+      
+      // Résoudre avec la texture originale (sera clonée par l'appelant)
+      resolve(texture)
     }
     
-    img.onerror = reject
+    img.onerror = (error) => {
+      // Supprimer la promesse en cours du cache en cas d'erreur
+      pendingPromises.delete(cacheKey)
+      reject(error)
+    }
     img.src = imageUrl
   })
+  
+  // Mettre la promesse en cache
+  pendingPromises.set(cacheKey, promise)
+  
+  // Retourner la promesse qui se résoudra par un clone
+  return promise.then(texture => cloneTexture(texture))
 }
 
 /**
@@ -138,6 +161,7 @@ export const clearTextureCache = () => {
     }
   })
   textureCache.clear()
+  pendingPromises.clear()
 }
 
 /**
@@ -146,7 +170,9 @@ export const clearTextureCache = () => {
 export const getTextureCacheStats = () => {
   return {
     size: textureCache.size,
-    keys: Array.from(textureCache.keys())
+    pendingSize: pendingPromises.size,
+    keys: Array.from(textureCache.keys()),
+    pendingKeys: Array.from(pendingPromises.keys())
   }
 }
 
@@ -177,5 +203,3 @@ export const configureTexture = (texture, span, validPositions, targetFace) => {
   )
 } 
 
-// span 3 = 0.5
-// span 2 environ 0.67
