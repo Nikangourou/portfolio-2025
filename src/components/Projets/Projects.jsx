@@ -17,10 +17,10 @@ export default function Projects() {
   const gridConfig = useGridConfig()
   const groupRef = useRef(null)
   const isProjectsArranged = useStore((state) => state.isProjectsArranged)
- 
+
   // Ref minimal pour le raycasting (ne contient que les données des projets)
   const projectDataRef = useRef([])
-  
+
   // Garder quelques states pour les interactions et l'interface
   const [minDistance, setMinDistance] = useState(2.0)
   const currentTheme = useThemeStore((state) => state.currentTheme)
@@ -90,21 +90,21 @@ export default function Projects() {
 
     return position
   }
-  
+
   // Créer les données des projets avec positions initiales aléatoires
   const projectData = useMemo(() => {
     const usedPositions = []
-    
+
     return projectsData.projects.map((project, index) => {
       const randomPosition = findValidPosition(usedPositions)
       usedPositions.push(randomPosition)
-      
+
       const randomRotation = [
+        (Math.random() - 0.5) * Math.PI * 0.4,
         Math.random() * Math.PI * 2,
-        Math.random() * Math.PI * 2,
-        Math.random() * Math.PI * 2
+        (Math.random() - 0.5) * Math.PI * 0.40
       ]
-      
+
       return {
         project,
         initialPosition: randomPosition,
@@ -135,8 +135,8 @@ export default function Projects() {
       />
 
       {!isProjectsArranged && displayedProject && (
-        <ProjectInfoFloating 
-          project={displayedProject} 
+        <ProjectInfoFloating
+          project={displayedProject}
           isVisible={!!hoveredProject}
           displaySpring={displaySpring}
           displayApi={displayApi}
