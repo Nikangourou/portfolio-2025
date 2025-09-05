@@ -33,6 +33,7 @@ const ProjectList = ({
             image={state.project.cover}
             initialPosition={state.initialPosition}
             initialRotation={state.initialRotation}
+            globalRotation={rotationY}
           />
         )
       })}

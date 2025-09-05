@@ -1,6 +1,7 @@
 import { useRef, forwardRef, useEffect, useState, useImperativeHandle, useMemo } from 'react'
 import * as THREE from 'three'
 import { useTexture } from '@react-three/drei'
+import { useFrame } from '@react-three/fiber'
 import { animated, useSpring, config } from '@react-spring/three'
 import { useStore } from '@/stores/store'
 import styles from './Project.module.scss'
@@ -11,9 +12,10 @@ import projectsData from '@/data/projects.json'
 import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
 import { useCachedPlaneGeometry } from './OptimizedGeometry'
 import { getSpringConfig } from '@/utils/springConfig'
+import { RotationShaderMaterial } from '@/shaders/rotationShader'
 
 const Project = forwardRef(function Project(
-  { gridPosition, image, initialPosition, initialRotation },
+  { gridPosition, image, initialPosition, initialRotation, globalRotation },
   ref,
 ) {
 
@@ -93,6 +95,69 @@ const Project = forwardRef(function Project(
   const { contentTexture, targetFace } = useContentTexture(gridPosition)
   const { contentText } = useContentText(gridPosition)
 
+  // Créer les matériaux shader une seule fois
+  const shaderMaterials = useMemo(() => {
+    const frontMaterial = new RotationShaderMaterial({
+      side: THREE.DoubleSide,
+      projectIndex: gridPosition,
+      toneMapped: true,
+      isFrontFace: true
+    })
+    
+    const backMaterial = new RotationShaderMaterial({
+      side: THREE.DoubleSide,
+      projectIndex: gridPosition,
+      toneMapped: true,
+      isFrontFace: false
+    })
+
+    return { frontMaterial, backMaterial }
+  }, [gridPosition])
+
+  // Assigner les références après création
+  useEffect(() => {
+    frontMaterialRef.current = shaderMaterials.frontMaterial
+    backMaterialRef.current = shaderMaterials.backMaterial
+  }, [shaderMaterials])
+
+  // État pour calculer la vitesse de rotation
+  const previousRotationRef = useRef(globalRotation || 0)
+  const smoothedVelocityRef = useRef(0)
+
+  // Mettre à jour la rotation et calculer la vitesse dans le shader
+  useFrame((state, delta) => {
+    if (frontMaterialRef.current && backMaterialRef.current) {
+      const currentRotation = globalRotation || 0
+      
+      // Calculer la différence de rotation en gérant les transitions 2π -> 0
+      let rotationDelta = currentRotation - previousRotationRef.current
+      
+      // Normaliser la différence pour éviter les sauts
+      if (rotationDelta > Math.PI) {
+        rotationDelta -= 2 * Math.PI
+      } else if (rotationDelta < -Math.PI) {
+        rotationDelta += 2 * Math.PI
+      }
+      
+      // Calculer la vitesse angulaire (radians par seconde)
+      const currentVelocity = Math.abs(rotationDelta) / Math.max(delta, 0.016)
+      
+      // Lissage exponentiel de la vitesse pour éviter les sauts
+      const smoothingFactor = 0.05 // Plus lent pour plus de douceur
+      smoothedVelocityRef.current = smoothedVelocityRef.current * (1 - smoothingFactor) + 
+                                    currentVelocity * smoothingFactor
+      
+      // Convertir la vitesse en intensité pour le shader avec courbe plus douce
+      const intensity = Math.min(smoothedVelocityRef.current * 0.5, 1.0)
+      
+      frontMaterialRef.current.updateRotation(currentRotation, intensity)
+      backMaterialRef.current.updateRotation(currentRotation, intensity)
+      
+      // Stocker la rotation précédente
+      previousRotationRef.current = currentRotation
+    }
+  })
+
   // Fonction pour gérer le clic et arrêter la propagation
   const handleMeshClick = (event) => {
     event.stopPropagation()
@@ -127,18 +192,18 @@ const Project = forwardRef(function Project(
     
     const backNeedsUpdate = (
       backMaterial.map !== newMap || 
-      backMaterial.color.getHexString() !== newColor.replace('#', '')
+      !backMaterial.color.equals(new THREE.Color(newColor))
     )
     
     const frontNeedsUpdate = (
       frontMaterial.map !== newMap || 
-      frontMaterial.color.getHexString() !== newColor.replace('#', '')
+      !frontMaterial.color.equals(new THREE.Color(newColor))
     )
 
     if (evenPage || currentPage === 0) {
       if (backNeedsUpdate) {
         backMaterial.map = newMap
-        backMaterial.color.set(newColor)
+        backMaterial.color = newColor
         backMaterial.needsUpdate = true
       }
     }
@@ -146,7 +211,7 @@ const Project = forwardRef(function Project(
     if (!evenPage || currentPage === 0) {
       if (frontNeedsUpdate) {
         frontMaterial.map = newMap
-        frontMaterial.color.set(newColor)
+        frontMaterial.color = newColor
         frontMaterial.needsUpdate = true
       }
     }
@@ -172,25 +237,10 @@ const Project = forwardRef(function Project(
       >
         <mesh
           onClick={handleMeshClick}
+          material={frontMaterialRef.current}
         >
         <primitive object={cachedGeometry} />
-        <meshBasicMaterial
-          ref={frontMaterialRef}
-          side={THREE.FrontSide}
-          toneMapped={true}
-        />
       </mesh>
-      <mesh
-        onClick={handleMeshClick}
-        rotation-y={Math.PI}
-      >
-        <primitive object={cachedGeometry} />
-        <meshBasicMaterial
-          ref={backMaterialRef}
-          side={THREE.FrontSide}
-          toneMapped={true}
-        />
-      </mesh>      {/* Groupe séparé pour les overlays qui suivra les animations */}
       <group>
         {isArrangementAnimationComplete && (
           <>
