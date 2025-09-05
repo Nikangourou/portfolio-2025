@@ -6,6 +6,8 @@ export const rotationVertexShader = `
   uniform float uProjectIndex;
   uniform float uGlobalRotation;
   uniform float uSide; // 1.0 pour face avant, -1.0 pour face arrière
+  uniform vec3 uProjectWorldPosition; // Position du projet dans le groupe
+  uniform float uDistanceFromCenter; // Distance du projet au centre du groupe
   
   varying vec2 vUv;
   varying vec3 vPosition;
@@ -20,6 +22,18 @@ export const rotationVertexShader = `
     // Utiliser l'intensité de rotation avec lissage
     float deformationIntensity = smoothstep(0.0, 2.5, uRotationIntensity);
     
+    // Force centrifuge : plus le projet est loin du centre, plus l'effet est fort
+    float centrifugalForce = uDistanceFromCenter * 0.01; // Normaliser la distance
+    float globalDeformationIntensity = deformationIntensity * (1.0 + centrifugalForce);
+    
+    // Direction de la force centrifuge basée sur la position du projet
+    vec2 centrifugalDirection = normalize(uProjectWorldPosition.xy);
+    
+    // Déformation radiale (étirement vers l'extérieur) - Force centrifuge
+    float radialIntensity = globalDeformationIntensity * 0.3;
+    newPosition.x += centrifugalDirection.x * radialIntensity * (position.x * position.x);
+    newPosition.y += centrifugalDirection.y * radialIntensity * (position.y * position.y);
+    
     // Côté gauche : arrondi convexe (ajouter de la matière)
     if (position.x < -0.1) {
       float normalizedY = position.y / 0.5;
@@ -27,8 +41,8 @@ export const rotationVertexShader = `
       if (distance <= 1.0) {
         // Transition douce depuis le centre vers le bord
         float edgeFactor = smoothstep(-0.1, -0.4, position.x);
-        float curve = sqrt(1.0 - distance * distance) * 0.4 * deformationIntensity * edgeFactor;
-        newPosition.x = position.x - curve; // Expansion vers l'extérieur
+        float curve = sqrt(1.0 - distance * distance) * 0.4 * globalDeformationIntensity * edgeFactor;
+        newPosition.x = newPosition.x - curve; // Expansion vers l'extérieur
         
         // Ajouter déformation Z pour l'effet convexe (vers l'avant)
         newPosition.z += curve * 0.3;
@@ -42,24 +56,30 @@ export const rotationVertexShader = `
       if (distance <= 1.0) {
         // Transition douce depuis le centre vers le bord
         float edgeFactor = smoothstep(0.1, 0.4, position.x);
-        float curve = sqrt(1.0 - distance * distance) * 0.3 * deformationIntensity * edgeFactor;
-        newPosition.x = position.x - curve; // Contraction vers l'intérieur
+        float curve = sqrt(1.0 - distance * distance) * 0.3 * globalDeformationIntensity * edgeFactor;
+        newPosition.x = newPosition.x - curve; // Contraction vers l'intérieur
         
         // Ajouter déformation Z pour l'effet concave (vers l'arrière)
         newPosition.z -= curve * 2.5;
       }
     }
     
-    // Déformation Z sur tout le projet : plus forte au centre vertical (axe horizontal)
+    // Déformation Z sur tout le projet : simulation de la compression centrifuge
     float verticalDistance = abs(position.y); // Distance depuis le centre vertical (y=0)
-    float centerIntensity = 1.0 - verticalDistance * 2.0; // Plus fort au centre (y=0)
-    centerIntensity = max(0.0, centerIntensity); // Garder positif
+    float centerIntensity = 1.0 - smoothstep(0.0, 0.5, verticalDistance); // Transition plus douce
     
-    // Déformation Z basée sur la distance du centre vertical pour effet horizontal
-    float zDeformation = centerIntensity * deformationIntensity * 0.8;
+    // Effet de compression/décompression basé sur la position dans le groupe
+    float compressionFactor = sin(uDistanceFromCenter * 0.5 + uGlobalRotation * 2.0) * 0.5 + 0.5;
+    float zDeformation = centerIntensity * globalDeformationIntensity * 0.6 * compressionFactor;
     newPosition.z += zDeformation;
     
-    vDistortion = deformationIntensity;
+    // Effet de vibration due à la force centrifuge pour les projets éloignés
+    if (uDistanceFromCenter > 5.0) {
+      float vibration = sin(uTime * 20.0 + uProjectIndex) * globalDeformationIntensity * 0.02;
+      newPosition += normalize(uProjectWorldPosition) * vibration;
+    }
+    
+    vDistortion = globalDeformationIntensity;
     
     gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
   }
@@ -103,7 +123,9 @@ export class RotationShaderMaterial extends THREE.ShaderMaterial {
       uProjectIndex: { value: options.projectIndex || 0 },
       uGlobalRotation: { value: 0.0 },
       uHasTexture: { value: !!options.map },
-      uSide: { value: options.isFrontFace ? 1.0 : -1.0 }
+      uSide: { value: options.isFrontFace ? 1.0 : -1.0 },
+      uProjectWorldPosition: { value: new THREE.Vector3(0, 0, 0) },
+      uDistanceFromCenter: { value: 0.0 }
     }
 
     super({
@@ -141,6 +163,13 @@ export class RotationShaderMaterial extends THREE.ShaderMaterial {
   updateRotation(globalRotation, intensity = 1.0) {
     this.uniforms.uGlobalRotation.value = globalRotation
     this.uniforms.uRotationIntensity.value = intensity
+  }
+
+  updateProjectPosition(worldPosition) {
+    this.uniforms.uProjectWorldPosition.value.copy(worldPosition)
+    // Calculer la distance depuis le centre (0,0,0)
+    const distanceFromCenter = worldPosition.length()
+    this.uniforms.uDistanceFromCenter.value = distanceFromCenter
   }
 
   updateTime(time) {

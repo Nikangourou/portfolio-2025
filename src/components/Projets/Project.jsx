@@ -126,7 +126,7 @@ const Project = forwardRef(function Project(
 
   // Mettre à jour la rotation et calculer la vitesse dans le shader
   useFrame((state, delta) => {
-    if (frontMaterialRef.current && backMaterialRef.current) {
+    if (frontMaterialRef.current && backMaterialRef.current && projectRef.current) {
       const currentRotation = globalRotation || 0
       
       // Calculer la différence de rotation en gérant les transitions 2π -> 0
@@ -150,8 +150,18 @@ const Project = forwardRef(function Project(
       // Convertir la vitesse en intensité pour le shader avec courbe plus douce
       const intensity = Math.min(smoothedVelocityRef.current * 0.5, 1.0)
       
+      // Obtenir la position mondiale du projet
+      const worldPosition = new THREE.Vector3()
+      projectRef.current.getWorldPosition(worldPosition)
+      
+      // Mettre à jour les shaders avec la position et l'intensité
       frontMaterialRef.current.updateRotation(currentRotation, intensity)
+      frontMaterialRef.current.updateProjectPosition(worldPosition)
+      frontMaterialRef.current.updateTime(state.clock.elapsedTime)
+      
       backMaterialRef.current.updateRotation(currentRotation, intensity)
+      backMaterialRef.current.updateProjectPosition(worldPosition)
+      backMaterialRef.current.updateTime(state.clock.elapsedTime)
       
       // Stocker la rotation précédente
       previousRotationRef.current = currentRotation
