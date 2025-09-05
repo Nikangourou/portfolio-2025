@@ -8,6 +8,7 @@ export const rotationVertexShader = `
   uniform float uSide; // 1.0 pour face avant, -1.0 pour face arrière
   uniform vec3 uProjectWorldPosition; // Position du projet dans le groupe
   uniform float uDistanceFromCenter; // Distance du projet au centre du groupe
+  uniform float uRotationDirection; // Sens de rotation : 1.0 = horaire, -1.0 = anti-horaire
   
   varying vec2 vUv;
   varying vec3 vPosition;
@@ -29,53 +30,81 @@ export const rotationVertexShader = `
     // Direction de la force centrifuge basée sur la position du projet
     vec2 centrifugalDirection = normalize(uProjectWorldPosition.xy);
     
+    // Calculer la direction tangentielle (perpendiculaire à la direction radiale)
+    // Pour simuler l'effet d'inertie selon le sens de rotation
+    vec2 tangentialDirection = vec2(-centrifugalDirection.y, centrifugalDirection.x) * uRotationDirection;
+    
     // Déformation radiale (étirement vers l'extérieur) - Force centrifuge
     float radialIntensity = globalDeformationIntensity * 0.3;
     newPosition.x += centrifugalDirection.x * radialIntensity * (position.x * position.x);
     newPosition.y += centrifugalDirection.y * radialIntensity * (position.y * position.y);
     
-    // Côté gauche : arrondi convexe (ajouter de la matière)
+    // Déformation tangentielle selon le sens de rotation - Effet d'inertie
+    float tangentialIntensity = globalDeformationIntensity * 0.2;
+    newPosition.x += tangentialDirection.x * tangentialIntensity * abs(position.y);
+    newPosition.y += tangentialDirection.y * tangentialIntensity * abs(position.x);
+    
+    // Côté gauche : arrondi convexe/concave selon le sens de rotation
     if (position.x < -0.1) {
       float normalizedY = position.y / 0.5;
       float distance = abs(normalizedY);
       if (distance <= 1.0) {
-        // Transition douce depuis le centre vers le bord
         float edgeFactor = smoothstep(-0.1, -0.4, position.x);
         float curve = sqrt(1.0 - distance * distance) * 0.4 * globalDeformationIntensity * edgeFactor;
-        newPosition.x = newPosition.x - curve; // Expansion vers l'extérieur
         
-        // Ajouter déformation Z pour l'effet convexe (vers l'avant)
-        newPosition.z += curve * 0.3;
+        // Appliquer l'effet selon le sens de rotation sans valeurs négatives
+        if (uRotationDirection > 0.0) {
+          // Rotation horaire : effet normal
+          newPosition.x = newPosition.x - curve;
+          newPosition.z += curve * 0.3;
+        } else {
+          // Rotation anti-horaire : effet réduit mais pas inversé
+          newPosition.x = newPosition.x - curve * 0.5;
+          newPosition.z += curve * 0.15;
+        }
       }
     }
     
-    // Côté droit : arrondi concave (créer un creux)
+    // Côté droit : arrondi concave/convexe selon le sens de rotation
     if (position.x > 0.1) {
       float normalizedY = position.y / 0.5;
       float distance = abs(normalizedY);
       if (distance <= 1.0) {
-        // Transition douce depuis le centre vers le bord
         float edgeFactor = smoothstep(0.1, 0.4, position.x);
         float curve = sqrt(1.0 - distance * distance) * 0.3 * globalDeformationIntensity * edgeFactor;
-        newPosition.x = newPosition.x - curve; // Contraction vers l'intérieur
         
-        // Ajouter déformation Z pour l'effet concave (vers l'arrière)
-        newPosition.z -= curve * 2.5;
+        // Appliquer l'effet selon le sens de rotation sans valeurs négatives
+        if (uRotationDirection > 0.0) {
+          // Rotation horaire : effet normal
+          newPosition.x = newPosition.x - curve;
+          newPosition.z -= curve * 2.5;
+        } else {
+          // Rotation anti-horaire : effet réduit mais pas inversé
+          newPosition.x = newPosition.x - curve * 0.5;
+          newPosition.z -= curve * 1.25;
+        }
       }
     }
     
-    // Déformation Z sur tout le projet : simulation de la compression centrifuge
-    float verticalDistance = abs(position.y); // Distance depuis le centre vertical (y=0)
-    float centerIntensity = 1.0 - smoothstep(0.0, 0.5, verticalDistance); // Transition plus douce
+    // Déformation Z : compression selon le sens de rotation
+    float verticalDistance = abs(position.y);
+    float centerIntensity = 1.0 - smoothstep(0.0, 0.5, verticalDistance);
     
-    // Effet de compression/décompression basé sur la position dans le groupe
-    float compressionFactor = sin(uDistanceFromCenter * 0.5 + uGlobalRotation * 2.0) * 0.5 + 0.5;
-    float zDeformation = centerIntensity * globalDeformationIntensity * 0.6 * compressionFactor;
+    // Effet de compression stable selon le sens de rotation
+    float rotationPhase = abs(uGlobalRotation) * 2.0;
+    float compressionFactor = sin(uDistanceFromCenter * 0.5 + rotationPhase) * 0.5 + 0.5;
+    
+    // Ajuster l'intensité selon le sens de rotation sans créer de valeurs négatives
+    float directionMultiplier = uRotationDirection > 0.0 ? 1.0 : 0.7;
+    float zDeformation = centerIntensity * globalDeformationIntensity * 0.6 * compressionFactor * directionMultiplier;
     newPosition.z += zDeformation;
     
     // Effet de vibration due à la force centrifuge pour les projets éloignés
     if (uDistanceFromCenter > 5.0) {
-      float vibration = sin(uTime * 20.0 + uProjectIndex) * globalDeformationIntensity * 0.02;
+      float vibrationPhase = uTime * 20.0 + uProjectIndex;
+      // Ajuster l'amplitude selon le sens de rotation sans créer d'instabilité
+      float vibrationIntensity = globalDeformationIntensity * 0.02 * (uRotationDirection > 0.0 ? 1.0 : 0.5);
+      float vibration = sin(vibrationPhase) * vibrationIntensity;
       newPosition += normalize(uProjectWorldPosition) * vibration;
     }
     
@@ -125,7 +154,8 @@ export class RotationShaderMaterial extends THREE.ShaderMaterial {
       uHasTexture: { value: !!options.map },
       uSide: { value: options.isFrontFace ? 1.0 : -1.0 },
       uProjectWorldPosition: { value: new THREE.Vector3(0, 0, 0) },
-      uDistanceFromCenter: { value: 0.0 }
+      uDistanceFromCenter: { value: 0.0 },
+      uRotationDirection: { value: 1.0 }
     }
 
     super({
@@ -160,9 +190,10 @@ export class RotationShaderMaterial extends THREE.ShaderMaterial {
     return this.uniforms.uColor.value
   }
 
-  updateRotation(globalRotation, intensity = 1.0) {
+  updateRotation(globalRotation, intensity = 1.0, rotationDirection = 1.0) {
     this.uniforms.uGlobalRotation.value = globalRotation
     this.uniforms.uRotationIntensity.value = intensity
+    this.uniforms.uRotationDirection.value = rotationDirection
   }
 
   updateProjectPosition(worldPosition) {
