@@ -126,7 +126,7 @@ const Project = forwardRef(function Project(
 
   // Mettre à jour la rotation et calculer la vitesse dans le shader
   useFrame((state, delta) => {
-    if (frontMaterialRef.current && backMaterialRef.current && projectRef.current) {
+    if (frontMaterialRef.current && backMaterialRef.current) {
       const currentRotation = globalRotation || 0
       
       // Calculer la différence de rotation en gérant les transitions 2π -> 0
@@ -142,32 +142,19 @@ const Project = forwardRef(function Project(
       // Calculer la vitesse angulaire (radians par seconde)
       const currentVelocity = Math.abs(rotationDelta) / Math.max(delta, 0.016)
       
-      // Déterminer le sens de rotation de manière plus stable
-      // Utiliser un seuil pour éviter les oscillations autour de zéro
-      let rotationDirection = 1.0
-      if (Math.abs(rotationDelta) > 0.001) {
-        rotationDirection = rotationDelta > 0 ? 1.0 : -1.0
-      }
-      
       // Lissage exponentiel de la vitesse pour éviter les sauts
-      const smoothingFactor = 0.05 // Plus lent pour plus de douceur
+      const smoothingFactor = 0.05
       smoothedVelocityRef.current = smoothedVelocityRef.current * (1 - smoothingFactor) + 
                                     currentVelocity * smoothingFactor
       
-      // Convertir la vitesse en intensité pour le shader avec courbe plus douce
-      const intensity = Math.min(smoothedVelocityRef.current * 0.5, 1.0)
+      // Convertir la vitesse en intensité pour le shader
+      const intensity = Math.min(smoothedVelocityRef.current * 0.2, 1)
       
-      // Obtenir la position mondiale du projet
-      const worldPosition = new THREE.Vector3()
-      projectRef.current.getWorldPosition(worldPosition)
-      
-      // Mettre à jour les shaders avec la position, l'intensité et le sens de rotation
-      frontMaterialRef.current.updateRotation(currentRotation, intensity, rotationDirection)
-      frontMaterialRef.current.updateProjectPosition(worldPosition)
+      // Mettre à jour les shaders
+      frontMaterialRef.current.updateRotation(currentRotation, intensity)
       frontMaterialRef.current.updateTime(state.clock.elapsedTime)
       
-      backMaterialRef.current.updateRotation(currentRotation, intensity, rotationDirection)
-      backMaterialRef.current.updateProjectPosition(worldPosition)
+      backMaterialRef.current.updateRotation(currentRotation, intensity)
       backMaterialRef.current.updateTime(state.clock.elapsedTime)
       
       // Stocker la rotation précédente
