@@ -4,6 +4,7 @@ import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
 import { useStore } from '@/stores/store'
 import { useMemo } from 'react'
 import { getSpringConfig } from '@/utils/springConfig'
+import { getCachedGeometry } from './OptimizedGeometry'
 
 const ProjectBorders = ({
   isProjectsArranged,
@@ -27,6 +28,7 @@ const ProjectBorders = ({
   const isArrangementAnimationComplete = useStore(
     (state) => state.isArrangementAnimationComplete
   )
+  
 
   // Utiliser useSprings avec des délais individuels pour chaque bordure
   const springs = useSprings(
@@ -51,12 +53,12 @@ const ProjectBorders = ({
             position={state.position}
             rotation={spring.rotation}
           >
-            <planeGeometry args={[projectSize.width, projectSize.height]} />
+            <primitive object={getCachedGeometry(projectSize.width, projectSize.height).clone()} />
+            {/* <primitive object={cachedGeometry} /> */}
+
             <meshBasicMaterial
               side={THREE.BackSide}
               color={currentTheme.background}
-              opacity={1}
-              transparent={true}
             />
           </animated.mesh>
         )
