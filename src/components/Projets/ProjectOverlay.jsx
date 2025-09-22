@@ -1,4 +1,3 @@
-import React from 'react'
 import { Html } from '@react-three/drei'
 import styles from './Project.module.scss'
 import { useStore } from '@/stores/store'
@@ -13,7 +12,7 @@ const ProjectOverlay = ({ condition, children, projectSize }) => {
     <Html
       occlude
       transform
-      prepend
+      pointerEvents="none"
       position={evenPage ? [0, 0, -0.01] : [0, 0, 0.01]}
       rotation={evenPage ? [Math.PI, 0, 0] : [0, 0, 0]}
       className={styles.project}
@@ -22,7 +21,11 @@ const ProjectOverlay = ({ condition, children, projectSize }) => {
         height: `${projectSize.height * 40}px`,
       }}
     >
-      <div className={styles.container}>{children}</div>
+      <div
+        className={styles.container}
+      >
+        {children}
+      </div>
     </Html>
   )
 }

@@ -10,12 +10,15 @@
     align-items: center;
     color: var(--theme-text);
 
+
     .title {
       font-size: 6px;
       font-family: 'Allerta Stencil', sans-serif;
       text-align: center;
       padding: 0;
       margin: 0;
+      // pointer-events: auto;
+
     }
 
     .technoContainer {
@@ -24,6 +27,8 @@
       align-items: center;
       justify-content: center;
       text-align: center;
+      // pointer-events: auto;
+
 
       .techno {
         font-family: 'Allerta Stencil', sans-serif;
@@ -33,33 +38,29 @@
         margin: 0;
       }
     }
+
+    .contentText {
+      padding: 5px;
+      color: var(--theme-text);
+      font-size: 3.5px;
+      z-index: 1;
+      // pointer-events: auto;
+    }
+
+    .linkButton {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--theme-text);
+      color: var(--theme-background);
+      text-decoration: none;
+      font-family: 'Allerta Stencil', sans-serif;
+      font-size: 6px;
+      padding: 2px 4px;
+      pointer-events: auto;
+      cursor: pointer;
+      pointer-events: auto;
+
+    }
   }
-}
-
-.contentImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-}
-
-.contentText {
-  padding: 5px;
-  color: var(--theme-text);
-  font-size: 3.5px;
-  z-index: 1;
-}
-
-.linkButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--theme-text);
-  color: var(--theme-background);
-  text-decoration: none;
-  font-family: 'Allerta Stencil, sans-serif';
-  font-size: 6px;
-  // font-weight: bold;
-  // text-transform: uppercase;
-  padding: 2px 4px;
 }

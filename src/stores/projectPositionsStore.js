@@ -6,7 +6,7 @@ export const useProjectPositionsStore = create((set, get) => ({
   arrangedDistance: null,
   predefinedPositions: [],
   borderPositions: [],
-  projectSize: { width: 0, height: 0 },
+  projectSize: { width: 1, height: 1 },
   gridConfig: null,
   
   // Fonction pour calculer les positions des projets

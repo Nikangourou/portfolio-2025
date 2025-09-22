@@ -4,11 +4,10 @@ import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
 import { useStore } from '@/stores/store'
 import { useMemo } from 'react'
 import { getSpringConfig } from '@/utils/springConfig'
-import { getCachedGeometry } from './OptimizedGeometry'
+import { getCachedGeometry, AnimatedMesh } from './OptimizedGeometry'
 
 const ProjectBorders = ({
   isProjectsArranged,
-  projectSize,
   currentTheme,
   distance
 }) => {
@@ -48,19 +47,23 @@ const ProjectBorders = ({
         const state = borderStates[index]
 
         return (
-          <animated.mesh
+          <animated.group
             key={`border-${index}`}
             position={state.position}
             rotation={spring.rotation}
           >
-            <primitive object={getCachedGeometry(projectSize.width, projectSize.height).clone()} />
-            {/* <primitive object={cachedGeometry} /> */}
-
-            <meshBasicMaterial
-              side={THREE.BackSide}
-              color={currentTheme.background}
-            />
-          </animated.mesh>
+            <AnimatedMesh
+              projectId={`border-${index}`}
+            >
+              <mesh>
+                <primitive object={getCachedGeometry().clone()} />
+                <meshBasicMaterial
+                  side={THREE.BackSide}
+                  color={currentTheme.background}
+                />
+              </mesh>
+            </AnimatedMesh>
+          </animated.group>
         )
       })}
     </group>

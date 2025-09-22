@@ -9,15 +9,16 @@ import ProjectOverlay from './ProjectOverlay'
 import { useContentTexture, useContentText } from '@/utils/contentLoader'
 import projectsData from '@/data/projects.json'
 import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
-import { useCachedPlaneGeometry } from './OptimizedGeometry'
+import { getCachedGeometry, AnimatedMesh } from './OptimizedGeometry'
 import { getSpringConfig } from '@/utils/springConfig'
+import { useGridConfig } from '@/hooks/useGridConfig'
 
 const Project = forwardRef(function Project(
   { gridPosition, image, initialPosition, initialRotation },
   ref,
 ) {
 
-  
+
   const backMaterialRef = useRef(null)
   const frontMaterialRef = useRef(null)
   const projectRef = useRef(null)
@@ -46,9 +47,6 @@ const Project = forwardRef(function Project(
 
   // Obtenir les positions d'arrangement directement depuis le store
   const { predefinedPositions, projectSize } = useProjectPositionsStore()
-
-  // Géométrie cachée pour éviter la recreation
-  const cachedGeometry = useCachedPlaneGeometry(projectSize.width, projectSize.height)
 
   // Position cible pour l'arrangement (memoized)
   const targetArrangedPosition = useMemo(() => {
@@ -88,15 +86,39 @@ const Project = forwardRef(function Project(
     config: getSpringConfig('projectRotation')
   })
 
-
   // Utiliser les hooks personnalisés
   const { contentTexture, targetFace } = useContentTexture(gridPosition)
   const { contentText } = useContentText(gridPosition)
 
+  // Fonctions de navigation
+  const resetProjectState = useStore((state) => state.resetProjectState)
+  const setCurrentPage = useStore((state) => state.setCurrentPage)
+  const maxPage = selectedProject?.contents?.length
+  const gridConfig = useGridConfig()
+
   // Fonction pour gérer le clic et arrêter la propagation
   const handleMeshClick = (event) => {
     event.stopPropagation()
-    // Logique de sélection du projet
+    
+    // Navigation - Cross
+    if (gridPosition === gridConfig.crossPosition && selectedProject) {
+      resetProjectState()
+      return
+    }
+    
+    // Navigation - Arrow Up
+    if (gridPosition === gridConfig.arrowUpPosition && selectedProject && currentPage > 1) {
+      setCurrentPage(currentPage - 1)
+      return
+    }
+    
+    // Navigation - Arrow Down
+    if (gridPosition === 14 && selectedProject && currentPage < maxPage) {
+      setCurrentPage(currentPage + 1)
+      return
+    }
+    
+    // Logique de sélection du projet (pour toutes les autres positions)
     if (!isProjectsArranged) {
       setProjectsArranged(true)
       setSelectedProject(projectsData.projects[gridPosition])
@@ -124,14 +146,14 @@ const Project = forwardRef(function Project(
     // Optimisation : vérifier si les valeurs ont vraiment changé avant de mettre à jour
     const backMaterial = backMaterialRef.current
     const frontMaterial = frontMaterialRef.current
-    
+
     const backNeedsUpdate = (
-      backMaterial.map !== newMap || 
+      backMaterial.map !== newMap ||
       backMaterial.color.getHexString() !== newColor.replace('#', '')
     )
-    
+
     const frontNeedsUpdate = (
-      frontMaterial.map !== newMap || 
+      frontMaterial.map !== newMap ||
       frontMaterial.color.getHexString() !== newColor.replace('#', '')
     )
 
@@ -162,117 +184,117 @@ const Project = forwardRef(function Project(
 
 
   return (
-    <animated.group 
-      ref={projectRef} 
+    <animated.group
+      ref={projectRef}
       position={position}
       rotation={rotation}
     >
       <animated.group
         rotation-x={pageRotationX}
       >
-        <mesh
+        <AnimatedMesh
+          projectId={gridPosition}
           onClick={handleMeshClick}
         >
-        <primitive object={cachedGeometry} />
-        <meshBasicMaterial
-          ref={frontMaterialRef}
-          side={THREE.FrontSide}
-          toneMapped={true}
-        />
-      </mesh>
-      <mesh
-        onClick={handleMeshClick}
-        rotation-y={Math.PI}
-      >
-        <primitive object={cachedGeometry} />
-        <meshBasicMaterial
-          ref={backMaterialRef}
-          side={THREE.FrontSide}
-          toneMapped={true}
-        />
-      </mesh>      {/* Groupe séparé pour les overlays qui suivra les animations */}
-      <group>
-        {isArrangementAnimationComplete && (
-          <>
-            {currentPage === 1 && (
+          <mesh>
+            <primitive object={getCachedGeometry().clone()} />
+            <meshBasicMaterial
+              ref={frontMaterialRef}
+              side={THREE.FrontSide}
+              toneMapped={true}
+            />
+          </mesh>
+          <mesh rotation-y={Math.PI}>
+            <primitive object={getCachedGeometry().clone()} />
+            <meshBasicMaterial
+              ref={backMaterialRef}
+              side={THREE.FrontSide}
+              toneMapped={true}
+            />
+          </mesh>
+          <group>
+            {isArrangementAnimationComplete && (
               <>
-                <ProjectOverlay
-                  condition={
-                    selectedProject && gridPosition === 0 && selectedProject.title
-                  }
+                {currentPage === 1 && (
+                  <>
+                    <ProjectOverlay
+                      condition={
+                        selectedProject && gridPosition === 0 && selectedProject.title
+                      }
+                      projectSize={projectSize}
+                    >
+                      <p className={styles.title}>{selectedProject?.title}</p>
+                    </ProjectOverlay>
+                    <ProjectOverlay
+                      condition={
+                        selectedProject &&
+                        gridPosition === 1 &&
+                        selectedProject.context
+                      }
+                      projectSize={projectSize}
+                    >
+                      <p className={styles.title}>{selectedProject?.context}</p>
+                    </ProjectOverlay>
+                    <ProjectOverlay
+                      condition={
+                        selectedProject && gridPosition === 2 && selectedProject.year
+                      }
+                      projectSize={projectSize}
+                    >
+                      <p className={styles.title}>{selectedProject?.year}</p>
+                    </ProjectOverlay>
+                    <ProjectOverlay
+                      condition={
+                        selectedProject &&
+                        gridPosition === 3 &&
+                        selectedProject.technologies
+                      }
+                      projectSize={projectSize}
+                    >
+                      <div className={styles.technoContainer}>
+                        {selectedProject?.technologies.map((techno) => (
+                          <p key={techno} className={styles.techno}>
+                            {techno}
+                          </p>
+                        ))}
+                      </div>
+                    </ProjectOverlay>
+                    <ProjectOverlay
+                      condition={
+                        selectedProject && gridPosition === 4 && selectedProject.link
+                      }
+                      projectSize={projectSize}
+                    >
+                      <a
+                        href={selectedProject?.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.linkButton}
+                      >
+                        Link
+                      </a>
+                    </ProjectOverlay>
+                  </>
+                )}
+                <Navigation
+                  selectedProject={selectedProject}
+                  currentPage={currentPage}
+                  gridPosition={gridPosition}
                   projectSize={projectSize}
-                >
-                  <p className={styles.title}>{selectedProject?.title}</p>
-                </ProjectOverlay>
-                <ProjectOverlay
-                  condition={
-                    selectedProject &&
-                    gridPosition === 1 &&
-                    selectedProject.context
-                  }
-                  projectSize={projectSize}
-                >
-                  <p className={styles.title}>{selectedProject?.context}</p>
-                </ProjectOverlay>
-                <ProjectOverlay
-                  condition={
-                    selectedProject && gridPosition === 2 && selectedProject.year
-                  }
-                  projectSize={projectSize}
-                >
-                  <p className={styles.title}>{selectedProject?.year}</p>
-                </ProjectOverlay>
-                <ProjectOverlay
-                  condition={
-                    selectedProject &&
-                    gridPosition === 3 &&
-                    selectedProject.technologies
-                  }
-                  projectSize={projectSize}
-                >
-                  <div className={styles.technoContainer}>
-                    {selectedProject?.technologies.map((techno) => (
-                      <p key={techno} className={styles.techno}>
-                        {techno}
-                      </p>
-                    ))}
-                  </div>
-                </ProjectOverlay>
-                <ProjectOverlay
-                  condition={
-                    selectedProject && gridPosition === 4 && selectedProject.link
-                  }
-                  projectSize={projectSize}
-                >
-                  <a
-                    href={selectedProject?.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.linkButton}
+                />
+                {contentText && (
+                  <ProjectOverlay
+                    condition={selectedProject}
+                    projectSize={projectSize}
+                    reverse={true}
                   >
-                    Link
-                  </a>
-                </ProjectOverlay>
+                    <p className={styles.contentText}>{contentText.text}</p>
+                  </ProjectOverlay>
+                )}
               </>
             )}
-            <Navigation
-              selectedProject={selectedProject}
-              currentPage={currentPage}
-              gridPosition={gridPosition}
-              projectSize={projectSize}
-            />
-            {contentText && (
-              <ProjectOverlay
-                condition={selectedProject}
-                projectSize={projectSize}
-                reverse={true}
-              >
-                <p className={styles.contentText}>{contentText.text}</p>
-              </ProjectOverlay>
-            )}
-          </>
-        )}
-      </group>
+          </group>
+        </AnimatedMesh>
       </animated.group>
     </animated.group>
   )
