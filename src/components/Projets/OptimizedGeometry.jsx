@@ -23,12 +23,11 @@ const ROTATION_MULTIPLIER = 0.5
 
 // Composant wrapper pour l'animation de hover
 export const AnimatedMesh = ({ children, projectId, ...props }) => {
+  // Tous les hooks doivent être appelés avant tout return conditionnel
+  const isProjectsArranged = useStore((state) => state.isProjectsArranged)
   const [isHovered, setIsHovered] = useState(false)
   const [pushDirection, setPushDirection] = useState(0)
-  
-  // États du store et configuration
   const selectedProject = useStore((state) => state.selectedProject)
-  const isArrangementAnimationComplete = useStore((state) => state.isArrangementAnimationComplete)
   const currentPage = useStore((state) => state.currentPage)
   const gridConfig = useGridConfig()
   
@@ -36,19 +35,19 @@ export const AnimatedMesh = ({ children, projectId, ...props }) => {
   const maxPage = useMemo(() => selectedProject?.contents?.length, [selectedProject?.contents?.length])
   
   const isNavigationElement = useMemo(() => {
-    return isArrangementAnimationComplete && selectedProject && (
+    return selectedProject && (
       projectId === gridConfig.crossPosition ||
       (projectId === gridConfig.arrowUpPosition && currentPage > 1) ||
       (projectId === 14 && currentPage < maxPage)
     )
-  }, [isArrangementAnimationComplete, selectedProject, projectId, gridConfig.crossPosition, gridConfig.arrowUpPosition, currentPage, maxPage])
+  }, [selectedProject, projectId, gridConfig.crossPosition, gridConfig.arrowUpPosition, currentPage, maxPage])
   
   const isBorder = useMemo(() => {
     return projectId && projectId.toString().startsWith('border-')
   }, [projectId])
   
   // Animation avec configuration optimisée
-  const targetRotationX = (isHovered && isArrangementAnimationComplete) ? pushDirection * ROTATION_MULTIPLIER : 0
+  const targetRotationX = (isHovered && isProjectsArranged) ? pushDirection * ROTATION_MULTIPLIER : 0
   
   const { rotationX } = useSpring({
     rotationX: targetRotationX,
@@ -57,6 +56,8 @@ export const AnimatedMesh = ({ children, projectId, ...props }) => {
   
   // Mémoriser les gestionnaires d'événements
   const updateRotationFromEvent = useCallback((e) => {
+    if (!isProjectsArranged) return
+    
     // Méthode alternative : utiliser les coordonnées du canvas
     const canvas = e.target.offsetParent || document.querySelector('canvas')
     const rect = canvas ? canvas.getBoundingClientRect() : { 
@@ -86,22 +87,19 @@ export const AnimatedMesh = ({ children, projectId, ...props }) => {
     }
     
     setPushDirection(rotationDirection)
-  }, [currentPage, isBorder])
+  }, [currentPage, isBorder, isProjectsArranged])
   
   const handlePointerEnter = useCallback((e) => {
     setIsHovered(true)
     document.body.style.cursor = isNavigationElement ? 'pointer' : 'default'
-    
-    if (isArrangementAnimationComplete) {
-      updateRotationFromEvent(e)
-    }
-  }, [isNavigationElement, isArrangementAnimationComplete, updateRotationFromEvent])
+    updateRotationFromEvent(e)
+  }, [isNavigationElement, updateRotationFromEvent])
   
   const handlePointerMove = useCallback((e) => {
-    if (isHovered && isArrangementAnimationComplete) {
+    if (isHovered) {
       updateRotationFromEvent(e)
     }
-  }, [isHovered, isArrangementAnimationComplete, updateRotationFromEvent])
+  }, [isHovered, updateRotationFromEvent])
   
   const handlePointerOut = useCallback((e) => {
     setIsHovered(false)
@@ -109,6 +107,16 @@ export const AnimatedMesh = ({ children, projectId, ...props }) => {
     document.body.style.cursor = 'default'
   }, [])
   
+  // Si les projets ne sont pas arrangés, rendu simple sans animation
+  if (!isProjectsArranged) {
+    return (
+      <group {...props}>
+        {children}
+      </group>
+    )
+  }
+
+
   return (
     <animated.group
       {...props}
