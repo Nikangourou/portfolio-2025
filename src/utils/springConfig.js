@@ -43,7 +43,13 @@ export const optimizedSpringConfigs = {
     tension: 100,
     friction: 3,
     mass: 1,
-  }
+  },
+
+  clickRotation: {
+    tension: 80,
+    friction: 20,
+    mass: 1,
+  },
 }
 
 
@@ -63,6 +69,8 @@ export const getSpringConfig = (type) => {
       return optimizedSpringConfigs.hover
     case 'hoverRotation':
       return optimizedSpringConfigs.hoverRotation
+    case 'clickRotation':
+      return optimizedSpringConfigs.clickRotation
     default:
       return config.default
   }

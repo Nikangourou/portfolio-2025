@@ -22,11 +22,13 @@ export const getCachedGeometry = () => {
 const ROTATION_MULTIPLIER = 0.5
 
 // Composant wrapper pour l'animation de hover
-export const AnimatedMesh = ({ children, projectId, ...props }) => {
+export const AnimatedMesh = ({ children, projectId, onClick, ...props }) => {
   // Tous les hooks doivent être appelés avant tout return conditionnel
   const isProjectsArranged = useStore((state) => state.isProjectsArranged)
   const [isHovered, setIsHovered] = useState(false)
   const [pushDirection, setPushDirection] = useState(0)
+  const [clickCount, setClickCount] = useState(0) // Compteur pour permettre les clics multiples
+  const [clickDirection, setClickDirection] = useState(1) // Direction du clic (1 ou -1)
   const selectedProject = useStore((state) => state.selectedProject)
   const currentPage = useStore((state) => state.currentPage)
   const gridConfig = useGridConfig()
@@ -46,18 +48,30 @@ export const AnimatedMesh = ({ children, projectId, ...props }) => {
     return projectId && projectId.toString().startsWith('border-')
   }, [projectId])
   
-  // Animation avec configuration optimisée
-  const targetRotationX = (isHovered && isProjectsArranged) ? pushDirection * ROTATION_MULTIPLIER : 0
+  // Animations séparées pour hover et clic
+  const targetHoverRotationX = (isHovered && isProjectsArranged && clickCount === 0) ? pushDirection * ROTATION_MULTIPLIER : 0
+  const targetClickRotationX = (clickCount > 0 && isProjectsArranged) ? clickCount * Math.PI * 2 * clickDirection : 0 // Direction basée sur le clic
   
-  const { rotationX } = useSpring({
-    rotationX: targetRotationX,
+  const { hoverRotationX } = useSpring({
+    hoverRotationX: targetHoverRotationX,
     config: getSpringConfig('hoverRotation')
   })
   
-  // Mémoriser les gestionnaires d'événements
-  const updateRotationFromEvent = useCallback((e) => {
-    if (!isProjectsArranged) return
-    
+  const { clickRotationX } = useSpring({
+    clickRotationX: targetClickRotationX,
+    config: getSpringConfig('clickRotation'),
+    onRest: () => {
+      if (clickCount > 0) {
+        setClickCount(0) // Reset après l'animation
+      }
+    }
+  })
+  
+  // Combiner les rotations (priorité au clic)
+  const finalRotationX = clickCount > 0 ? clickRotationX : hoverRotationX
+  
+  // Fonction pour calculer la direction basée sur la position de clic/hover
+  const calculateRotationDirection = useCallback((e) => {
     // Méthode alternative : utiliser les coordonnées du canvas
     const canvas = e.target.offsetParent || document.querySelector('canvas')
     const rect = canvas ? canvas.getBoundingClientRect() : { 
@@ -86,8 +100,16 @@ export const AnimatedMesh = ({ children, projectId, ...props }) => {
       rotationDirection = isEvenPage ? -relativeY : relativeY
     }
     
+    return rotationDirection
+  }, [currentPage, isBorder])
+  
+  // Mémoriser les gestionnaires d'événements
+  const updateRotationFromEvent = useCallback((e) => {
+    if (!isProjectsArranged) return
+    
+    const rotationDirection = calculateRotationDirection(e)
     setPushDirection(rotationDirection)
-  }, [currentPage, isBorder, isProjectsArranged])
+  }, [isProjectsArranged, calculateRotationDirection])
   
   const handlePointerEnter = useCallback((e) => {
     setIsHovered(true)
@@ -107,10 +129,36 @@ export const AnimatedMesh = ({ children, projectId, ...props }) => {
     document.body.style.cursor = 'default'
   }, [])
   
+  const handleClick = useCallback((e) => {
+    // Pour les éléments de navigation, appeler directement onClick
+    if (isNavigationElement && onClick) {
+      onClick(e)
+      return
+    }
+    
+    // Animation de clic pour les projets arrangés
+    if (isProjectsArranged) {
+      // Calculer la direction basée sur la position du clic
+      const rotationDirection = calculateRotationDirection(e)
+      
+      // Définir la direction (positif ou négatif) basée sur la position
+      const direction = rotationDirection >= 0 ? 1 : -1
+      setClickDirection(direction)
+      
+      setClickCount(prev => prev + 1) // Incrémenter pour relancer l'animation
+      
+      // Ne pas propager l'événement pour éviter les conflits
+      e.stopPropagation()
+    } else if (onClick) {
+      // Si pas arrangé, appeler onClick normalement
+      onClick(e)
+    }
+  }, [isProjectsArranged, calculateRotationDirection, isNavigationElement, onClick])
+  
   // Si les projets ne sont pas arrangés, rendu simple sans animation
   if (!isProjectsArranged) {
     return (
-      <group {...props}>
+      <group {...props} onClick={onClick}>
         {children}
       </group>
     )
@@ -120,10 +168,11 @@ export const AnimatedMesh = ({ children, projectId, ...props }) => {
   return (
     <animated.group
       {...props}
-      rotation-x={rotationX}
+      rotation-x={finalRotationX}
       onPointerOver={handlePointerEnter}
       onPointerMove={handlePointerMove}
       onPointerOut={handlePointerOut}
+      onClick={handleClick}
     >
       {children}
     </animated.group>

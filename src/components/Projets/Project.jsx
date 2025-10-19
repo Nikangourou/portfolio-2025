@@ -98,7 +98,6 @@ const Project = forwardRef(function Project(
 
   // Fonction pour gérer le clic et arrêter la propagation
   const handleMeshClick = (event) => {
-    event.stopPropagation()
     
     // Navigation - Cross
     if (gridPosition === gridConfig.crossPosition && selectedProject) {
