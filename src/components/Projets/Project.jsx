@@ -27,6 +27,10 @@ const Project = forwardRef(function Project(
   // Exposer la ref du groupe principal pour le raycasting
   useImperativeHandle(ref, () => projectRef.current, [])
 
+  // Géométries mémorisées — créées une seule fois au montage, pas à chaque render
+  const frontGeometry = useMemo(() => getCachedGeometry().clone(), [])
+  const backGeometry = useMemo(() => getCachedGeometry().clone(), [])
+
   const texture = useTexture(image || '', (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace
     texture.minFilter = THREE.LinearFilter
@@ -207,7 +211,7 @@ const Project = forwardRef(function Project(
           onClick={handleMeshClick}
         >
           <mesh>
-            <primitive object={getCachedGeometry().clone()} />
+            <primitive object={frontGeometry} />
             <meshBasicMaterial
               ref={frontMaterialRef}
               side={THREE.FrontSide}
@@ -215,7 +219,7 @@ const Project = forwardRef(function Project(
             />
           </mesh>
           <mesh rotation-y={Math.PI}>
-            <primitive object={getCachedGeometry().clone()} />
+            <primitive object={backGeometry} />
             <meshBasicMaterial
               ref={backMaterialRef}
               side={THREE.FrontSide}
