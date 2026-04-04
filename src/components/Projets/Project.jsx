@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import { useTexture } from '@react-three/drei'
 import { animated, useSpring, config } from '@react-spring/three'
 import { useStore } from '@/stores/store'
+import { useShallow } from 'zustand/react/shallow'
 import styles from './Project.module.scss'
 import { Navigation } from '@/components/Interface/Interface'
 import ProjectOverlay from './ProjectOverlay'
@@ -32,18 +33,30 @@ const Project = forwardRef(function Project(
     texture.magFilter = THREE.LinearFilter
   })
 
-  const selectedProject = useStore((state) => state.selectedProject)
-  const currentPage = useStore((state) => state.currentPage)
+  const {
+    selectedProject,
+    currentPage,
+    isArrangementAnimationComplete,
+    isProjectsArranged,
+    setProjectsArranged,
+    setSelectedProject,
+    setArrangementAnimationComplete,
+    resetProjectState,
+    setCurrentPage,
+  } = useStore(
+    useShallow((state) => ({
+      selectedProject: state.selectedProject,
+      currentPage: state.currentPage,
+      isArrangementAnimationComplete: state.isArrangementAnimationComplete,
+      isProjectsArranged: state.isProjectsArranged,
+      setProjectsArranged: state.setProjectsArranged,
+      setSelectedProject: state.setSelectedProject,
+      setArrangementAnimationComplete: state.setArrangementAnimationComplete,
+      resetProjectState: state.resetProjectState,
+      setCurrentPage: state.setCurrentPage,
+    }))
+  )
   const evenPage = currentPage % 2
-  const isArrangementAnimationComplete = useStore(
-    (state) => state.isArrangementAnimationComplete,
-  )
-  const isProjectsArranged = useStore((state) => state.isProjectsArranged)
-  const setProjectsArranged = useStore((state) => state.setProjectsArranged)
-  const setSelectedProject = useStore((state) => state.setSelectedProject)
-  const setArrangementAnimationComplete = useStore(
-    (state) => state.setArrangementAnimationComplete,
-  )
 
   // Obtenir les positions d'arrangement directement depuis le store
   const { predefinedPositions, projectSize } = useProjectPositionsStore()
@@ -91,8 +104,6 @@ const Project = forwardRef(function Project(
   const { contentText } = useContentText(gridPosition)
 
   // Fonctions de navigation
-  const resetProjectState = useStore((state) => state.resetProjectState)
-  const setCurrentPage = useStore((state) => state.setCurrentPage)
   const maxPage = selectedProject?.contents?.length
   const gridConfig = useGridConfig()
 
