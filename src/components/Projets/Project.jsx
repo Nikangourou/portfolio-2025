@@ -98,25 +98,25 @@ const Project = forwardRef(function Project(
 
   // Fonction pour gérer le clic et arrêter la propagation
   const handleMeshClick = (event) => {
-    
+
     // Navigation - Cross
     if (gridPosition === gridConfig.crossPosition && selectedProject) {
       resetProjectState()
       return
     }
-    
+
     // Navigation - Arrow Up
     if (gridPosition === gridConfig.arrowUpPosition && selectedProject && currentPage > 1) {
       setCurrentPage(currentPage - 1)
       return
     }
-    
+
     // Navigation - Arrow Down
     if (gridPosition === 14 && selectedProject && currentPage < maxPage) {
       setCurrentPage(currentPage + 1)
       return
     }
-    
+
     // Logique de sélection du projet (pour toutes les autres positions)
     if (!isProjectsArranged) {
       setProjectsArranged(true)
