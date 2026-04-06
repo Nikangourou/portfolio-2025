@@ -3,7 +3,6 @@ import * as THREE from 'three'
 import { useTexture } from '@react-three/drei'
 import { animated, useSpring, config } from '@react-spring/three'
 import { useStore } from '@/stores/store'
-import { useShallow } from 'zustand/react/shallow'
 import styles from './Project.module.scss'
 import { Navigation } from '@/components/Interface/Interface'
 import ProjectOverlay from './ProjectOverlay'
@@ -27,40 +26,24 @@ const Project = forwardRef(function Project(
   // Exposer la ref du groupe principal pour le raycasting
   useImperativeHandle(ref, () => projectRef.current, [])
 
-  // Géométries mémorisées — créées une seule fois au montage, pas à chaque render
-  const frontGeometry = useMemo(() => getCachedGeometry().clone(), [])
-  const backGeometry = useMemo(() => getCachedGeometry().clone(), [])
-
   const texture = useTexture(image || '', (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace
     texture.minFilter = THREE.LinearFilter
     texture.magFilter = THREE.LinearFilter
   })
 
-  const {
-    selectedProject,
-    currentPage,
-    isArrangementAnimationComplete,
-    isProjectsArranged,
-    setProjectsArranged,
-    setSelectedProject,
-    setArrangementAnimationComplete,
-    resetProjectState,
-    setCurrentPage,
-  } = useStore(
-    useShallow((state) => ({
-      selectedProject: state.selectedProject,
-      currentPage: state.currentPage,
-      isArrangementAnimationComplete: state.isArrangementAnimationComplete,
-      isProjectsArranged: state.isProjectsArranged,
-      setProjectsArranged: state.setProjectsArranged,
-      setSelectedProject: state.setSelectedProject,
-      setArrangementAnimationComplete: state.setArrangementAnimationComplete,
-      resetProjectState: state.resetProjectState,
-      setCurrentPage: state.setCurrentPage,
-    }))
-  )
+  const selectedProject = useStore((state) => state.selectedProject)
+  const currentPage = useStore((state) => state.currentPage)
   const evenPage = currentPage % 2
+  const isArrangementAnimationComplete = useStore(
+    (state) => state.isArrangementAnimationComplete,
+  )
+  const isProjectsArranged = useStore((state) => state.isProjectsArranged)
+  const setProjectsArranged = useStore((state) => state.setProjectsArranged)
+  const setSelectedProject = useStore((state) => state.setSelectedProject)
+  const setArrangementAnimationComplete = useStore(
+    (state) => state.setArrangementAnimationComplete,
+  )
 
   // Obtenir les positions d'arrangement directement depuis le store
   const { predefinedPositions, projectSize } = useProjectPositionsStore()
@@ -108,30 +91,32 @@ const Project = forwardRef(function Project(
   const { contentText } = useContentText(gridPosition)
 
   // Fonctions de navigation
+  const resetProjectState = useStore((state) => state.resetProjectState)
+  const setCurrentPage = useStore((state) => state.setCurrentPage)
   const maxPage = selectedProject?.contents?.length
   const gridConfig = useGridConfig()
 
   // Fonction pour gérer le clic et arrêter la propagation
   const handleMeshClick = (event) => {
-    
+
     // Navigation - Cross
     if (gridPosition === gridConfig.crossPosition && selectedProject) {
       resetProjectState()
       return
     }
-    
+
     // Navigation - Arrow Up
     if (gridPosition === gridConfig.arrowUpPosition && selectedProject && currentPage > 1) {
       setCurrentPage(currentPage - 1)
       return
     }
-    
+
     // Navigation - Arrow Down
     if (gridPosition === 14 && selectedProject && currentPage < maxPage) {
       setCurrentPage(currentPage + 1)
       return
     }
-    
+
     // Logique de sélection du projet (pour toutes les autres positions)
     if (!isProjectsArranged) {
       setProjectsArranged(true)
@@ -211,7 +196,7 @@ const Project = forwardRef(function Project(
           onClick={handleMeshClick}
         >
           <mesh>
-            <primitive object={frontGeometry} />
+            <primitive object={getCachedGeometry().clone()} />
             <meshBasicMaterial
               ref={frontMaterialRef}
               side={THREE.FrontSide}
@@ -219,7 +204,7 @@ const Project = forwardRef(function Project(
             />
           </mesh>
           <mesh rotation-y={Math.PI}>
-            <primitive object={backGeometry} />
+            <primitive object={getCachedGeometry().clone()} />
             <meshBasicMaterial
               ref={backMaterialRef}
               side={THREE.FrontSide}
