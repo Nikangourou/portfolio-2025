@@ -1,9 +1,10 @@
+import { memo } from 'react'
 import Project from './Project'
 import { animated, useSpring } from '@react-spring/three'
 import { useRotationControl } from '@/hooks/useRotationControl'
 import { getSpringConfig } from '@/utils/springConfig'
 
-const ProjectList = ({
+const ProjectList = memo(({
   projectStates,
   projectGroupsRef,
   groupRef,
@@ -38,6 +39,6 @@ const ProjectList = ({
       })}
     </animated.group>
   )
-}
+})
 
-export default ProjectList 
+export default ProjectList

@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { Html } from '@react-three/drei';
 import { useSpring, animated, config } from '@react-spring/web';
 import styles from './ProjectInfoFloating.module.scss';
 
-export default function ProjectInfoFloating({ project, isVisible = true, displaySpring, displayApi }) {
+const ProjectInfoFloating = memo(function ProjectInfoFloating({ project, isVisible = true, displaySpring, displayApi }) {
   // Animation pour l'opacité et la position
   const [springs, api] = useSpring(() => ({
     opacity: 0,
@@ -120,4 +120,6 @@ export default function ProjectInfoFloating({ project, isVisible = true, display
       </animated.div>
     </Html>
   );
-} 
+})
+
+export default ProjectInfoFloating 
