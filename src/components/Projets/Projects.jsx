@@ -17,13 +17,6 @@ export default function Projects() {
   const gridConfig = useGridConfig()
   const groupRef = useRef(null)
   const isProjectsArranged = useStore((state) => state.isProjectsArranged)
-  const isArrangementAnimationComplete = useStore(
-    (state) => state.isArrangementAnimationComplete,
-  )
-  const selectedProject = useStore((state) => state.selectedProject)
-  const currentPage = useStore((state) => state.currentPage)
-  const setCurrentPage = useStore((state) => state.setCurrentPage)
-  const wheelCooldownRef = useRef(0)
 
   // Ref minimal pour le raycasting (ne contient que les données des projets)
   const projectDataRef = useRef([])
@@ -131,53 +124,6 @@ export default function Projects() {
     // Raycasting optimisé pour détecter le projet sous le curseur
     performRaycasting(projectDataRef.current, isProjectsArranged, groupRef)
   })
-
-  useEffect(() => {
-    if (
-      !isProjectsArranged ||
-      !isArrangementAnimationComplete ||
-      !selectedProject
-    ) {
-      return
-    }
-
-    const maxPage = selectedProject?.contents?.length || 0
-    if (maxPage <= 1) {
-      return
-    }
-
-    const handleWheel = (event) => {
-      if (Math.abs(event.deltaY) < 8) return
-
-      const now = performance.now()
-      if (now - wheelCooldownRef.current < 250) return
-
-      if (event.deltaY > 0 && currentPage < maxPage) {
-        setCurrentPage(currentPage + 1)
-        wheelCooldownRef.current = now
-        event.preventDefault()
-        return
-      }
-
-      if (event.deltaY < 0 && currentPage > 1) {
-        setCurrentPage(currentPage - 1)
-        wheelCooldownRef.current = now
-        event.preventDefault()
-      }
-    }
-
-    window.addEventListener('wheel', handleWheel, { passive: false })
-
-    return () => {
-      window.removeEventListener('wheel', handleWheel)
-    }
-  }, [
-    isProjectsArranged,
-    isArrangementAnimationComplete,
-    selectedProject,
-    currentPage,
-    setCurrentPage,
-  ])
 
   return (
     <>
