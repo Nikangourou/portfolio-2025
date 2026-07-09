@@ -1,7 +1,7 @@
-import { useRef, forwardRef, useEffect, useState, useImperativeHandle, useMemo } from 'react'
+import { useRef, forwardRef, useEffect, useImperativeHandle, useMemo } from 'react'
 import * as THREE from 'three'
 import { useTexture } from '@react-three/drei'
-import { animated, useSpring, config } from '@react-spring/three'
+import { animated, useSpring } from '@react-spring/three'
 import { useStore } from '@/stores/store'
 import styles from './Project.module.scss'
 import { Navigation } from '@/components/Interface/Interface'
@@ -81,13 +81,14 @@ const Project = forwardRef(function Project(
 
   // Spring pour la rotation de page individuelle - OPTIMISÉE
   const { pageRotationX } = useSpring({
-    pageRotationX: (currentPage) * Math.PI,
-    delay: animationDelays.pageRotation,
+    pageRotationX: isProjectsArranged ? currentPage * Math.PI : 0,
+    delay: isProjectsArranged ? animationDelays.pageRotation : 0,
+    immediate: !isProjectsArranged,
     config: getSpringConfig('projectRotation')
   })
 
   // Utiliser les hooks personnalisés
-  const { contentTexture, targetFace } = useContentTexture(gridPosition)
+  const { contentTexture } = useContentTexture(gridPosition)
   const { contentText } = useContentText(gridPosition)
 
   // Fonctions de navigation
