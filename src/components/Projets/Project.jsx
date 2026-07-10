@@ -14,8 +14,8 @@ import { getCachedGeometry, AnimatedMesh } from './OptimizedGeometry'
 import { getSpringConfig } from '@/utils/springConfig'
 import { useGridConfig } from '@/hooks/useGridConfig'
 
-const CURSOR_RESPONSE = 10
-const REVEAL_RESPONSE = 7.5
+const CURSOR_RESPONSE = 9
+const FLUTTER_RESPONSE = 6.8
 const TRAIL_RESPONSE = 2.2
 const TRAIL_DECAY = 0.92
 
@@ -39,12 +39,12 @@ const Project = forwardRef(function Project(
   const hasPointerSampleRef = useRef(false)
   const { camera, pointer } = useThree()
 
-  const revealUniforms = useMemo(() => ({
-    uRevealCursor: { value: new THREE.Vector2(999, 999) },
+  const flutterUniforms = useMemo(() => ({
+    uFlutterCursor: { value: new THREE.Vector2(999, 999) },
     uTrailCursor: { value: new THREE.Vector2(999, 999) },
-    uRevealStrength: { value: 0 },
+    uFlutterStrength: { value: 0 },
     uTrailStrength: { value: 0 },
-    uInkColor: { value: new THREE.Color('#cfd8e6') },
+    uEdgeTint: { value: new THREE.Color('#f3f6fb') },
     uTime: { value: 0 },
   }), [])
 
@@ -78,126 +78,92 @@ const Project = forwardRef(function Project(
     return predefinedPositions[gridPosition] || [0, 0, 0]
   }, [predefinedPositions, gridPosition])
 
-  const applyInkRevealShader = useCallback((material) => {
+  const applyEdgeFlutterShader = useCallback((material) => {
     material.onBeforeCompile = (shader) => {
-      shader.uniforms.uRevealCursor = revealUniforms.uRevealCursor
-      shader.uniforms.uTrailCursor = revealUniforms.uTrailCursor
-      shader.uniforms.uRevealStrength = revealUniforms.uRevealStrength
-      shader.uniforms.uTrailStrength = revealUniforms.uTrailStrength
-      shader.uniforms.uInkColor = revealUniforms.uInkColor
-      shader.uniforms.uTime = revealUniforms.uTime
+      shader.uniforms.uFlutterCursor = flutterUniforms.uFlutterCursor
+      shader.uniforms.uTrailCursor = flutterUniforms.uTrailCursor
+      shader.uniforms.uFlutterStrength = flutterUniforms.uFlutterStrength
+      shader.uniforms.uTrailStrength = flutterUniforms.uTrailStrength
+      shader.uniforms.uEdgeTint = flutterUniforms.uEdgeTint
+      shader.uniforms.uTime = flutterUniforms.uTime
 
       shader.vertexShader = `
-        varying vec2 vRevealUv;
-        varying vec2 vRevealPosition;
+        uniform vec2 uFlutterCursor;
+        uniform vec2 uTrailCursor;
+        uniform float uFlutterStrength;
+        uniform float uTrailStrength;
+        uniform float uTime;
+        varying vec2 vFlutterUv;
+        varying float vFlutterMask;
       ` + shader.vertexShader
 
       shader.vertexShader = shader.vertexShader.replace(
         '#include <begin_vertex>',
         `
           #include <begin_vertex>
-          vRevealUv = uv;
-          vRevealPosition = position.xy;
+
+          vFlutterUv = uv;
+
+          float cursorDistance = distance(position.xy, uFlutterCursor);
+          float trailDistance = distance(position.xy, uTrailCursor);
+          float cursorField = smoothstep(1.3, 0.0, cursorDistance) * uFlutterStrength;
+          float trailField = smoothstep(1.8, 0.0, trailDistance) * uTrailStrength;
+          float flutterField = max(cursorField, trailField * 0.82);
+
+          float topEdge = smoothstep(0.48, 1.0, uv.y);
+          float bottomEdge = 1.0 - smoothstep(0.0, 0.18, uv.y);
+          float sideDistance = abs(uv.x * 2.0 - 1.0);
+          float sideEdge = smoothstep(0.46, 1.0, sideDistance);
+          float cornerBias = smoothstep(0.52, 1.0, max(sideDistance, abs(uv.y * 2.0 - 1.0)));
+          float edgeMask = max(topEdge * 1.1, sideEdge * 0.72 + bottomEdge * 0.22);
+          edgeMask = mix(edgeMask, 1.0, cornerBias * 0.18);
+
+          float flutterWave = sin(
+            uTime * 7.0 +
+            uv.y * 16.0 +
+            uv.x * 9.0
+          );
+          float secondaryWave = sin(
+            uTime * 11.0 +
+            uv.y * 23.0 -
+            uv.x * 6.0
+          );
+          float wave = flutterWave * 0.7 + secondaryWave * 0.3;
+          float bend = flutterField * edgeMask;
+
+          transformed.z += bend * (0.12 + wave * 0.09);
+          transformed.x += bend * sideEdge * (uv.x - 0.5) * (0.1 + secondaryWave * 0.05);
+          transformed.y += bend * topEdge * (0.04 + flutterWave * 0.035);
+
+          vFlutterMask = bend;
         `,
       )
 
       shader.fragmentShader = `
-        uniform vec2 uRevealCursor;
-        uniform vec2 uTrailCursor;
-        uniform float uRevealStrength;
-        uniform float uTrailStrength;
-        uniform vec3 uInkColor;
+        uniform vec3 uEdgeTint;
         uniform float uTime;
-        varying vec2 vRevealUv;
-        varying vec2 vRevealPosition;
-
-        float hash21(vec2 p) {
-          p = fract(p * vec2(234.34, 435.345));
-          p += dot(p, p + 34.23);
-          return fract(p.x * p.y);
-        }
-
-        float noise21(vec2 p) {
-          vec2 cell = floor(p);
-          vec2 local = fract(p);
-          local = local * local * (3.0 - 2.0 * local);
-
-          float a = hash21(cell);
-          float b = hash21(cell + vec2(1.0, 0.0));
-          float c = hash21(cell + vec2(0.0, 1.0));
-          float d = hash21(cell + vec2(1.0, 1.0));
-
-          return mix(mix(a, b, local.x), mix(c, d, local.x), local.y);
-        }
-
-        float fbm(vec2 p) {
-          float value = 0.0;
-          float amplitude = 0.5;
-
-          value += amplitude * noise21(p);
-          p *= 2.03;
-          amplitude *= 0.5;
-          value += amplitude * noise21(p);
-          p *= 2.01;
-          amplitude *= 0.5;
-          value += amplitude * noise21(p);
-          p *= 2.02;
-          amplitude *= 0.5;
-          value += amplitude * noise21(p);
-
-          return value;
-        }
-
-        float fiberPattern(vec2 uv) {
-          float vertical = fbm(vec2(uv.x * 3.0, uv.y * 24.0));
-          float diagonal = fbm(vec2(uv.x * 14.0 + uv.y * 4.0, uv.y * 18.0));
-          return smoothstep(0.48, 0.8, vertical * 0.65 + diagonal * 0.35);
-        }
+        varying vec2 vFlutterUv;
+        varying float vFlutterMask;
       ` + shader.fragmentShader
 
       shader.fragmentShader = shader.fragmentShader.replace(
         '#include <dithering_fragment>',
         `
-          float cursorDistance = distance(vRevealPosition, uRevealCursor);
-          float trailDistance = distance(vRevealPosition, uTrailCursor);
-          float revealMask = smoothstep(1.25, 0.0, cursorDistance) * uRevealStrength;
-          float trailMask = smoothstep(1.7, 0.0, trailDistance) * uTrailStrength;
-          float revealField = max(revealMask, trailMask * 0.85);
+          float edgeHighlight = smoothstep(0.28, 1.0, vFlutterMask);
+          float shimmer = 0.5 + 0.5 * sin(uTime * 5.0 + vFlutterUv.y * 18.0 + vFlutterUv.x * 12.0);
+          float sideGlow = smoothstep(0.34, 1.0, abs(vFlutterUv.x * 2.0 - 1.0));
+          vec3 flutterTint = mix(gl_FragColor.rgb, uEdgeTint, edgeHighlight * (0.12 + shimmer * 0.08));
 
-          vec2 flowUv = vRevealUv * vec2(1.15, 1.45);
-          float wave = 0.5 + 0.5 * sin((flowUv.y * 10.0 + flowUv.x * 2.2) + uTime * 0.45);
-          float bloomNoise = fbm(flowUv * 5.0 + vec2(0.0, uTime * 0.03));
-          float edgeNoise = fbm(flowUv * 9.0 + vec2(1.7, -2.3));
-          float fibers = fiberPattern(flowUv + vec2(0.15, -0.08));
-          float grain = noise21(vRevealUv * 280.0 + uTime * 0.03);
-          float edge = smoothstep(0.0, 0.2, vRevealUv.x) * smoothstep(0.0, 0.2, 1.0 - vRevealUv.x);
-          edge *= smoothstep(0.0, 0.16, vRevealUv.y) * smoothstep(0.0, 0.16, 1.0 - vRevealUv.y);
-
-          float organicMask = smoothstep(0.28, 0.8, bloomNoise * 0.72 + edgeNoise * 0.28 + wave * 0.22);
-          float feather = smoothstep(0.12, 0.95, revealField + edgeNoise * 0.26);
-          float glossMask = revealField * mix(0.5, 1.0, organicMask) * feather * edge;
-          float streak = smoothstep(0.38, 0.96, wave) * (0.42 + fibers * 0.58);
-          float sheen = smoothstep(0.08, 0.96, 1.0 - abs(vRevealUv.x * 2.0 - 1.0));
-          float printBands = smoothstep(0.35, 0.78, sin(vRevealUv.y * 54.0 + bloomNoise * 4.5) * 0.5 + 0.5);
-          vec3 baseColor = gl_FragColor.rgb;
-          vec3 paperLift = mix(baseColor, vec3(1.0), glossMask * 0.08);
-          vec3 varnishTint = mix(vec3(0.98, 0.98, 1.0), uInkColor, 0.55 + grain * 0.12);
-          vec3 varnishLayer = paperLift + varnishTint * glossMask * streak * sheen * (0.2 + printBands * 0.16);
-          float specularLine = pow(smoothstep(0.46, 1.0, wave), 2.4) * glossMask * 0.34;
-          float softBloom = glossMask * (0.06 + fibers * 0.045 + printBands * 0.03);
-          float contrastDip = glossMask * (0.08 + printBands * 0.05);
-
-          gl_FragColor.rgb = mix(baseColor * (1.0 - contrastDip), varnishLayer, glossMask * 0.88);
-          gl_FragColor.rgb += specularLine + softBloom;
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, flutterTint, edgeHighlight * (0.45 + sideGlow * 0.18));
 
           #include <dithering_fragment>
         `,
       )
     }
 
-    material.customProgramCacheKey = () => 'ink-reveal-v2-gloss'
+    material.customProgramCacheKey = () => 'edge-flutter-v1'
     material.needsUpdate = true
-  }, [revealUniforms])
+  }, [flutterUniforms])
 
   // Delays précalculés pour éviter les recalculs
   const animationDelays = useMemo(() => ({
@@ -245,13 +211,13 @@ const Project = forwardRef(function Project(
 
   useEffect(() => {
     if (frontMaterialRef.current) {
-      applyInkRevealShader(frontMaterialRef.current)
+      applyEdgeFlutterShader(frontMaterialRef.current)
     }
 
     if (backMaterialRef.current) {
-      applyInkRevealShader(backMaterialRef.current)
+      applyEdgeFlutterShader(backMaterialRef.current)
     }
-  }, [applyInkRevealShader])
+  }, [applyEdgeFlutterShader])
 
   useFrame((state, delta) => {
     if (!pageGroupRef.current) {
@@ -306,35 +272,35 @@ const Project = forwardRef(function Project(
     const screenInfluence = THREE.MathUtils.clamp(1 - screenDistance / 0.72, 0, 1)
     const targetStrength = Math.max(
       cursorInfluence,
-      screenInfluence * 0.72,
+      screenInfluence * 0.68,
     )
     const cursorBlend = 1 - Math.exp(-delta * CURSOR_RESPONSE)
-    const strengthBlend = 1 - Math.exp(-delta * REVEAL_RESPONSE)
+    const strengthBlend = 1 - Math.exp(-delta * FLUTTER_RESPONSE)
     const trailBlend = 1 - Math.exp(-delta * TRAIL_RESPONSE)
     const residualTrailStrength = Math.max(
       targetStrength * 0.95,
-      revealUniforms.uTrailStrength.value * Math.exp(-delta * TRAIL_DECAY),
+      flutterUniforms.uTrailStrength.value * Math.exp(-delta * TRAIL_DECAY),
     )
 
-    if (revealUniforms.uRevealCursor.value.x > 900) {
-      revealUniforms.uRevealCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
-      revealUniforms.uTrailCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
+    if (flutterUniforms.uFlutterCursor.value.x > 900) {
+      flutterUniforms.uFlutterCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
+      flutterUniforms.uTrailCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
     } else {
-      revealUniforms.uRevealCursor.value.lerp(localCursorRef.current, cursorBlend)
-      revealUniforms.uTrailCursor.value.lerp(localCursorRef.current, trailBlend)
+      flutterUniforms.uFlutterCursor.value.lerp(localCursorRef.current, cursorBlend)
+      flutterUniforms.uTrailCursor.value.lerp(localCursorRef.current, trailBlend)
     }
 
-    revealUniforms.uRevealStrength.value = THREE.MathUtils.lerp(
-      revealUniforms.uRevealStrength.value,
+    flutterUniforms.uFlutterStrength.value = THREE.MathUtils.lerp(
+      flutterUniforms.uFlutterStrength.value,
       targetStrength,
       strengthBlend,
     )
-    revealUniforms.uTrailStrength.value = THREE.MathUtils.lerp(
-      revealUniforms.uTrailStrength.value,
+    flutterUniforms.uTrailStrength.value = THREE.MathUtils.lerp(
+      flutterUniforms.uTrailStrength.value,
       residualTrailStrength,
       trailBlend,
     )
-    revealUniforms.uTime.value = state.clock.elapsedTime
+    flutterUniforms.uTime.value = state.clock.elapsedTime
   })
 
   // Fonction pour gérer le clic et arrêter la propagation
