@@ -15,7 +15,7 @@ import { getSpringConfig } from '@/utils/springConfig'
 import { useGridConfig } from '@/hooks/useGridConfig'
 
 const CURSOR_RESPONSE = 9
-const FLUTTER_RESPONSE = 6.8
+const RIPPLE_RESPONSE = 7.2
 const TRAIL_RESPONSE = 2.2
 const TRAIL_DECAY = 0.92
 
@@ -39,12 +39,12 @@ const Project = forwardRef(function Project(
   const hasPointerSampleRef = useRef(false)
   const { camera, pointer } = useThree()
 
-  const flutterUniforms = useMemo(() => ({
-    uFlutterCursor: { value: new THREE.Vector2(999, 999) },
+  const rippleUniforms = useMemo(() => ({
+    uRippleCursor: { value: new THREE.Vector2(999, 999) },
     uTrailCursor: { value: new THREE.Vector2(999, 999) },
-    uFlutterStrength: { value: 0 },
+    uRippleStrength: { value: 0 },
     uTrailStrength: { value: 0 },
-    uEdgeTint: { value: new THREE.Color('#f3f6fb') },
+    uRippleTint: { value: new THREE.Color('#eef4ff') },
     uTime: { value: 0 },
   }), [])
 
@@ -78,23 +78,24 @@ const Project = forwardRef(function Project(
     return predefinedPositions[gridPosition] || [0, 0, 0]
   }, [predefinedPositions, gridPosition])
 
-  const applyEdgeFlutterShader = useCallback((material) => {
+  const applyPressureRippleShader = useCallback((material) => {
     material.onBeforeCompile = (shader) => {
-      shader.uniforms.uFlutterCursor = flutterUniforms.uFlutterCursor
-      shader.uniforms.uTrailCursor = flutterUniforms.uTrailCursor
-      shader.uniforms.uFlutterStrength = flutterUniforms.uFlutterStrength
-      shader.uniforms.uTrailStrength = flutterUniforms.uTrailStrength
-      shader.uniforms.uEdgeTint = flutterUniforms.uEdgeTint
-      shader.uniforms.uTime = flutterUniforms.uTime
+      shader.uniforms.uRippleCursor = rippleUniforms.uRippleCursor
+      shader.uniforms.uTrailCursor = rippleUniforms.uTrailCursor
+      shader.uniforms.uRippleStrength = rippleUniforms.uRippleStrength
+      shader.uniforms.uTrailStrength = rippleUniforms.uTrailStrength
+      shader.uniforms.uRippleTint = rippleUniforms.uRippleTint
+      shader.uniforms.uTime = rippleUniforms.uTime
 
       shader.vertexShader = `
-        uniform vec2 uFlutterCursor;
+        uniform vec2 uRippleCursor;
         uniform vec2 uTrailCursor;
-        uniform float uFlutterStrength;
+        uniform float uRippleStrength;
         uniform float uTrailStrength;
         uniform float uTime;
-        varying vec2 vFlutterUv;
-        varying float vFlutterMask;
+        varying vec2 vRippleUv;
+        varying float vRippleMask;
+        varying float vRipplePhase;
       ` + shader.vertexShader
 
       shader.vertexShader = shader.vertexShader.replace(
@@ -102,68 +103,65 @@ const Project = forwardRef(function Project(
         `
           #include <begin_vertex>
 
-          vFlutterUv = uv;
+          vRippleUv = uv;
 
-          float cursorDistance = distance(position.xy, uFlutterCursor);
+          float cursorDistance = distance(position.xy, uRippleCursor);
           float trailDistance = distance(position.xy, uTrailCursor);
-          float cursorField = smoothstep(1.3, 0.0, cursorDistance) * uFlutterStrength;
+          float cursorField = smoothstep(1.45, 0.0, cursorDistance) * uRippleStrength;
           float trailField = smoothstep(1.8, 0.0, trailDistance) * uTrailStrength;
-          float flutterField = max(cursorField, trailField * 0.82);
+          float rippleField = max(cursorField, trailField * 0.8);
 
-          float topEdge = smoothstep(0.48, 1.0, uv.y);
-          float bottomEdge = 1.0 - smoothstep(0.0, 0.18, uv.y);
-          float sideDistance = abs(uv.x * 2.0 - 1.0);
-          float sideEdge = smoothstep(0.46, 1.0, sideDistance);
-          float cornerBias = smoothstep(0.52, 1.0, max(sideDistance, abs(uv.y * 2.0 - 1.0)));
-          float edgeMask = max(topEdge * 1.1, sideEdge * 0.72 + bottomEdge * 0.22);
-          edgeMask = mix(edgeMask, 1.0, cornerBias * 0.18);
+          vec2 cursorVector = position.xy - uRippleCursor;
+          float cursorRadius = max(length(cursorVector), 0.0001);
+          vec2 cursorDirection = cursorVector / cursorRadius;
+          vec2 trailVector = position.xy - uTrailCursor;
+          float trailRadius = max(length(trailVector), 0.0001);
 
-          float flutterWave = sin(
-            uTime * 7.0 +
-            uv.y * 16.0 +
-            uv.x * 9.0
-          );
-          float secondaryWave = sin(
-            uTime * 11.0 +
-            uv.y * 23.0 -
-            uv.x * 6.0
-          );
-          float wave = flutterWave * 0.7 + secondaryWave * 0.3;
-          float bend = flutterField * edgeMask;
+          float cursorRipple = sin(cursorRadius * 20.0 - uTime * 9.0);
+          float trailRipple = sin(trailRadius * 16.0 - uTime * 6.5);
+          float cursorEnvelope = exp(-cursorRadius * 2.8);
+          float trailEnvelope = exp(-trailRadius * 2.1);
+          float sheetBias = smoothstep(0.0, 1.0, 1.0 - abs(uv.x * 2.0 - 1.0) * 0.55);
+          float ripple = cursorRipple * cursorEnvelope * cursorField + trailRipple * trailEnvelope * trailField * 0.75;
+          float bend = ripple * (0.12 + sheetBias * 0.08);
 
-          transformed.z += bend * (0.12 + wave * 0.09);
-          transformed.x += bend * sideEdge * (uv.x - 0.5) * (0.1 + secondaryWave * 0.05);
-          transformed.y += bend * topEdge * (0.04 + flutterWave * 0.035);
+          transformed.z += bend;
+          transformed.x += cursorDirection.x * rippleField * 0.035 * cursorEnvelope;
+          transformed.y += cursorDirection.y * rippleField * 0.035 * cursorEnvelope;
 
-          vFlutterMask = bend;
+          vRippleMask = clamp(abs(ripple) * 2.4 + rippleField * 0.35, 0.0, 1.0);
+          vRipplePhase = ripple;
         `,
       )
 
       shader.fragmentShader = `
-        uniform vec3 uEdgeTint;
+        uniform vec3 uRippleTint;
         uniform float uTime;
-        varying vec2 vFlutterUv;
-        varying float vFlutterMask;
+        varying vec2 vRippleUv;
+        varying float vRippleMask;
+        varying float vRipplePhase;
       ` + shader.fragmentShader
 
       shader.fragmentShader = shader.fragmentShader.replace(
         '#include <dithering_fragment>',
         `
-          float edgeHighlight = smoothstep(0.28, 1.0, vFlutterMask);
-          float shimmer = 0.5 + 0.5 * sin(uTime * 5.0 + vFlutterUv.y * 18.0 + vFlutterUv.x * 12.0);
-          float sideGlow = smoothstep(0.34, 1.0, abs(vFlutterUv.x * 2.0 - 1.0));
-          vec3 flutterTint = mix(gl_FragColor.rgb, uEdgeTint, edgeHighlight * (0.12 + shimmer * 0.08));
+          float rippleHighlight = smoothstep(0.12, 1.0, vRippleMask);
+          float shimmer = 0.5 + 0.5 * sin(uTime * 4.5 + vRippleUv.y * 22.0 + vRippleUv.x * 10.0);
+          float ringLine = smoothstep(0.35, 0.95, 0.5 + 0.5 * vRipplePhase);
+          float centerBias = smoothstep(0.08, 0.92, 1.0 - distance(vRippleUv, vec2(0.5)) * 1.2);
+          vec3 rippleTint = mix(gl_FragColor.rgb, uRippleTint, rippleHighlight * (0.16 + shimmer * 0.08));
 
-          gl_FragColor.rgb = mix(gl_FragColor.rgb, flutterTint, edgeHighlight * (0.45 + sideGlow * 0.18));
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, rippleTint, rippleHighlight * 0.52);
+          gl_FragColor.rgb += ringLine * rippleHighlight * 0.12 * (0.65 + centerBias * 0.35);
 
           #include <dithering_fragment>
         `,
       )
     }
 
-    material.customProgramCacheKey = () => 'edge-flutter-v1'
+    material.customProgramCacheKey = () => 'pressure-ripple-v1'
     material.needsUpdate = true
-  }, [flutterUniforms])
+  }, [rippleUniforms])
 
   // Delays précalculés pour éviter les recalculs
   const animationDelays = useMemo(() => ({
@@ -211,13 +209,13 @@ const Project = forwardRef(function Project(
 
   useEffect(() => {
     if (frontMaterialRef.current) {
-      applyEdgeFlutterShader(frontMaterialRef.current)
+      applyPressureRippleShader(frontMaterialRef.current)
     }
 
     if (backMaterialRef.current) {
-      applyEdgeFlutterShader(backMaterialRef.current)
+      applyPressureRippleShader(backMaterialRef.current)
     }
-  }, [applyEdgeFlutterShader])
+  }, [applyPressureRippleShader])
 
   useFrame((state, delta) => {
     if (!pageGroupRef.current) {
@@ -272,35 +270,35 @@ const Project = forwardRef(function Project(
     const screenInfluence = THREE.MathUtils.clamp(1 - screenDistance / 0.72, 0, 1)
     const targetStrength = Math.max(
       cursorInfluence,
-      screenInfluence * 0.68,
+      screenInfluence * 0.62,
     )
     const cursorBlend = 1 - Math.exp(-delta * CURSOR_RESPONSE)
-    const strengthBlend = 1 - Math.exp(-delta * FLUTTER_RESPONSE)
+    const strengthBlend = 1 - Math.exp(-delta * RIPPLE_RESPONSE)
     const trailBlend = 1 - Math.exp(-delta * TRAIL_RESPONSE)
     const residualTrailStrength = Math.max(
       targetStrength * 0.95,
-      flutterUniforms.uTrailStrength.value * Math.exp(-delta * TRAIL_DECAY),
+      rippleUniforms.uTrailStrength.value * Math.exp(-delta * TRAIL_DECAY),
     )
 
-    if (flutterUniforms.uFlutterCursor.value.x > 900) {
-      flutterUniforms.uFlutterCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
-      flutterUniforms.uTrailCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
+    if (rippleUniforms.uRippleCursor.value.x > 900) {
+      rippleUniforms.uRippleCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
+      rippleUniforms.uTrailCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
     } else {
-      flutterUniforms.uFlutterCursor.value.lerp(localCursorRef.current, cursorBlend)
-      flutterUniforms.uTrailCursor.value.lerp(localCursorRef.current, trailBlend)
+      rippleUniforms.uRippleCursor.value.lerp(localCursorRef.current, cursorBlend)
+      rippleUniforms.uTrailCursor.value.lerp(localCursorRef.current, trailBlend)
     }
 
-    flutterUniforms.uFlutterStrength.value = THREE.MathUtils.lerp(
-      flutterUniforms.uFlutterStrength.value,
+    rippleUniforms.uRippleStrength.value = THREE.MathUtils.lerp(
+      rippleUniforms.uRippleStrength.value,
       targetStrength,
       strengthBlend,
     )
-    flutterUniforms.uTrailStrength.value = THREE.MathUtils.lerp(
-      flutterUniforms.uTrailStrength.value,
+    rippleUniforms.uTrailStrength.value = THREE.MathUtils.lerp(
+      rippleUniforms.uTrailStrength.value,
       residualTrailStrength,
       trailBlend,
     )
-    flutterUniforms.uTime.value = state.clock.elapsedTime
+    rippleUniforms.uTime.value = state.clock.elapsedTime
   })
 
   // Fonction pour gérer le clic et arrêter la propagation
