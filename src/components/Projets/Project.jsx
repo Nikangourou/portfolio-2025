@@ -1,7 +1,8 @@
-import { useRef, forwardRef, useEffect, useImperativeHandle, useMemo } from 'react'
+import { useRef, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo } from 'react'
 import * as THREE from 'three'
 import { useTexture } from '@react-three/drei'
 import { animated, useSpring } from '@react-spring/three'
+import { useFrame, useThree } from '@react-three/fiber'
 import { useStore } from '@/stores/store'
 import styles from './Project.module.scss'
 import { Navigation } from '@/components/Interface/Interface'
@@ -13,15 +14,44 @@ import { getCachedGeometry, AnimatedMesh } from './OptimizedGeometry'
 import { getSpringConfig } from '@/utils/springConfig'
 import { useGridConfig } from '@/hooks/useGridConfig'
 
+const MAX_WIND_SPEED = 1.1
+const WIND_RESPONSE = 4.6
+const DIRECTION_RESPONSE = 6.5
+const STRENGTH_RESPONSE = 6.2
+const TRAIL_RESPONSE = 1.7
+const TRAIL_DECAY = 0.78
+
 const Project = forwardRef(function Project(
   { gridPosition, image, initialPosition, initialRotation },
   ref,
 ) {
-
-
   const backMaterialRef = useRef(null)
   const frontMaterialRef = useRef(null)
   const projectRef = useRef(null)
+  const pageGroupRef = useRef(null)
+  const raycasterRef = useRef(new THREE.Raycaster())
+  const worldPlaneRef = useRef(new THREE.Plane())
+  const planeOriginRef = useRef(new THREE.Vector3())
+  const planeNormalRef = useRef(new THREE.Vector3())
+  const planeQuaternionRef = useRef(new THREE.Quaternion())
+  const hitPointRef = useRef(new THREE.Vector3())
+  const localCursorRef = useRef(new THREE.Vector3())
+  const projectedCenterRef = useRef(new THREE.Vector3())
+  const previousPointerRef = useRef(new THREE.Vector2())
+  const smoothedWindRef = useRef(new THREE.Vector2())
+  const targetWindRef = useRef(new THREE.Vector2())
+  const stableDirectionRef = useRef(new THREE.Vector2(0, 1))
+  const hasPointerSampleRef = useRef(false)
+  const { camera, pointer } = useThree()
+
+  const windUniforms = useMemo(() => ({
+    uWindCursor: { value: new THREE.Vector3(999, 999, 0) },
+    uTrailCursor: { value: new THREE.Vector3(999, 999, 0) },
+    uWindDirection: { value: new THREE.Vector2(0, 1) },
+    uWindStrength: { value: 0 },
+    uTrailStrength: { value: 0 },
+    uTime: { value: 0 },
+  }), [])
 
   // Exposer la ref du groupe principal pour le raycasting
   useImperativeHandle(ref, () => projectRef.current, [])
@@ -52,6 +82,58 @@ const Project = forwardRef(function Project(
   const targetArrangedPosition = useMemo(() => {
     return predefinedPositions[gridPosition] || [0, 0, 0]
   }, [predefinedPositions, gridPosition])
+
+  const applyWindShader = useCallback((material, directionSign) => {
+    material.onBeforeCompile = (shader) => {
+      shader.uniforms.uWindCursor = windUniforms.uWindCursor
+      shader.uniforms.uTrailCursor = windUniforms.uTrailCursor
+      shader.uniforms.uWindDirection = windUniforms.uWindDirection
+      shader.uniforms.uWindStrength = windUniforms.uWindStrength
+      shader.uniforms.uTrailStrength = windUniforms.uTrailStrength
+      shader.uniforms.uTime = windUniforms.uTime
+
+      shader.vertexShader = `
+        uniform vec3 uWindCursor;
+        uniform vec3 uTrailCursor;
+        uniform vec2 uWindDirection;
+        uniform float uWindStrength;
+        uniform float uTrailStrength;
+        uniform float uTime;
+      ` + shader.vertexShader
+
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        `
+          #include <begin_vertex>
+
+          vec2 windDirection = length(uWindDirection) > 0.0001
+            ? normalize(uWindDirection)
+            : vec2(0.0, 1.0);
+          float cursorDistance = distance(position.xy, uWindCursor.xy);
+          float trailDistance = distance(position.xy, uTrailCursor.xy);
+          float localFalloff = smoothstep(1.1, 0.0, cursorDistance);
+          float trailFalloff = smoothstep(1.6, 0.0, trailDistance);
+          float pageLift = smoothstep(-0.15, 1.0, uv.y);
+          float gust = 0.55 + 0.45 * sin(
+            position.y * 10.0 +
+            uTime * 3.2 +
+            dot(position.xy, windDirection * 6.0)
+          );
+          float influence = pageLift * (
+            localFalloff * uWindStrength +
+            trailFalloff * uTrailStrength * 0.8
+          );
+
+          transformed.x += windDirection.x * influence * 0.26 * gust;
+          transformed.y += windDirection.y * influence * 0.11 * gust;
+          transformed.z += ${directionSign.toFixed(1)} * influence * (0.22 + 0.16 * gust);
+        `,
+      )
+    }
+
+    material.customProgramCacheKey = () => `wind-bend-${directionSign}`
+    material.needsUpdate = true
+  }, [windUniforms])
 
   // Delays précalculés pour éviter les recalculs
   const animationDelays = useMemo(() => ({
@@ -96,6 +178,120 @@ const Project = forwardRef(function Project(
   const setCurrentPage = useStore((state) => state.setCurrentPage)
   const maxPage = selectedProject?.contents?.length
   const gridConfig = useGridConfig()
+
+  useEffect(() => {
+    if (frontMaterialRef.current) {
+      applyWindShader(frontMaterialRef.current, 1)
+    }
+
+    if (backMaterialRef.current) {
+      applyWindShader(backMaterialRef.current, -1)
+    }
+  }, [applyWindShader])
+
+  useFrame((state, delta) => {
+    if (!pageGroupRef.current) {
+      return
+    }
+
+    const previousPointer = previousPointerRef.current
+    const smoothedWind = smoothedWindRef.current
+    const targetWind = targetWindRef.current
+    const stableDirection = stableDirectionRef.current
+
+    if (!hasPointerSampleRef.current) {
+      previousPointer.set(pointer.x, pointer.y)
+      targetWind.set(0, 0)
+      smoothedWind.set(0, 0)
+      hasPointerSampleRef.current = true
+    }
+
+    const pointerDeltaX = pointer.x - previousPointer.x
+    const pointerDeltaY = pointer.y - previousPointer.y
+    previousPointer.set(pointer.x, pointer.y)
+
+    const windBlend = 1 - Math.exp(-delta * WIND_RESPONSE)
+    const directionBlend = 1 - Math.exp(-delta * DIRECTION_RESPONSE)
+    targetWind.set(pointerDeltaX * 28, -pointerDeltaY * 28)
+    if (targetWind.lengthSq() > MAX_WIND_SPEED * MAX_WIND_SPEED) {
+      targetWind.setLength(MAX_WIND_SPEED)
+    }
+    smoothedWind.lerp(targetWind, windBlend)
+
+    if (smoothedWind.lengthSq() > 0.0004) {
+      stableDirection.copy(smoothedWind).normalize()
+    }
+
+    pageGroupRef.current.getWorldPosition(planeOriginRef.current)
+    pageGroupRef.current.getWorldQuaternion(planeQuaternionRef.current)
+    planeNormalRef.current.set(0, 0, 1)
+      .applyQuaternion(planeQuaternionRef.current)
+      .normalize()
+
+    worldPlaneRef.current.setFromNormalAndCoplanarPoint(
+      planeNormalRef.current,
+      planeOriginRef.current,
+    )
+
+    raycasterRef.current.setFromCamera(pointer, camera)
+    raycasterRef.current.ray.intersectPlane(
+      worldPlaneRef.current,
+      hitPointRef.current,
+    )
+
+    localCursorRef.current.copy(hitPointRef.current)
+    pageGroupRef.current.worldToLocal(localCursorRef.current)
+
+    const halfWidth = projectSize.width * 0.5
+    const halfHeight = projectSize.height * 0.5
+    const normalizedX = localCursorRef.current.x / (halfWidth * 1.35)
+    const normalizedY = localCursorRef.current.y / (halfHeight * 1.35)
+    const radialDistance = Math.sqrt(
+      normalizedX * normalizedX + normalizedY * normalizedY,
+    )
+    const cursorInfluence = THREE.MathUtils.clamp(1 - radialDistance, 0, 1)
+    projectedCenterRef.current.copy(planeOriginRef.current).project(camera)
+
+    const pointerToProjectX = pointer.x - projectedCenterRef.current.x
+    const pointerToProjectY = pointer.y - projectedCenterRef.current.y
+    const screenDistance = Math.sqrt(
+      pointerToProjectX * pointerToProjectX +
+      pointerToProjectY * pointerToProjectY,
+    )
+    const screenInfluence = THREE.MathUtils.clamp(1 - screenDistance / 0.65, 0, 1)
+    const windMagnitude = THREE.MathUtils.clamp(smoothedWind.length(), 0, 1)
+    const targetStrength = Math.max(
+      cursorInfluence * (0.34 + windMagnitude * 1.1),
+      screenInfluence * (0.16 + windMagnitude * 0.55),
+    )
+    const strengthBlend = 1 - Math.exp(-delta * STRENGTH_RESPONSE)
+    const trailBlend = 1 - Math.exp(-delta * TRAIL_RESPONSE)
+    const residualTrailStrength = Math.max(
+      targetStrength * 0.95,
+      windUniforms.uTrailStrength.value * Math.exp(-delta * TRAIL_DECAY),
+    )
+
+    if (windUniforms.uWindCursor.value.x > 900) {
+      windUniforms.uWindCursor.value.copy(localCursorRef.current)
+      windUniforms.uTrailCursor.value.copy(localCursorRef.current)
+    } else {
+      windUniforms.uWindCursor.value.lerp(localCursorRef.current, strengthBlend)
+      windUniforms.uTrailCursor.value.lerp(localCursorRef.current, trailBlend)
+    }
+
+    windUniforms.uWindDirection.value.lerp(stableDirection, directionBlend)
+    windUniforms.uWindStrength.value = THREE.MathUtils.lerp(
+      windUniforms.uWindStrength.value,
+      targetStrength,
+      strengthBlend,
+    )
+    windUniforms.uTrailStrength.value = THREE.MathUtils.lerp(
+      windUniforms.uTrailStrength.value,
+      residualTrailStrength,
+      trailBlend,
+    )
+    windUniforms.uTime.value = state.clock.elapsedTime
+  })
 
   // Fonction pour gérer le clic et arrêter la propagation
   const handleMeshClick = (event) => {
@@ -190,6 +386,7 @@ const Project = forwardRef(function Project(
       rotation={rotation}
     >
       <animated.group
+        ref={pageGroupRef}
         rotation-x={pageRotationX}
       >
         <AnimatedMesh
