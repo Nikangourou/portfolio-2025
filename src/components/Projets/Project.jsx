@@ -14,12 +14,10 @@ import { getCachedGeometry, AnimatedMesh } from './OptimizedGeometry'
 import { getSpringConfig } from '@/utils/springConfig'
 import { useGridConfig } from '@/hooks/useGridConfig'
 
-const MAX_WIND_SPEED = 1.1
-const WIND_RESPONSE = 4.6
-const DIRECTION_RESPONSE = 6.5
-const STRENGTH_RESPONSE = 6.2
-const TRAIL_RESPONSE = 1.7
-const TRAIL_DECAY = 0.78
+const CURSOR_RESPONSE = 10
+const REVEAL_RESPONSE = 7.5
+const TRAIL_RESPONSE = 2.2
+const TRAIL_DECAY = 0.92
 
 const Project = forwardRef(function Project(
   { gridPosition, image, initialPosition, initialRotation },
@@ -38,18 +36,15 @@ const Project = forwardRef(function Project(
   const localCursorRef = useRef(new THREE.Vector3())
   const projectedCenterRef = useRef(new THREE.Vector3())
   const previousPointerRef = useRef(new THREE.Vector2())
-  const smoothedWindRef = useRef(new THREE.Vector2())
-  const targetWindRef = useRef(new THREE.Vector2())
-  const stableDirectionRef = useRef(new THREE.Vector2(0, 1))
   const hasPointerSampleRef = useRef(false)
   const { camera, pointer } = useThree()
 
-  const windUniforms = useMemo(() => ({
-    uWindCursor: { value: new THREE.Vector3(999, 999, 0) },
-    uTrailCursor: { value: new THREE.Vector3(999, 999, 0) },
-    uWindDirection: { value: new THREE.Vector2(0, 1) },
-    uWindStrength: { value: 0 },
+  const revealUniforms = useMemo(() => ({
+    uRevealCursor: { value: new THREE.Vector2(999, 999) },
+    uTrailCursor: { value: new THREE.Vector2(999, 999) },
+    uRevealStrength: { value: 0 },
     uTrailStrength: { value: 0 },
+    uInkColor: { value: new THREE.Color('#cfd8e6') },
     uTime: { value: 0 },
   }), [])
 
@@ -83,57 +78,126 @@ const Project = forwardRef(function Project(
     return predefinedPositions[gridPosition] || [0, 0, 0]
   }, [predefinedPositions, gridPosition])
 
-  const applyWindShader = useCallback((material, directionSign) => {
+  const applyInkRevealShader = useCallback((material) => {
     material.onBeforeCompile = (shader) => {
-      shader.uniforms.uWindCursor = windUniforms.uWindCursor
-      shader.uniforms.uTrailCursor = windUniforms.uTrailCursor
-      shader.uniforms.uWindDirection = windUniforms.uWindDirection
-      shader.uniforms.uWindStrength = windUniforms.uWindStrength
-      shader.uniforms.uTrailStrength = windUniforms.uTrailStrength
-      shader.uniforms.uTime = windUniforms.uTime
+      shader.uniforms.uRevealCursor = revealUniforms.uRevealCursor
+      shader.uniforms.uTrailCursor = revealUniforms.uTrailCursor
+      shader.uniforms.uRevealStrength = revealUniforms.uRevealStrength
+      shader.uniforms.uTrailStrength = revealUniforms.uTrailStrength
+      shader.uniforms.uInkColor = revealUniforms.uInkColor
+      shader.uniforms.uTime = revealUniforms.uTime
 
       shader.vertexShader = `
-        uniform vec3 uWindCursor;
-        uniform vec3 uTrailCursor;
-        uniform vec2 uWindDirection;
-        uniform float uWindStrength;
-        uniform float uTrailStrength;
-        uniform float uTime;
+        varying vec2 vRevealUv;
+        varying vec2 vRevealPosition;
       ` + shader.vertexShader
 
       shader.vertexShader = shader.vertexShader.replace(
         '#include <begin_vertex>',
         `
           #include <begin_vertex>
+          vRevealUv = uv;
+          vRevealPosition = position.xy;
+        `,
+      )
 
-          vec2 windDirection = length(uWindDirection) > 0.0001
-            ? normalize(uWindDirection)
-            : vec2(0.0, 1.0);
-          float cursorDistance = distance(position.xy, uWindCursor.xy);
-          float trailDistance = distance(position.xy, uTrailCursor.xy);
-          float localFalloff = smoothstep(1.1, 0.0, cursorDistance);
-          float trailFalloff = smoothstep(1.6, 0.0, trailDistance);
-          float pageLift = smoothstep(-0.15, 1.0, uv.y);
-          float gust = 0.55 + 0.45 * sin(
-            position.y * 10.0 +
-            uTime * 3.2 +
-            dot(position.xy, windDirection * 6.0)
-          );
-          float influence = pageLift * (
-            localFalloff * uWindStrength +
-            trailFalloff * uTrailStrength * 0.8
-          );
+      shader.fragmentShader = `
+        uniform vec2 uRevealCursor;
+        uniform vec2 uTrailCursor;
+        uniform float uRevealStrength;
+        uniform float uTrailStrength;
+        uniform vec3 uInkColor;
+        uniform float uTime;
+        varying vec2 vRevealUv;
+        varying vec2 vRevealPosition;
 
-          transformed.x += windDirection.x * influence * 0.26 * gust;
-          transformed.y += windDirection.y * influence * 0.11 * gust;
-          transformed.z += ${directionSign.toFixed(1)} * influence * (0.22 + 0.16 * gust);
+        float hash21(vec2 p) {
+          p = fract(p * vec2(234.34, 435.345));
+          p += dot(p, p + 34.23);
+          return fract(p.x * p.y);
+        }
+
+        float noise21(vec2 p) {
+          vec2 cell = floor(p);
+          vec2 local = fract(p);
+          local = local * local * (3.0 - 2.0 * local);
+
+          float a = hash21(cell);
+          float b = hash21(cell + vec2(1.0, 0.0));
+          float c = hash21(cell + vec2(0.0, 1.0));
+          float d = hash21(cell + vec2(1.0, 1.0));
+
+          return mix(mix(a, b, local.x), mix(c, d, local.x), local.y);
+        }
+
+        float fbm(vec2 p) {
+          float value = 0.0;
+          float amplitude = 0.5;
+
+          value += amplitude * noise21(p);
+          p *= 2.03;
+          amplitude *= 0.5;
+          value += amplitude * noise21(p);
+          p *= 2.01;
+          amplitude *= 0.5;
+          value += amplitude * noise21(p);
+          p *= 2.02;
+          amplitude *= 0.5;
+          value += amplitude * noise21(p);
+
+          return value;
+        }
+
+        float fiberPattern(vec2 uv) {
+          float vertical = fbm(vec2(uv.x * 3.0, uv.y * 24.0));
+          float diagonal = fbm(vec2(uv.x * 14.0 + uv.y * 4.0, uv.y * 18.0));
+          return smoothstep(0.48, 0.8, vertical * 0.65 + diagonal * 0.35);
+        }
+      ` + shader.fragmentShader
+
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <dithering_fragment>',
+        `
+          float cursorDistance = distance(vRevealPosition, uRevealCursor);
+          float trailDistance = distance(vRevealPosition, uTrailCursor);
+          float revealMask = smoothstep(1.25, 0.0, cursorDistance) * uRevealStrength;
+          float trailMask = smoothstep(1.7, 0.0, trailDistance) * uTrailStrength;
+          float revealField = max(revealMask, trailMask * 0.85);
+
+          vec2 flowUv = vRevealUv * vec2(1.15, 1.45);
+          float wave = 0.5 + 0.5 * sin((flowUv.y * 10.0 + flowUv.x * 2.2) + uTime * 0.45);
+          float bloomNoise = fbm(flowUv * 5.0 + vec2(0.0, uTime * 0.03));
+          float edgeNoise = fbm(flowUv * 9.0 + vec2(1.7, -2.3));
+          float fibers = fiberPattern(flowUv + vec2(0.15, -0.08));
+          float grain = noise21(vRevealUv * 280.0 + uTime * 0.03);
+          float edge = smoothstep(0.0, 0.2, vRevealUv.x) * smoothstep(0.0, 0.2, 1.0 - vRevealUv.x);
+          edge *= smoothstep(0.0, 0.16, vRevealUv.y) * smoothstep(0.0, 0.16, 1.0 - vRevealUv.y);
+
+          float organicMask = smoothstep(0.28, 0.8, bloomNoise * 0.72 + edgeNoise * 0.28 + wave * 0.22);
+          float feather = smoothstep(0.12, 0.95, revealField + edgeNoise * 0.26);
+          float glossMask = revealField * mix(0.5, 1.0, organicMask) * feather * edge;
+          float streak = smoothstep(0.38, 0.96, wave) * (0.42 + fibers * 0.58);
+          float sheen = smoothstep(0.08, 0.96, 1.0 - abs(vRevealUv.x * 2.0 - 1.0));
+          float printBands = smoothstep(0.35, 0.78, sin(vRevealUv.y * 54.0 + bloomNoise * 4.5) * 0.5 + 0.5);
+          vec3 baseColor = gl_FragColor.rgb;
+          vec3 paperLift = mix(baseColor, vec3(1.0), glossMask * 0.08);
+          vec3 varnishTint = mix(vec3(0.98, 0.98, 1.0), uInkColor, 0.55 + grain * 0.12);
+          vec3 varnishLayer = paperLift + varnishTint * glossMask * streak * sheen * (0.2 + printBands * 0.16);
+          float specularLine = pow(smoothstep(0.46, 1.0, wave), 2.4) * glossMask * 0.34;
+          float softBloom = glossMask * (0.06 + fibers * 0.045 + printBands * 0.03);
+          float contrastDip = glossMask * (0.08 + printBands * 0.05);
+
+          gl_FragColor.rgb = mix(baseColor * (1.0 - contrastDip), varnishLayer, glossMask * 0.88);
+          gl_FragColor.rgb += specularLine + softBloom;
+
+          #include <dithering_fragment>
         `,
       )
     }
 
-    material.customProgramCacheKey = () => `wind-bend-${directionSign}`
+    material.customProgramCacheKey = () => 'ink-reveal-v2-gloss'
     material.needsUpdate = true
-  }, [windUniforms])
+  }, [revealUniforms])
 
   // Delays précalculés pour éviter les recalculs
   const animationDelays = useMemo(() => ({
@@ -181,13 +245,13 @@ const Project = forwardRef(function Project(
 
   useEffect(() => {
     if (frontMaterialRef.current) {
-      applyWindShader(frontMaterialRef.current, 1)
+      applyInkRevealShader(frontMaterialRef.current)
     }
 
     if (backMaterialRef.current) {
-      applyWindShader(backMaterialRef.current, -1)
+      applyInkRevealShader(backMaterialRef.current)
     }
-  }, [applyWindShader])
+  }, [applyInkRevealShader])
 
   useFrame((state, delta) => {
     if (!pageGroupRef.current) {
@@ -195,32 +259,13 @@ const Project = forwardRef(function Project(
     }
 
     const previousPointer = previousPointerRef.current
-    const smoothedWind = smoothedWindRef.current
-    const targetWind = targetWindRef.current
-    const stableDirection = stableDirectionRef.current
 
     if (!hasPointerSampleRef.current) {
       previousPointer.set(pointer.x, pointer.y)
-      targetWind.set(0, 0)
-      smoothedWind.set(0, 0)
       hasPointerSampleRef.current = true
     }
 
-    const pointerDeltaX = pointer.x - previousPointer.x
-    const pointerDeltaY = pointer.y - previousPointer.y
     previousPointer.set(pointer.x, pointer.y)
-
-    const windBlend = 1 - Math.exp(-delta * WIND_RESPONSE)
-    const directionBlend = 1 - Math.exp(-delta * DIRECTION_RESPONSE)
-    targetWind.set(pointerDeltaX * 28, -pointerDeltaY * 28)
-    if (targetWind.lengthSq() > MAX_WIND_SPEED * MAX_WIND_SPEED) {
-      targetWind.setLength(MAX_WIND_SPEED)
-    }
-    smoothedWind.lerp(targetWind, windBlend)
-
-    if (smoothedWind.lengthSq() > 0.0004) {
-      stableDirection.copy(smoothedWind).normalize()
-    }
 
     pageGroupRef.current.getWorldPosition(planeOriginRef.current)
     pageGroupRef.current.getWorldQuaternion(planeQuaternionRef.current)
@@ -258,39 +303,38 @@ const Project = forwardRef(function Project(
       pointerToProjectX * pointerToProjectX +
       pointerToProjectY * pointerToProjectY,
     )
-    const screenInfluence = THREE.MathUtils.clamp(1 - screenDistance / 0.65, 0, 1)
-    const windMagnitude = THREE.MathUtils.clamp(smoothedWind.length(), 0, 1)
+    const screenInfluence = THREE.MathUtils.clamp(1 - screenDistance / 0.72, 0, 1)
     const targetStrength = Math.max(
-      cursorInfluence * (0.34 + windMagnitude * 1.1),
-      screenInfluence * (0.16 + windMagnitude * 0.55),
+      cursorInfluence,
+      screenInfluence * 0.72,
     )
-    const strengthBlend = 1 - Math.exp(-delta * STRENGTH_RESPONSE)
+    const cursorBlend = 1 - Math.exp(-delta * CURSOR_RESPONSE)
+    const strengthBlend = 1 - Math.exp(-delta * REVEAL_RESPONSE)
     const trailBlend = 1 - Math.exp(-delta * TRAIL_RESPONSE)
     const residualTrailStrength = Math.max(
       targetStrength * 0.95,
-      windUniforms.uTrailStrength.value * Math.exp(-delta * TRAIL_DECAY),
+      revealUniforms.uTrailStrength.value * Math.exp(-delta * TRAIL_DECAY),
     )
 
-    if (windUniforms.uWindCursor.value.x > 900) {
-      windUniforms.uWindCursor.value.copy(localCursorRef.current)
-      windUniforms.uTrailCursor.value.copy(localCursorRef.current)
+    if (revealUniforms.uRevealCursor.value.x > 900) {
+      revealUniforms.uRevealCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
+      revealUniforms.uTrailCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
     } else {
-      windUniforms.uWindCursor.value.lerp(localCursorRef.current, strengthBlend)
-      windUniforms.uTrailCursor.value.lerp(localCursorRef.current, trailBlend)
+      revealUniforms.uRevealCursor.value.lerp(localCursorRef.current, cursorBlend)
+      revealUniforms.uTrailCursor.value.lerp(localCursorRef.current, trailBlend)
     }
 
-    windUniforms.uWindDirection.value.lerp(stableDirection, directionBlend)
-    windUniforms.uWindStrength.value = THREE.MathUtils.lerp(
-      windUniforms.uWindStrength.value,
+    revealUniforms.uRevealStrength.value = THREE.MathUtils.lerp(
+      revealUniforms.uRevealStrength.value,
       targetStrength,
       strengthBlend,
     )
-    windUniforms.uTrailStrength.value = THREE.MathUtils.lerp(
-      windUniforms.uTrailStrength.value,
+    revealUniforms.uTrailStrength.value = THREE.MathUtils.lerp(
+      revealUniforms.uTrailStrength.value,
       residualTrailStrength,
       trailBlend,
     )
-    windUniforms.uTime.value = state.clock.elapsedTime
+    revealUniforms.uTime.value = state.clock.elapsedTime
   })
 
   // Fonction pour gérer le clic et arrêter la propagation
