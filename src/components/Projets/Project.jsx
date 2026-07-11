@@ -19,6 +19,15 @@ const RIPPLE_RESPONSE = 7.2
 const TRAIL_RESPONSE = 2.2
 const TRAIL_DECAY = 0.92
 
+const ARRANGED_BACK_FACE_FLIP = { x: 0.0, y: 0.0 }
+const FREE_BACK_FACE_FLIP = { x: 1.0, y: 1.0 }
+
+const getBackFaceFlip = (isProjectsArranged) => ({
+  // Keep arranged/non-arranged orientation stable across shader/UV changes.
+  x: isProjectsArranged ? ARRANGED_BACK_FACE_FLIP.x : FREE_BACK_FACE_FLIP.x,
+  y: isProjectsArranged ? ARRANGED_BACK_FACE_FLIP.y : FREE_BACK_FACE_FLIP.y,
+})
+
 const Project = forwardRef(function Project(
   { gridPosition, image, initialPosition, initialRotation },
   ref,
@@ -128,7 +137,7 @@ const Project = forwardRef(function Project(
           #include <begin_vertex>
 
           vFrontUv = (uFrontMapTransform * vec3(uv, 1.0)).xy;
-          vec2 backFaceUv = vec2(uv.x, uv.y);
+          vec2 backFaceUv = vec2(uv.x, 1.0 - uv.y);
           vBackUv = (uBackMapTransform * vec3(backFaceUv, 1.0)).xy;
           vRippleUv = uv;
 
@@ -390,6 +399,7 @@ const Project = forwardRef(function Project(
     if (!pageMaterialRef.current) return
 
     const material = pageMaterialRef.current
+    const backFaceFlip = getBackFaceFlip(isProjectsArranged)
     const shouldUseContentMaps = (
       isProjectsArranged &&
       isArrangementAnimationComplete &&
@@ -426,16 +436,16 @@ const Project = forwardRef(function Project(
     material.userData.backMap = nextBackMap
     rippleUniforms.uFrontMap.value = nextFrontMap
     rippleUniforms.uBackMap.value = nextBackMap
-    rippleUniforms.uBackFlipX.value = isProjectsArranged ? 0.0 : 1.0
-    rippleUniforms.uBackFlipY.value = isProjectsArranged ? 1.0 : 0.0
+    rippleUniforms.uBackFlipX.value = backFaceFlip.x
+    rippleUniforms.uBackFlipY.value = backFaceFlip.y
     rippleUniforms.uFrontMapTransform.value.copy(nextFrontMap.matrix)
     rippleUniforms.uBackMapTransform.value.copy(nextBackMap.matrix)
 
     if (material.userData.shader) {
       material.userData.shader.uniforms.uFrontMap.value = nextFrontMap
       material.userData.shader.uniforms.uBackMap.value = nextBackMap
-      material.userData.shader.uniforms.uBackFlipX.value = isProjectsArranged ? 0.0 : 1.0
-      material.userData.shader.uniforms.uBackFlipY.value = isProjectsArranged ? 1.0 : 0.0
+      material.userData.shader.uniforms.uBackFlipX.value = backFaceFlip.x
+      material.userData.shader.uniforms.uBackFlipY.value = backFaceFlip.y
       material.userData.shader.uniforms.uFrontMapTransform.value.copy(nextFrontMap.matrix)
       material.userData.shader.uniforms.uBackMapTransform.value.copy(nextBackMap.matrix)
     }
