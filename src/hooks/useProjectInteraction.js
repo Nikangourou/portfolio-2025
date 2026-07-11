@@ -9,6 +9,7 @@ export function useProjectInteraction() {
   const [hoveredProject, setHoveredProject] = useState(null)
   const [displayedProject, setDisplayedProject] = useState(null)
   const projectGroupsRef = useRef([])
+  const raycasterRef = useRef(new THREE.Raycaster())
   const gridConfig = useGridConfig()
 
   // Animation pour l'affichage du projet
@@ -57,55 +58,42 @@ export function useProjectInteraction() {
       return
     }
 
-    const raycaster = new THREE.Raycaster()
-    raycaster.setFromCamera(pointer, camera)
+    const projectRoots = projectGroupsRef.current.filter(Boolean)
+    if (projectRoots.length === 0) {
+      if (hoveredProject) {
+        setHoveredProject(null)
+      }
+      return
+    }
 
-    // Collecter tous les meshes des projets
-    const allMeshes = []
-    
-    projectGroupsRef.current.forEach((projectGroup, projectIndex) => {
-      if (projectGroup && projectGroup.children) {
-        // Parcourir récursivement tous les enfants pour trouver les meshes
-        const collectMeshes = (object) => {
-          if (object.isMesh && object.geometry && object.material) {
-            allMeshes.push({ 
-              mesh: object, 
-              projectIndex 
-            })
-          }
-          // Parcourir récursivement les enfants
-          if (object.children) {
-            object.children.forEach(collectMeshes)
-          }
-        }
-        
-        collectMeshes(projectGroup)
+    const rootToIndex = new Map()
+    projectGroupsRef.current.forEach((group, projectIndex) => {
+      if (group) {
+        rootToIndex.set(group, projectIndex)
       }
     })
 
-    if (allMeshes.length > 0) {
-      // Vrai raycasting sur les meshes
-      const intersects = raycaster.intersectObjects(
-        allMeshes.map(item => item.mesh),
-        false
-      )
+    raycasterRef.current.setFromCamera(pointer, camera)
+    const intersects = raycasterRef.current.intersectObjects(projectRoots, true)
 
-      if (intersects.length > 0) {
-        // Trouver le projet du mesh intersecté
-        const intersectedMesh = intersects[0].object
-        const meshData = allMeshes.find(item => item.mesh === intersectedMesh)
-        
-        if (meshData && projectStates[meshData.projectIndex]) {
-          const project = projectStates[meshData.projectIndex].project
-          
-          if (!hoveredProject || hoveredProject.id !== project.id) {
-            setHoveredProject(project)
-          }
+    if (intersects.length > 0) {
+      let object = intersects[0].object
+      let projectIndex
+
+      while (object) {
+        const index = rootToIndex.get(object)
+        if (index !== undefined) {
+          projectIndex = index
+          break
         }
-      } else {
-        // Aucun projet sous le curseur
-        if (hoveredProject) {
-          setHoveredProject(null)
+        object = object.parent
+      }
+
+      if (projectIndex !== undefined && projectStates[projectIndex]) {
+        const project = projectStates[projectIndex].project
+
+        if (!hoveredProject || hoveredProject.id !== project.id) {
+          setHoveredProject(project)
         }
       }
     } else if (hoveredProject) {

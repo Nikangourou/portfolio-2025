@@ -2,7 +2,7 @@ import { useMemo, useSyncExternalStore } from 'react'
 import { isMobile } from '@/utils/deviceUtils'
 
 let isMobileDevice = typeof window !== 'undefined' ? isMobile() : false
-let resizeListening = false
+let isListening = false
 let resizeTimeoutId = null
 const subscribers = new Set()
 
@@ -24,20 +24,20 @@ const handleResize = () => {
   }, 100)
 }
 
-const subscribeToViewport = (callback) => {
+const subscribe = (callback) => {
   subscribers.add(callback)
 
-  if (!resizeListening && typeof window !== 'undefined') {
+  if (!isListening && typeof window !== 'undefined') {
     window.addEventListener('resize', handleResize)
-    resizeListening = true
+    isListening = true
   }
 
   return () => {
     subscribers.delete(callback)
 
-    if (subscribers.size === 0 && resizeListening && typeof window !== 'undefined') {
+    if (subscribers.size === 0 && isListening && typeof window !== 'undefined') {
       window.removeEventListener('resize', handleResize)
-      resizeListening = false
+      isListening = false
 
       if (resizeTimeoutId) {
         clearTimeout(resizeTimeoutId)
@@ -56,7 +56,7 @@ const getServerSnapshot = () => false
  */
 export const useGridConfig = () => {
   const currentIsMobile = useSyncExternalStore(
-    subscribeToViewport,
+    subscribe,
     getSnapshot,
     getServerSnapshot,
   )
@@ -67,17 +67,17 @@ export const useGridConfig = () => {
       isMobile: currentIsMobile,
       cols: currentIsMobile ? 3 : 5,
       rows: currentIsMobile ? 5 : 3,
-
+      
       // Configuration des bordures
       borderColsLeft: currentIsMobile ? 4 : 3,
       borderColsRight: currentIsMobile ? 4 : 3,
       borderRowsTop: currentIsMobile ? 6 : 4,
       borderRowsBottom: currentIsMobile ? 6 : 4,
-
+      
       // Positions adaptatives pour la navigation
       arrowUpPosition: currentIsMobile ? 12 : 4,
       crossPosition: currentIsMobile ? 13 : 9,
-
+      
       // Configuration de la grille
       projectSize: 1,
       gap: 0.005,
