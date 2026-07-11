@@ -35,6 +35,10 @@ const Project = forwardRef(function Project(
   const pageMaterialRef = useRef(null)
   const projectRef = useRef(null)
   const pageGroupRef = useRef(null)
+  const previousCurrentPageRef = useRef(1)
+  const lastVisiblePageMapRef = useRef(null)
+  const isPageFlipAnimatingRef = useRef(false)
+  const lockedOppositeMapRef = useRef(null)
   const raycasterRef = useRef(new THREE.Raycaster())
   const worldPlaneRef = useRef(new THREE.Plane())
   const planeOriginRef = useRef(new THREE.Vector3())
@@ -90,6 +94,34 @@ const Project = forwardRef(function Project(
   const setArrangementAnimationComplete = useStore(
     (state) => state.setArrangementAnimationComplete,
   )
+
+  const backgroundFallbackTexture = useMemo(() => {
+    const data = new Uint8Array([255, 255, 255, 255])
+    const fallback = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat)
+    fallback.colorSpace = THREE.SRGBColorSpace
+    fallback.needsUpdate = true
+    return fallback
+  }, [])
+
+  useEffect(() => {
+    const hexColor = selectedProject?.color?.background || '#ffffff'
+    const data = backgroundFallbackTexture.image?.data
+
+    if (!data || data.length < 4) {
+      return
+    }
+
+    const normalizedHex = /^#[0-9a-fA-F]{6}$/.test(hexColor) ? hexColor : '#ffffff'
+    const red = parseInt(normalizedHex.slice(1, 3), 16)
+    const green = parseInt(normalizedHex.slice(3, 5), 16)
+    const blue = parseInt(normalizedHex.slice(5, 7), 16)
+
+    data[0] = red
+    data[1] = green
+    data[2] = blue
+    data[3] = 255
+    backgroundFallbackTexture.needsUpdate = true
+  }, [selectedProject?.color?.background, backgroundFallbackTexture])
 
   // Obtenir les positions d'arrangement directement depuis le store
   const { predefinedPositions, projectSize } = useProjectPositionsStore()
@@ -250,7 +282,13 @@ const Project = forwardRef(function Project(
     pageRotationX: isProjectsArranged ? currentPage * Math.PI : 0,
     delay: isProjectsArranged ? animationDelays.pageRotation : 0,
     immediate: !isProjectsArranged,
-    config: getSpringConfig('projectRotation')
+    config: getSpringConfig('projectRotation'),
+    onStart: () => {
+      isPageFlipAnimatingRef.current = true
+    },
+    onRest: () => {
+      isPageFlipAnimatingRef.current = false
+    },
   })
 
   // Utiliser les hooks personnalisés
@@ -268,13 +306,13 @@ const Project = forwardRef(function Project(
     previousPage,
     previousFace,
   )
-  const { contentText } = useContentText(gridPosition)
-
   // Fonctions de navigation
   const resetProjectState = useStore((state) => state.resetProjectState)
   const setCurrentPage = useStore((state) => state.setCurrentPage)
   const maxPage = selectedProject?.contents?.length || 0
   const gridConfig = useGridConfig()
+
+  const { contentText } = useContentText(gridPosition)
 
   useEffect(() => {
     if (pageMaterialRef.current) {
@@ -405,28 +443,42 @@ const Project = forwardRef(function Project(
       isArrangementAnimationComplete &&
       currentPage > 0
     )
-    const visibleSideHasTexture = shouldUseContentMaps && !!currentPageTexture
-
-    const nextColor = visibleSideHasTexture
-      ? 'white'
-      : (selectedProject?.color?.background || 'white')
+    const fallbackContentMap = backgroundFallbackTexture || emptyTexture
+    const nextColor = 'white'
     const baseMap = texture || emptyTexture
+    const coverOrFallbackMap = texture || fallbackContentMap
+    const previousPageValue = previousCurrentPageRef.current
+    const pageChanged = currentPage !== previousPageValue
     let nextFrontMap = baseMap
     let nextBackMap = baseMap
 
+    if (pageChanged) {
+      lockedOppositeMapRef.current = lastVisiblePageMapRef.current || coverOrFallbackMap
+      previousCurrentPageRef.current = currentPage
+    }
+
     if (shouldUseContentMaps) {
-      const currentMap = currentPageTexture || emptyTexture
-      const previousMap = previousPage
-        ? (previousPageTexture || emptyTexture)
-        : baseMap
+      const currentMap = currentPageTexture || fallbackContentMap
+      const settledOppositeMap = previousPage
+        ? (previousPageTexture || fallbackContentMap)
+        : coverOrFallbackMap
+      const transitionOppositeMap = lockedOppositeMapRef.current || settledOppositeMap
+      const shouldUseTransitionOpposite = !!lockedOppositeMapRef.current || pageChanged || isPageFlipAnimatingRef.current
+      const oppositeMap = shouldUseTransitionOpposite
+        ? transitionOppositeMap
+        : settledOppositeMap
 
       if (targetFace === 'front') {
         nextFrontMap = currentMap
-        nextBackMap = previousMap
+        nextBackMap = oppositeMap
       } else {
-        nextFrontMap = previousMap
+        nextFrontMap = oppositeMap
         nextBackMap = currentMap
       }
+
+      // Keep the map that is actually displayed for this page (image or fallback).
+      // This avoids reusing a stale older-page texture on the next transition.
+      lastVisiblePageMapRef.current = currentMap
     }
 
     nextFrontMap.updateMatrix()
@@ -451,6 +503,10 @@ const Project = forwardRef(function Project(
     }
 
     material.color.set(nextColor)
+
+    if (!shouldUseContentMaps) {
+      lastVisiblePageMapRef.current = texture || coverOrFallbackMap
+    }
   }, [
     isArrangementAnimationComplete,
     isProjectsArranged,
@@ -462,8 +518,15 @@ const Project = forwardRef(function Project(
     selectedProject?.color?.background,
     currentPage,
     emptyTexture,
+    backgroundFallbackTexture,
     rippleUniforms,
   ])
+
+  useEffect(() => {
+    return () => {
+      backgroundFallbackTexture.dispose()
+    }
+  }, [backgroundFallbackTexture])
 
 
   return (
