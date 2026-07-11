@@ -4,6 +4,7 @@ import { useTexture } from '@react-three/drei'
 import { animated, useSpring } from '@react-spring/three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useStore } from '@/stores/store'
+import { useShallow } from 'zustand/react/shallow'
 import styles from './Project.module.scss'
 import { Navigation } from '@/components/Interface/Interface'
 import ProjectOverlay from './ProjectOverlay'
@@ -89,16 +90,34 @@ const Project = forwardRef(function Project(
     texture.magFilter = THREE.LinearFilter
   })
 
-  const selectedProject = useStore((state) => state.selectedProject)
-  const currentPage = useStore((state) => state.currentPage)
-  const isArrangementAnimationComplete = useStore(
-    (state) => state.isArrangementAnimationComplete,
+  const [
+    selectedProject,
+    currentPage,
+    isArrangementAnimationComplete,
+    isProjectsArranged,
+  ] = useStore(
+    useShallow((state) => [
+      state.selectedProject,
+      state.currentPage,
+      state.isArrangementAnimationComplete,
+      state.isProjectsArranged,
+    ]),
   )
-  const isProjectsArranged = useStore((state) => state.isProjectsArranged)
-  const setProjectsArranged = useStore((state) => state.setProjectsArranged)
-  const setSelectedProject = useStore((state) => state.setSelectedProject)
-  const setArrangementAnimationComplete = useStore(
-    (state) => state.setArrangementAnimationComplete,
+
+  const [
+    setProjectsArranged,
+    setSelectedProject,
+    setArrangementAnimationComplete,
+    resetProjectState,
+    setCurrentPage,
+  ] = useStore(
+    useShallow((state) => [
+      state.setProjectsArranged,
+      state.setSelectedProject,
+      state.setArrangementAnimationComplete,
+      state.resetProjectState,
+      state.setCurrentPage,
+    ]),
   )
 
   const backgroundFallbackTexture = useMemo(() => {
@@ -312,9 +331,6 @@ const Project = forwardRef(function Project(
     previousPage,
     previousFace,
   )
-  // Fonctions de navigation
-  const resetProjectState = useStore((state) => state.resetProjectState)
-  const setCurrentPage = useStore((state) => state.setCurrentPage)
   const maxPage = selectedProject?.contents?.length || 0
   const gridConfig = useGridConfig()
 

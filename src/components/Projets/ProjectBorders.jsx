@@ -126,10 +126,12 @@ const BorderTile = ({ spring, state, index, currentTheme, projectSize, isDoubleS
     }
 
     const previousPointer = previousPointerRef.current
+
     if (!hasPointerSampleRef.current) {
       previousPointer.set(pointer.x, pointer.y)
       hasPointerSampleRef.current = true
     }
+
     previousPointer.set(pointer.x, pointer.y)
 
     meshRef.current.getWorldPosition(planeOriginRef.current)

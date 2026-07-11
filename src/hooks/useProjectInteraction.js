@@ -10,6 +10,9 @@ export function useProjectInteraction() {
   const [displayedProject, setDisplayedProject] = useState(null)
   const projectGroupsRef = useRef([])
   const raycasterRef = useRef(new THREE.Raycaster())
+  const cachedProjectRootsRef = useRef([])
+  const cachedRootToIndexRef = useRef(new Map())
+  const groupsSnapshotRef = useRef([])
   const gridConfig = useGridConfig()
 
   // Animation pour l'affichage du projet
@@ -47,6 +50,42 @@ export function useProjectInteraction() {
     }
   }, [hoveredProject, displayApi])
 
+  const rebuildRaycastCache = () => {
+    const groups = projectGroupsRef.current
+    const nextRoots = []
+    const nextRootToIndex = new Map()
+
+    groups.forEach((group, projectIndex) => {
+      if (!group) {
+        return
+      }
+
+      nextRoots.push(group)
+      nextRootToIndex.set(group, projectIndex)
+    })
+
+    cachedProjectRootsRef.current = nextRoots
+    cachedRootToIndexRef.current = nextRootToIndex
+    groupsSnapshotRef.current = [...groups]
+  }
+
+  const ensureRaycastCache = () => {
+    const groups = projectGroupsRef.current
+    const snapshot = groupsSnapshotRef.current
+
+    if (snapshot.length !== groups.length) {
+      rebuildRaycastCache()
+      return
+    }
+
+    for (let i = 0; i < groups.length; i++) {
+      if (snapshot[i] !== groups[i]) {
+        rebuildRaycastCache()
+        return
+      }
+    }
+  }
+
   // Fonction pour gérer le raycasting sur les meshes des projets
   const performRaycasting = (projectStates, isProjectsArranged, groupRef) => {
     if (
@@ -58,7 +97,9 @@ export function useProjectInteraction() {
       return
     }
 
-    const projectRoots = projectGroupsRef.current.filter(Boolean)
+    ensureRaycastCache()
+
+    const projectRoots = cachedProjectRootsRef.current
     if (projectRoots.length === 0) {
       if (hoveredProject) {
         setHoveredProject(null)
@@ -66,12 +107,7 @@ export function useProjectInteraction() {
       return
     }
 
-    const rootToIndex = new Map()
-    projectGroupsRef.current.forEach((group, projectIndex) => {
-      if (group) {
-        rootToIndex.set(group, projectIndex)
-      }
-    })
+    const rootToIndex = cachedRootToIndexRef.current
 
     raycasterRef.current.setFromCamera(pointer, camera)
     const intersects = raycasterRef.current.intersectObjects(projectRoots, true)
