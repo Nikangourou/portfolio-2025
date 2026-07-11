@@ -23,8 +23,7 @@ const Project = forwardRef(function Project(
   { gridPosition, image, initialPosition, initialRotation },
   ref,
 ) {
-  const backMaterialRef = useRef(null)
-  const frontMaterialRef = useRef(null)
+  const pageMaterialRef = useRef(null)
   const projectRef = useRef(null)
   const pageGroupRef = useRef(null)
   const raycasterRef = useRef(new THREE.Raycaster())
@@ -39,14 +38,26 @@ const Project = forwardRef(function Project(
   const hasPointerSampleRef = useRef(false)
   const { camera, pointer } = useThree()
 
+  const emptyTexture = useMemo(() => {
+    const data = new Uint8Array([255, 255, 255, 255])
+    const placeholder = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat)
+    placeholder.colorSpace = THREE.SRGBColorSpace
+    placeholder.needsUpdate = true
+    return placeholder
+  }, [])
+
   const rippleUniforms = useMemo(() => ({
     uRippleCursor: { value: new THREE.Vector2(999, 999) },
     uTrailCursor: { value: new THREE.Vector2(999, 999) },
     uRippleStrength: { value: 0 },
     uTrailStrength: { value: 0 },
     uRippleTint: { value: new THREE.Color('#eef4ff') },
+    uFrontMap: { value: emptyTexture },
+    uBackMap: { value: emptyTexture },
+    uFrontMapTransform: { value: new THREE.Matrix3() },
+    uBackMapTransform: { value: new THREE.Matrix3() },
     uTime: { value: 0 },
-  }), [])
+  }), [emptyTexture])
 
   // Exposer la ref du groupe principal pour le raycasting
   useImperativeHandle(ref, () => projectRef.current, [])
@@ -59,7 +70,6 @@ const Project = forwardRef(function Project(
 
   const selectedProject = useStore((state) => state.selectedProject)
   const currentPage = useStore((state) => state.currentPage)
-  const evenPage = currentPage % 2
   const isArrangementAnimationComplete = useStore(
     (state) => state.isArrangementAnimationComplete,
   )
@@ -85,7 +95,13 @@ const Project = forwardRef(function Project(
       shader.uniforms.uRippleStrength = rippleUniforms.uRippleStrength
       shader.uniforms.uTrailStrength = rippleUniforms.uTrailStrength
       shader.uniforms.uRippleTint = rippleUniforms.uRippleTint
+      shader.uniforms.uFrontMap = rippleUniforms.uFrontMap
+      shader.uniforms.uBackMap = rippleUniforms.uBackMap
+      shader.uniforms.uFrontMapTransform = rippleUniforms.uFrontMapTransform
+      shader.uniforms.uBackMapTransform = rippleUniforms.uBackMapTransform
       shader.uniforms.uTime = rippleUniforms.uTime
+
+      material.userData.shader = shader
 
       shader.vertexShader = `
         uniform vec2 uRippleCursor;
@@ -93,6 +109,10 @@ const Project = forwardRef(function Project(
         uniform float uRippleStrength;
         uniform float uTrailStrength;
         uniform float uTime;
+        uniform mat3 uFrontMapTransform;
+        uniform mat3 uBackMapTransform;
+        varying vec2 vFrontUv;
+        varying vec2 vBackUv;
         varying vec2 vRippleUv;
         varying float vRippleMask;
         varying float vRipplePhase;
@@ -103,6 +123,10 @@ const Project = forwardRef(function Project(
         `
           #include <begin_vertex>
 
+          vFrontUv = (uFrontMapTransform * vec3(uv, 1.0)).xy;
+          // Back face: keep Y inversion from page flip, but avoid mirrored text on X.
+          vec2 backFaceUv = vec2(uv.x, 1.0 - uv.y);
+          vBackUv = (uBackMapTransform * vec3(backFaceUv, 1.0)).xy;
           vRippleUv = uv;
 
           float cursorDistance = distance(position.xy, uRippleCursor);
@@ -135,12 +159,28 @@ const Project = forwardRef(function Project(
       )
 
       shader.fragmentShader = `
+        uniform sampler2D uFrontMap;
+        uniform sampler2D uBackMap;
         uniform vec3 uRippleTint;
         uniform float uTime;
+        varying vec2 vFrontUv;
+        varying vec2 vBackUv;
         varying vec2 vRippleUv;
         varying float vRippleMask;
         varying float vRipplePhase;
       ` + shader.fragmentShader
+
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <map_fragment>',
+        `
+          vec2 backSampleUv = vec2(1.0 - vBackUv.x, vBackUv.y);
+          vec4 sampledDiffuseColor = gl_FrontFacing
+            ? texture2D(uFrontMap, vFrontUv)
+            : texture2D(uBackMap, backSampleUv);
+
+          diffuseColor *= sampledDiffuseColor;
+        `,
+      )
 
       shader.fragmentShader = shader.fragmentShader.replace(
         '#include <dithering_fragment>',
@@ -198,22 +238,31 @@ const Project = forwardRef(function Project(
   })
 
   // Utiliser les hooks personnalisés
-  const { contentTexture } = useContentTexture(gridPosition)
+  const {
+    contentTexture: currentPageTexture,
+    targetFace,
+  } = useContentTexture(
+    gridPosition,
+    currentPage || null,
+  )
+  const previousPage = currentPage > 1 ? currentPage - 1 : null
+  const previousFace = targetFace === 'front' ? 'back' : 'front'
+  const { contentTexture: previousPageTexture } = useContentTexture(
+    gridPosition,
+    previousPage,
+    previousFace,
+  )
   const { contentText } = useContentText(gridPosition)
 
   // Fonctions de navigation
   const resetProjectState = useStore((state) => state.resetProjectState)
   const setCurrentPage = useStore((state) => state.setCurrentPage)
-  const maxPage = selectedProject?.contents?.length
+  const maxPage = selectedProject?.contents?.length || 0
   const gridConfig = useGridConfig()
 
   useEffect(() => {
-    if (frontMaterialRef.current) {
-      applyPressureRippleShader(frontMaterialRef.current)
-    }
-
-    if (backMaterialRef.current) {
-      applyPressureRippleShader(backMaterialRef.current)
+    if (pageMaterialRef.current) {
+      applyPressureRippleShader(pageMaterialRef.current)
     }
   }, [applyPressureRippleShader])
 
@@ -331,59 +380,68 @@ const Project = forwardRef(function Project(
 
   // Optimiser le useEffect pour éviter les re-renders inutiles
   useEffect(() => {
-    if (!backMaterialRef.current || !frontMaterialRef.current) return
+    if (!pageMaterialRef.current) return
 
-    let newMap = null
-    let newColor = 'white'
-
-    if (contentTexture && isArrangementAnimationComplete) {
-      newMap = contentTexture
-    } else if (
-      texture &&
-      (!isArrangementAnimationComplete || !isProjectsArranged)
-    ) {
-      newMap = texture
-    } else {
-      newColor = selectedProject?.color?.background || 'white'
-    }
-
-    // Optimisation : vérifier si les valeurs ont vraiment changé avant de mettre à jour
-    const backMaterial = backMaterialRef.current
-    const frontMaterial = frontMaterialRef.current
-
-    const backNeedsUpdate = (
-      backMaterial.map !== newMap ||
-      backMaterial.color.getHexString() !== newColor.replace('#', '')
+    const material = pageMaterialRef.current
+    const shouldUseContentMaps = (
+      isProjectsArranged &&
+      isArrangementAnimationComplete &&
+      currentPage > 0
     )
+    const visibleSideHasTexture = shouldUseContentMaps && !!currentPageTexture
 
-    const frontNeedsUpdate = (
-      frontMaterial.map !== newMap ||
-      frontMaterial.color.getHexString() !== newColor.replace('#', '')
-    )
+    const nextColor = visibleSideHasTexture
+      ? 'white'
+      : (selectedProject?.color?.background || 'white')
+    const baseMap = texture || emptyTexture
+    let nextFrontMap = baseMap
+    let nextBackMap = baseMap
 
-    if (evenPage || currentPage === 0) {
-      if (backNeedsUpdate) {
-        backMaterial.map = newMap
-        backMaterial.color.set(newColor)
-        backMaterial.needsUpdate = true
+    if (shouldUseContentMaps) {
+      const currentMap = currentPageTexture || emptyTexture
+      const previousMap = previousPage
+        ? (previousPageTexture || emptyTexture)
+        : baseMap
+
+      if (targetFace === 'front') {
+        nextFrontMap = currentMap
+        nextBackMap = previousMap
+      } else {
+        nextFrontMap = previousMap
+        nextBackMap = currentMap
       }
     }
 
-    if (!evenPage || currentPage === 0) {
-      if (frontNeedsUpdate) {
-        frontMaterial.map = newMap
-        frontMaterial.color.set(newColor)
-        frontMaterial.needsUpdate = true
-      }
+    nextFrontMap.updateMatrix()
+    nextBackMap.updateMatrix()
+
+    material.userData.frontMap = nextFrontMap
+    material.userData.backMap = nextBackMap
+    rippleUniforms.uFrontMap.value = nextFrontMap
+    rippleUniforms.uBackMap.value = nextBackMap
+    rippleUniforms.uFrontMapTransform.value.copy(nextFrontMap.matrix)
+    rippleUniforms.uBackMapTransform.value.copy(nextBackMap.matrix)
+
+    if (material.userData.shader) {
+      material.userData.shader.uniforms.uFrontMap.value = nextFrontMap
+      material.userData.shader.uniforms.uBackMap.value = nextBackMap
+      material.userData.shader.uniforms.uFrontMapTransform.value.copy(nextFrontMap.matrix)
+      material.userData.shader.uniforms.uBackMapTransform.value.copy(nextBackMap.matrix)
     }
+
+    material.color.set(nextColor)
   }, [
     isArrangementAnimationComplete,
     isProjectsArranged,
     texture,
-    contentTexture,
+    currentPageTexture,
+    previousPageTexture,
+    previousPage,
+    targetFace,
     selectedProject?.color?.background,
     currentPage,
-    evenPage
+    emptyTexture,
+    rippleUniforms,
   ])
 
 
@@ -404,17 +462,16 @@ const Project = forwardRef(function Project(
           <mesh>
             <primitive object={getCachedGeometry().clone()} />
             <meshBasicMaterial
-              ref={frontMaterialRef}
-              side={THREE.FrontSide}
+              ref={pageMaterialRef}
+              map={emptyTexture}
+              side={THREE.DoubleSide}
               toneMapped={true}
-            />
-          </mesh>
-          <mesh rotation-y={Math.PI}>
-            <primitive object={getCachedGeometry().clone()} />
-            <meshBasicMaterial
-              ref={backMaterialRef}
-              side={THREE.FrontSide}
-              toneMapped={true}
+              onUpdate={(material) => {
+                if (!material.userData.shaderSetup) {
+                  applyPressureRippleShader(material)
+                  material.userData.shaderSetup = true
+                }
+              }}
             />
           </mesh>
           <group>

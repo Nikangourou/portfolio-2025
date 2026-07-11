@@ -16,7 +16,7 @@ const getAdaptiveUrl = (url, isMobile) => {
       return isMobile ? url.mobile : url.desktop
     }
   }
-  
+
   // Sinon, retourner l'URL telle quelle (rétrocompatibilité)
   return url
 }
@@ -34,7 +34,7 @@ const getAdaptiveSpan = (span, isMobile) => {
       return isMobile ? span.mobile : span.desktop
     }
   }
-  
+
   // Sinon, retourner le span tel quel (rétrocompatibilité)
   return span
 }
@@ -53,10 +53,10 @@ export const getGridPositionsFromSpan = (span, startPosition, currentPosition = 
 
   const positions = []
   const [width, height] = span.split('-').map(Number)
-  
+
   // Utiliser la configuration passée en paramètre ou une valeur par défaut
   const cols = gridConfig ? gridConfig.cols : 5
-  
+
   // Gérer la nouvelle structure de position (objet avec desktop/mobile)
   let adaptedStartPosition
   if (typeof startPosition === 'object' && startPosition.desktop !== undefined) {
@@ -66,65 +66,36 @@ export const getGridPositionsFromSpan = (span, startPosition, currentPosition = 
     // Fallback pour l'ancienne structure (nombre simple)
     adaptedStartPosition = startPosition
   }
-  
+
   const startRow = Math.floor(adaptedStartPosition / cols)
   const startCol = adaptedStartPosition % cols
-  
+
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
       const position = (startRow + row) * cols + (startCol + col)
       positions.push(position)
     }
   }
-  
+
   // Si on a une position actuelle, calculer l'offset pour cette position spécifique
   if (currentPosition !== null) {
     const currentRow = Math.floor(currentPosition / cols)
     const currentCol = currentPosition % cols
-    
+
     // Calculer la position relative dans le span
     const relativeRow = currentRow - startRow
     const relativeCol = currentCol - startCol
 
-    // Calculer les offsets pour cette position spécifique
-    let offsetX, offsetY
-
-    switch (width) {
-      case 1:
-        offsetX = 0
-        break
-      case 2:
-        offsetX = relativeCol === 0 ? -0.25 : 0.25
-        break
-      case 4:
-        offsetX = (1 / width) * (relativeCol - 1) - (1 / 8)
-        break
-      default:
-        offsetX = (1 / width) * (relativeCol - 1)
-        break
-    }
+    // Mapping UV canonique sur X.
+    const mappedCol = relativeCol
+    // La grille est indexée depuis le haut, donc Y doit être inversé pour les UV.
+    const offsetX = mappedCol / width
+    const offsetY = (height - 1 - relativeRow) / height
 
 
-    switch (height) {
-      case 1:
-        offsetY = 0
-        break
-      case 2:
-        offsetY = relativeRow === 0 ? 0.25 : -0.25
-        break
-      case 4:
-        offsetY = (1 / height) * (-relativeRow + 1) + (1 / 8)
-        break
-      default:
-        // Logique générale pour les autres spans
-        offsetY = (1 / height) * (-relativeRow + 1)
-        break
-    }
-    
-    
     return { positions, offsetX, offsetY }
   }
-  
+
   // Fallback si pas de position spécifique
   return { positions, offsetX: 0, offsetY: 0 }
 }
@@ -132,12 +103,13 @@ export const getGridPositionsFromSpan = (span, startPosition, currentPosition = 
 // Cache global optimisé pour éviter de recalculer les Maps à chaque render
 const contentCache = new Map()
 const MAX_CACHE_SIZE = 50 // Augmenter la taille du cache
+const CONTENT_MAPPING_VERSION = 'v4'
 
 /**
  * Génère une clé unique pour le cache basée sur le projet et la page
  */
 const getCacheKey = (projectId, page, isMobile) => {
-  return `${projectId}-${page}-${isMobile ? 'mobile' : 'desktop'}`
+  return `${CONTENT_MAPPING_VERSION}-${projectId}-${page}-${isMobile ? 'mobile' : 'desktop'}`
 }
 
 /**
@@ -158,12 +130,13 @@ const cleanCache = () => {
 /**
  * Hook pour charger les textures de contenu
  */
-export const useContentTexture = (gridPosition) => {
+export const useContentTexture = (gridPosition, pageNumber = null, forcedFace = null) => {
   const [contentTexture, setContentTexture] = useState(null)
   const selectedProject = useStore((state) => state.selectedProject)
   const currentPage = useStore((state) => state.currentPage)
   const gridConfig = useGridConfig()
-  
+  const resolvedPage = pageNumber === undefined ? currentPage : pageNumber
+
   // Nettoyer le cache de contenu de manière optimisée
   useEffect(() => {
     cleanCache()
@@ -174,22 +147,25 @@ export const useContentTexture = (gridPosition) => {
   // Trouver l'image correspondant à cette position de grille et calculer ses positions
   const { contentImage, validPositions } = useMemo(() => {
     if (!selectedProject?.contents) return { contentImage: null, validPositions: { positions: [], offsetX: 0, offsetY: 0 } }
-    
+    if (!resolvedPage || resolvedPage < 1) {
+      return { contentImage: null, validPositions: { positions: [], offsetX: 0, offsetY: 0 } }
+    }
+
     // Récupérer le contenu de la page actuelle
-    const currentContent = selectedProject.contents[currentPage - 1]
+    const currentContent = selectedProject.contents[resolvedPage - 1]
     if (!currentContent?.images) return { contentImage: null, validPositions: { positions: [], offsetX: 0, offsetY: 0 } }
-    
+
     // Générer la clé de cache
-    const cacheKey = getCacheKey(selectedProject.id, currentPage, gridConfig.isMobile)
-    
+    const cacheKey = getCacheKey(selectedProject.id, resolvedPage, gridConfig.isMobile)
+
     // Vérifier si on a déjà calculé cette page
     let cachedData = contentCache.get(cacheKey)
-    
+
     if (!cachedData) {
       // Calculer et mettre en cache
       const imageMap = new Map()
       const offsetCache = new Map()
-      
+
       for (const image of currentContent.images) {
         const adaptiveSpan = getAdaptiveSpan(image.span, gridConfig.isMobile)
         const allPositions = getGridPositionsFromSpan(adaptiveSpan, image.position, null, gridConfig)
@@ -200,11 +176,11 @@ export const useContentTexture = (gridPosition) => {
           offsetCache.set(pos, positionOffsets)
         })
       }
-      
+
       cachedData = { imageMap, offsetCache }
       contentCache.set(cacheKey, cachedData)
     }
-    
+
     // Lookup direct dans le cache
     const foundImage = cachedData.imageMap.get(gridPosition)
     if (foundImage) {
@@ -216,14 +192,14 @@ export const useContentTexture = (gridPosition) => {
       }
       return { contentImage, validPositions }
     }
-    
+
     return { contentImage: null, validPositions: { positions: [], offsetX: 0, offsetY: 0 } }
-  }, [selectedProject?.id, currentPage, gridPosition, gridConfig.isMobile])
+  }, [selectedProject?.id, resolvedPage, gridPosition, gridConfig.isMobile])
 
 
   // Déterminer quelle face utiliser selon la parité de la page
-  const isEvenPage = currentPage % 2 === 0
-  const targetFace = isEvenPage ? 'front' : 'back'
+  const isEvenPage = resolvedPage % 2 === 0
+  const targetFace = forcedFace || (isEvenPage ? 'front' : 'back')
 
   useEffect(() => {
     if (!contentImage?.url || !validPositions.positions.includes(gridPosition)) {
@@ -232,7 +208,7 @@ export const useContentTexture = (gridPosition) => {
     }
 
     const backgroundColor = selectedProject?.color?.background || '#ffffff'
-    
+
     createTextureWithBackground(contentImage.url, backgroundColor)
       .then((texture) => {
         configureTexture(texture, contentImage.span, validPositions, targetFace)
@@ -243,14 +219,10 @@ export const useContentTexture = (gridPosition) => {
         setContentTexture(null)
       })
 
-    // Cleanup : libérer l'ancienne texture
+    // Cleanup : laisser le composant parent remplacer la texture sans la disposer
+    // immédiatement. Le shader peut encore la référencer pendant un remount complet.
     return () => {
-      setContentTexture((prevTexture) => {
-        if (prevTexture && prevTexture.dispose) {
-          prevTexture.dispose()
-        }
-        return null
-      })
+      setContentTexture(null)
     }
   }, [contentImage?.url, gridPosition, validPositions, targetFace, selectedProject?.color?.background])
 
@@ -264,15 +236,15 @@ export const useContentText = (gridPosition) => {
   const selectedProject = useStore((state) => state.selectedProject)
   const currentPage = useStore((state) => state.currentPage)
   const gridConfig = useGridConfig()
-  
+
   // Trouver le texte correspondant à cette position de grille
   const contentText = useMemo(() => {
     if (!selectedProject?.contents) return null
-    
+
     // Récupérer le contenu de la page actuelle
     const currentContent = selectedProject.contents[currentPage - 1]
     if (!currentContent?.texts) return null
-    
+
     // Chercher le texte qui correspond à cette position
     for (const text of currentContent.texts) {
       // Gérer la nouvelle structure de position (objet avec desktop/mobile)
@@ -283,7 +255,7 @@ export const useContentText = (gridPosition) => {
         // Fallback pour l'ancienne structure (nombre simple)
         textPosition = text.position
       }
-      
+
       if (textPosition === gridPosition) {
         return {
           text: text.text,
@@ -291,7 +263,7 @@ export const useContentText = (gridPosition) => {
         }
       }
     }
-    
+
     return null
   }, [selectedProject, currentPage, gridPosition, gridConfig.isMobile])
 

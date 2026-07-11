@@ -4,10 +4,10 @@ import useThemeStore from './themeStore'
 const useStore = create((set, get) => ({
   selectedProject: null,
   isProjectsArranged: false,
-  isArrangementAnimationComplete: false, 
+  isArrangementAnimationComplete: false,
   currentPage: 0,
 
-  
+
   setSelectedProject: (project) => {
     set({ selectedProject: project })
     // Mettre à jour le thème global quand un projet est sélectionné
@@ -17,7 +17,7 @@ const useStore = create((set, get) => ({
       useThemeStore.getState().resetTheme()
     }
   },
-  
+
   setProjectsArranged: (value) => {
     set({ isProjectsArranged: value })
     // Réinitialiser l'animation quand on désarrange les projets
@@ -25,7 +25,7 @@ const useStore = create((set, get) => ({
       set({ isArrangementAnimationComplete: false })
     }
   },
-  
+
   setArrangementAnimationComplete: (value) => {
     set({ isArrangementAnimationComplete: value })
     // Mettre currentPage à 1 quand l'animation d'arrangement est terminée
@@ -33,9 +33,9 @@ const useStore = create((set, get) => ({
       set({ currentPage: 1 })
     }
   },
-  
+
   setCurrentPage: (page) => set({ currentPage: page }),
-  
+
   // Méthode pour réinitialiser complètement l'état des projets
   resetProjectState: () => {
     set({
@@ -46,7 +46,7 @@ const useStore = create((set, get) => ({
     })
     useThemeStore.getState().resetTheme()
   },
-  
+
   // Getter pour vérifier si on doit afficher la texture initiale
   shouldShowInitialTexture: () => {
     const { isProjectsArranged, isArrangementAnimationComplete } = get()
