@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useStore } from '@/stores/store'
 import { createTextureWithBackground, configureTexture, clearTextureCache } from './textureUtils'
 import { useGridConfig } from '../hooks/useGridConfig'
@@ -130,12 +130,30 @@ const cleanCache = () => {
 /**
  * Hook pour charger les textures de contenu
  */
-export const useContentTexture = (gridPosition, pageNumber = null, forcedFace = null) => {
+export const useContentTexture = (gridPosition, pageNumber = undefined, forcedFace = null) => {
   const [contentTexture, setContentTexture] = useState(null)
+  const activeTextureRef = useRef(null)
   const selectedProject = useStore((state) => state.selectedProject)
   const currentPage = useStore((state) => state.currentPage)
   const gridConfig = useGridConfig()
   const resolvedPage = pageNumber === undefined ? currentPage : pageNumber
+
+  const disposeTexture = (texture) => {
+    if (texture?.dispose) {
+      texture.dispose()
+    }
+  }
+
+  const scheduleDisposeTexture = (texture) => {
+    if (!texture?.dispose) return
+
+    const scheduler =
+      typeof globalThis.requestAnimationFrame === 'function'
+        ? globalThis.requestAnimationFrame
+        : (callback) => setTimeout(callback, 0)
+
+    scheduler(() => disposeTexture(texture))
+  }
 
   // Nettoyer le cache de contenu de manière optimisée
   useEffect(() => {
@@ -202,7 +220,12 @@ export const useContentTexture = (gridPosition, pageNumber = null, forcedFace = 
   const targetFace = forcedFace || (isEvenPage ? 'front' : 'back')
 
   useEffect(() => {
+    let cancelled = false
+
     if (!contentImage?.url || !validPositions.positions.includes(gridPosition)) {
+      const previousTexture = activeTextureRef.current
+      activeTextureRef.current = null
+      disposeTexture(previousTexture)
       setContentTexture(null)
       return
     }
@@ -211,20 +234,46 @@ export const useContentTexture = (gridPosition, pageNumber = null, forcedFace = 
 
     createTextureWithBackground(contentImage.url, backgroundColor)
       .then((texture) => {
+        if (cancelled) {
+          disposeTexture(texture)
+          return
+        }
+
         configureTexture(texture, contentImage.span, validPositions, targetFace)
+
+        const previousTexture = activeTextureRef.current
+        activeTextureRef.current = texture
         setContentTexture(texture)
+
+        if (previousTexture && previousTexture !== texture) {
+          scheduleDisposeTexture(previousTexture)
+        }
       })
       .catch((error) => {
+        if (cancelled) {
+          return
+        }
+
         console.warn('Error loading content texture:', error)
+
+        const previousTexture = activeTextureRef.current
+        activeTextureRef.current = null
+        disposeTexture(previousTexture)
         setContentTexture(null)
       })
 
-    // Cleanup : laisser le composant parent remplacer la texture sans la disposer
-    // immédiatement. Le shader peut encore la référencer pendant un remount complet.
     return () => {
-      setContentTexture(null)
+      cancelled = true
     }
   }, [contentImage?.url, gridPosition, validPositions, targetFace, selectedProject?.color?.background])
+
+  useEffect(() => {
+    return () => {
+      const previousTexture = activeTextureRef.current
+      activeTextureRef.current = null
+      disposeTexture(previousTexture)
+    }
+  }, [])
 
   return { contentTexture, targetFace }
 }

@@ -59,6 +59,12 @@ const Project = forwardRef(function Project(
     return placeholder
   }, [])
 
+  useEffect(() => {
+    return () => {
+      emptyTexture.dispose()
+    }
+  }, [emptyTexture])
+
   const rippleUniforms = useMemo(() => ({
     uRippleCursor: { value: new THREE.Vector2(999, 999) },
     uTrailCursor: { value: new THREE.Vector2(999, 999) },
@@ -346,10 +352,14 @@ const Project = forwardRef(function Project(
     )
 
     raycasterRef.current.setFromCamera(pointer, camera)
-    raycasterRef.current.ray.intersectPlane(
+    const hasIntersection = raycasterRef.current.ray.intersectPlane(
       worldPlaneRef.current,
       hitPointRef.current,
     )
+
+    if (!hasIntersection) {
+      return
+    }
 
     localCursorRef.current.copy(hitPointRef.current)
     pageGroupRef.current.worldToLocal(localCursorRef.current)

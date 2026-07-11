@@ -183,7 +183,7 @@ export const getTextureCacheStats = () => {
  * @param {Object} validPositions - Positions valides avec offsets
  * @param {string} targetFace - Face cible ('front' ou 'back')
  */
-export const configureTexture = (texture, span, validPositions, targetFace) => {
+export const configureTexture = (texture, span, validPositions, _targetFace) => {
   // En mode mono-plan, l'orientation des faces est gérée dans le shader.
   // On garde ici une matrice de texture neutre pour éviter les décalages UV.
   texture.rotation = 0
