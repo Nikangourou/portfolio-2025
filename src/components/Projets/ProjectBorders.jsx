@@ -242,7 +242,7 @@ const ProjectBorders = ({
   currentTheme,
   distance
 }) => {
-  const [revealedBorders, setRevealedBorders] = useState(() => new Set())
+  const [areBordersDoubleSided, setAreBordersDoubleSided] = useState(false)
 
   // Récupérer les positions des bordures depuis le store
   const { borderPositions, projectSize } = useProjectPositionsStore()
@@ -262,8 +262,16 @@ const ProjectBorders = ({
 
   useEffect(() => {
     if (!isProjectsArranged || !isArrangementAnimationComplete) {
-      setRevealedBorders(new Set())
+      setAreBordersDoubleSided(false)
+      return
     }
+
+    // Delai global: max delay (~1000ms) + marge d'animation.
+    const timer = setTimeout(() => {
+      setAreBordersDoubleSided(true)
+    }, 1300)
+
+    return () => clearTimeout(timer)
   }, [isProjectsArranged, isArrangementAnimationComplete])
 
 
@@ -274,15 +282,6 @@ const ProjectBorders = ({
       rotation: isArrangementAnimationComplete ? [Math.PI, 0, 0] : [0, 0, 0],
       delay: isArrangementAnimationComplete ? Math.random() * 1000 : 0, // Délai aléatoire jusqu'à 1s
       config: getSpringConfig('projectRotation'),
-      onRest: () => {
-        if (!isArrangementAnimationComplete) return
-        setRevealedBorders((prev) => {
-          if (prev.has(index)) return prev
-          const next = new Set(prev)
-          next.add(index)
-          return next
-        })
-      },
     })) || []
   )
 
@@ -301,7 +300,7 @@ const ProjectBorders = ({
             state={state}
             currentTheme={currentTheme}
             projectSize={projectSize}
-            isDoubleSided={revealedBorders.has(index)}
+            isDoubleSided={areBordersDoubleSided}
           />
         )
       })}

@@ -54,6 +54,8 @@ const Project = forwardRef(function Project(
     uRippleTint: { value: new THREE.Color('#eef4ff') },
     uFrontMap: { value: emptyTexture },
     uBackMap: { value: emptyTexture },
+    uBackFlipX: { value: 1.0 },
+    uBackFlipY: { value: 0.0 },
     uFrontMapTransform: { value: new THREE.Matrix3() },
     uBackMapTransform: { value: new THREE.Matrix3() },
     uTime: { value: 0 },
@@ -97,6 +99,8 @@ const Project = forwardRef(function Project(
       shader.uniforms.uRippleTint = rippleUniforms.uRippleTint
       shader.uniforms.uFrontMap = rippleUniforms.uFrontMap
       shader.uniforms.uBackMap = rippleUniforms.uBackMap
+      shader.uniforms.uBackFlipX = rippleUniforms.uBackFlipX
+      shader.uniforms.uBackFlipY = rippleUniforms.uBackFlipY
       shader.uniforms.uFrontMapTransform = rippleUniforms.uFrontMapTransform
       shader.uniforms.uBackMapTransform = rippleUniforms.uBackMapTransform
       shader.uniforms.uTime = rippleUniforms.uTime
@@ -124,8 +128,7 @@ const Project = forwardRef(function Project(
           #include <begin_vertex>
 
           vFrontUv = (uFrontMapTransform * vec3(uv, 1.0)).xy;
-          // Back face: keep Y inversion from page flip, but avoid mirrored text on X.
-          vec2 backFaceUv = vec2(uv.x, 1.0 - uv.y);
+          vec2 backFaceUv = vec2(uv.x, uv.y);
           vBackUv = (uBackMapTransform * vec3(backFaceUv, 1.0)).xy;
           vRippleUv = uv;
 
@@ -161,6 +164,8 @@ const Project = forwardRef(function Project(
       shader.fragmentShader = `
         uniform sampler2D uFrontMap;
         uniform sampler2D uBackMap;
+        uniform float uBackFlipX;
+        uniform float uBackFlipY;
         uniform vec3 uRippleTint;
         uniform float uTime;
         varying vec2 vFrontUv;
@@ -173,7 +178,9 @@ const Project = forwardRef(function Project(
       shader.fragmentShader = shader.fragmentShader.replace(
         '#include <map_fragment>',
         `
-          vec2 backSampleUv = vec2(1.0 - vBackUv.x, vBackUv.y);
+          float sampledBackX = mix(vBackUv.x, 1.0 - vBackUv.x, uBackFlipX);
+          float sampledBackY = mix(vBackUv.y, 1.0 - vBackUv.y, uBackFlipY);
+          vec2 backSampleUv = vec2(sampledBackX, sampledBackY);
           vec4 sampledDiffuseColor = gl_FrontFacing
             ? texture2D(uFrontMap, vFrontUv)
             : texture2D(uBackMap, backSampleUv);
@@ -419,12 +426,16 @@ const Project = forwardRef(function Project(
     material.userData.backMap = nextBackMap
     rippleUniforms.uFrontMap.value = nextFrontMap
     rippleUniforms.uBackMap.value = nextBackMap
+    rippleUniforms.uBackFlipX.value = isProjectsArranged ? 0.0 : 1.0
+    rippleUniforms.uBackFlipY.value = isProjectsArranged ? 1.0 : 0.0
     rippleUniforms.uFrontMapTransform.value.copy(nextFrontMap.matrix)
     rippleUniforms.uBackMapTransform.value.copy(nextBackMap.matrix)
 
     if (material.userData.shader) {
       material.userData.shader.uniforms.uFrontMap.value = nextFrontMap
       material.userData.shader.uniforms.uBackMap.value = nextBackMap
+      material.userData.shader.uniforms.uBackFlipX.value = isProjectsArranged ? 0.0 : 1.0
+      material.userData.shader.uniforms.uBackFlipY.value = isProjectsArranged ? 1.0 : 0.0
       material.userData.shader.uniforms.uFrontMapTransform.value.copy(nextFrontMap.matrix)
       material.userData.shader.uniforms.uBackMapTransform.value.copy(nextBackMap.matrix)
     }
