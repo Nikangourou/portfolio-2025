@@ -1,5 +1,8 @@
 import * as THREE from 'three'
 
+const textureLoader = new THREE.TextureLoader()
+textureLoader.setCrossOrigin('anonymous')
+
 // Cache global pour les textures par URL et couleur de fond
 const textureCache = new Map()
 // Cache pour les promesses en cours pour éviter les requêtes parallèles
@@ -29,6 +32,18 @@ const cleanTextureCache = () => {
  */
 const getCacheKey = (imageUrl, backgroundColor) => {
   return `${imageUrl}#${backgroundColor}`
+}
+
+const isOpaqueImageFormat = (imageUrl) => {
+  return /\.jpe?g([?#].*)?$/i.test(imageUrl)
+}
+
+const applyTextureDefaults = (texture) => {
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.minFilter = THREE.LinearFilter
+  texture.magFilter = THREE.LinearFilter
+  texture.format = THREE.RGBAFormat
+  texture.premultiplyAlpha = false
 }
 
 /**
@@ -67,8 +82,39 @@ export const createTextureWithBackground = (imageUrl, backgroundColor = '#ffffff
 
   // Créer une nouvelle promesse pour cette texture
   const promise = new Promise((resolve, reject) => {
+    // Fast-path CPU: les JPEG/JPG n'ont pas d'alpha, inutile de passer par canvas + pixels.
+    if (isOpaqueImageFormat(imageUrl)) {
+      textureLoader.load(
+        imageUrl,
+        (texture) => {
+          applyTextureDefaults(texture)
+
+          cleanTextureCache()
+          textureCache.set(cacheKey, {
+            texture,
+            timestamp: Date.now(),
+          })
+
+          pendingPromises.delete(cacheKey)
+          resolve(texture)
+        },
+        undefined,
+        (error) => {
+          pendingPromises.delete(cacheKey)
+          reject(error)
+        },
+      )
+      return
+    }
+
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
+
+    if (!ctx) {
+      pendingPromises.delete(cacheKey)
+      reject(new Error('Unable to get 2D canvas context for texture processing'))
+      return
+    }
 
     // Créer une image temporaire pour accéder aux pixels
     const img = new Image()
@@ -90,37 +136,26 @@ export const createTextureWithBackground = (imageUrl, backgroundColor = '#ffffff
       const g = parseInt(backgroundColor.slice(3, 5), 16)
       const b = parseInt(backgroundColor.slice(5, 7), 16)
 
-      // Optimisation : vérifier s'il y a des pixels transparents avant de traiter
+      // Optimisation CPU: une seule passe pour détecter/remplacer les pixels transparents.
       let hasTransparency = false
-      for (let i = 3; i < data.length; i += 4) {
-        if (data[i] < 128) {
+      for (let i = 0; i < data.length; i += 4) {
+        const alpha = data[i + 3]
+        if (alpha < 128) {
           hasTransparency = true
-          break
+          data[i] = r
+          data[i + 1] = g
+          data[i + 2] = b
+          data[i + 3] = 255
         }
       }
 
-      // Remplacer les pixels transparents par la couleur de fond uniquement si nécessaire
       if (hasTransparency) {
-        for (let i = 0; i < data.length; i += 4) {
-          const alpha = data[i + 3]
-          if (alpha < 128) { // Si le pixel est assez transparent
-            data[i] = r     // Rouge
-            data[i + 1] = g // Vert
-            data[i + 2] = b // Bleu
-            data[i + 3] = 255 // Alpha opaque
-          }
-        }
-        // Remettre les données modifiées sur le canvas
         ctx.putImageData(imageData, 0, 0)
       }
 
       // Créer une nouvelle texture à partir du canvas
       const texture = new THREE.CanvasTexture(canvas)
-      texture.colorSpace = THREE.SRGBColorSpace
-      texture.minFilter = THREE.LinearFilter
-      texture.magFilter = THREE.LinearFilter
-      texture.format = THREE.RGBAFormat
-      texture.premultiplyAlpha = false
+      applyTextureDefaults(texture)
 
       // Mettre en cache la texture originale
       cleanTextureCache()

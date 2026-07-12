@@ -9,6 +9,10 @@ export function useProjectInteraction() {
   const [hoveredProject, setHoveredProject] = useState(null)
   const [displayedProject, setDisplayedProject] = useState(null)
   const projectGroupsRef = useRef([])
+  const raycasterRef = useRef(new THREE.Raycaster())
+  const cachedProjectRootsRef = useRef([])
+  const cachedRootToIndexRef = useRef(new Map())
+  const groupsSnapshotRef = useRef([])
   const gridConfig = useGridConfig()
 
   // Animation pour l'affichage du projet
@@ -46,6 +50,42 @@ export function useProjectInteraction() {
     }
   }, [hoveredProject, displayApi])
 
+  const rebuildRaycastCache = () => {
+    const groups = projectGroupsRef.current
+    const nextRoots = []
+    const nextRootToIndex = new Map()
+
+    groups.forEach((group, projectIndex) => {
+      if (!group) {
+        return
+      }
+
+      nextRoots.push(group)
+      nextRootToIndex.set(group, projectIndex)
+    })
+
+    cachedProjectRootsRef.current = nextRoots
+    cachedRootToIndexRef.current = nextRootToIndex
+    groupsSnapshotRef.current = [...groups]
+  }
+
+  const ensureRaycastCache = () => {
+    const groups = projectGroupsRef.current
+    const snapshot = groupsSnapshotRef.current
+
+    if (snapshot.length !== groups.length) {
+      rebuildRaycastCache()
+      return
+    }
+
+    for (let i = 0; i < groups.length; i++) {
+      if (snapshot[i] !== groups[i]) {
+        rebuildRaycastCache()
+        return
+      }
+    }
+  }
+
   // Fonction pour gérer le raycasting sur les meshes des projets
   const performRaycasting = (projectStates, isProjectsArranged, groupRef) => {
     if (
@@ -57,55 +97,39 @@ export function useProjectInteraction() {
       return
     }
 
-    const raycaster = new THREE.Raycaster()
-    raycaster.setFromCamera(pointer, camera)
+    ensureRaycastCache()
 
-    // Collecter tous les meshes des projets
-    const allMeshes = []
-    
-    projectGroupsRef.current.forEach((projectGroup, projectIndex) => {
-      if (projectGroup && projectGroup.children) {
-        // Parcourir récursivement tous les enfants pour trouver les meshes
-        const collectMeshes = (object) => {
-          if (object.isMesh && object.geometry && object.material) {
-            allMeshes.push({ 
-              mesh: object, 
-              projectIndex 
-            })
-          }
-          // Parcourir récursivement les enfants
-          if (object.children) {
-            object.children.forEach(collectMeshes)
-          }
-        }
-        
-        collectMeshes(projectGroup)
+    const projectRoots = cachedProjectRootsRef.current
+    if (projectRoots.length === 0) {
+      if (hoveredProject) {
+        setHoveredProject(null)
       }
-    })
+      return
+    }
 
-    if (allMeshes.length > 0) {
-      // Vrai raycasting sur les meshes
-      const intersects = raycaster.intersectObjects(
-        allMeshes.map(item => item.mesh),
-        false
-      )
+    const rootToIndex = cachedRootToIndexRef.current
 
-      if (intersects.length > 0) {
-        // Trouver le projet du mesh intersecté
-        const intersectedMesh = intersects[0].object
-        const meshData = allMeshes.find(item => item.mesh === intersectedMesh)
-        
-        if (meshData && projectStates[meshData.projectIndex]) {
-          const project = projectStates[meshData.projectIndex].project
-          
-          if (!hoveredProject || hoveredProject.id !== project.id) {
-            setHoveredProject(project)
-          }
+    raycasterRef.current.setFromCamera(pointer, camera)
+    const intersects = raycasterRef.current.intersectObjects(projectRoots, true)
+
+    if (intersects.length > 0) {
+      let object = intersects[0].object
+      let projectIndex
+
+      while (object) {
+        const index = rootToIndex.get(object)
+        if (index !== undefined) {
+          projectIndex = index
+          break
         }
-      } else {
-        // Aucun projet sous le curseur
-        if (hoveredProject) {
-          setHoveredProject(null)
+        object = object.parent
+      }
+
+      if (projectIndex !== undefined && projectStates[projectIndex]) {
+        const project = projectStates[projectIndex].project
+
+        if (!hoveredProject || hoveredProject.id !== project.id) {
+          setHoveredProject(project)
         }
       }
     } else if (hoveredProject) {

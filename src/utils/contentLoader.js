@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useStore } from '@/stores/store'
-import { createTextureWithBackground, configureTexture, clearTextureCache } from './textureUtils'
+import { createTextureWithBackground, configureTexture } from './textureUtils'
 import { useGridConfig } from '../hooks/useGridConfig'
 
 /**
@@ -265,7 +265,7 @@ export const useContentTexture = (gridPosition, pageNumber = undefined, forcedFa
     return () => {
       cancelled = true
     }
-  }, [contentImage?.url, gridPosition, validPositions, targetFace, selectedProject?.color?.background])
+  }, [contentImage?.url, gridPosition, validPositions, selectedProject?.color?.background])
 
   useEffect(() => {
     return () => {

@@ -4,6 +4,7 @@ import ProjectBorders from './ProjectBorders'
 import projectsData from '../../data/projects.json'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useStore } from '@/stores/store'
+import { useShallow } from 'zustand/react/shallow'
 import useThemeStore from '@/stores/themeStore'
 import ProjectInfoFloating from '../Interface/ProjectInfoFloating'
 import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
@@ -16,7 +17,21 @@ export default function Projects() {
   const { camera } = useThree()
   const gridConfig = useGridConfig()
   const groupRef = useRef(null)
-  const isProjectsArranged = useStore((state) => state.isProjectsArranged)
+  const lastScrollNavigationRef = useRef(0)
+  const touchStartRef = useRef({ x: 0, y: 0, time: 0 })
+
+  const [
+    selectedProject,
+    currentPage,
+    isProjectsArranged,
+  ] = useStore(
+    useShallow((state) => [
+      state.selectedProject,
+      state.currentPage,
+      state.isProjectsArranged,
+    ]),
+  )
+  const setCurrentPage = useStore((state) => state.setCurrentPage)
 
   // Ref minimal pour le raycasting (ne contient que les données des projets)
   const projectDataRef = useRef([])
@@ -118,6 +133,108 @@ export default function Projects() {
   useEffect(() => {
     projectDataRef.current = projectData
   }, [projectData])
+
+  useEffect(() => {
+    const maxPage = selectedProject?.contents?.length || 0
+
+    const canNavigate = () => {
+      if (!isProjectsArranged || maxPage <= 1) {
+        return false
+      }
+
+      const now = Date.now()
+      if (now - lastScrollNavigationRef.current < 360) {
+        return false
+      }
+
+      lastScrollNavigationRef.current = now
+      return true
+    }
+
+    const goToNextPage = () => {
+      if (currentPage < maxPage) {
+        setCurrentPage(currentPage + 1)
+      }
+    }
+
+    const goToPreviousPage = () => {
+      if (currentPage > 1) {
+        setCurrentPage(currentPage - 1)
+      }
+    }
+
+    const handleWheel = (event) => {
+      if (!isProjectsArranged) {
+        return
+      }
+
+      if (Math.abs(event.deltaY) < 8 || !canNavigate()) {
+        return
+      }
+
+      event.preventDefault()
+
+      if (event.deltaY > 0) {
+        goToNextPage()
+      } else {
+        goToPreviousPage()
+      }
+    }
+
+    const handleTouchStart = (event) => {
+      const touch = event.touches?.[0]
+      if (!touch) {
+        return
+      }
+
+      touchStartRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        time: Date.now(),
+      }
+    }
+
+    const handleTouchEnd = (event) => {
+      if (!isProjectsArranged || !canNavigate()) {
+        return
+      }
+
+      const touch = event.changedTouches?.[0]
+      if (!touch) {
+        return
+      }
+
+      const start = touchStartRef.current
+      const deltaX = touch.clientX - start.x
+      const deltaY = touch.clientY - start.y
+      const elapsed = Date.now() - start.time
+
+      if (elapsed > 700) {
+        return
+      }
+
+      const isVerticalSwipe = Math.abs(deltaY) > Math.abs(deltaX)
+      if (!isVerticalSwipe || Math.abs(deltaY) < 24) {
+        return
+      }
+
+      if (deltaY < 0) {
+        goToNextPage()
+      } else {
+        goToPreviousPage()
+      }
+    }
+
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    window.addEventListener('touchstart', handleTouchStart, { passive: true })
+    window.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel)
+      window.removeEventListener('touchstart', handleTouchStart)
+      window.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [selectedProject?.contents?.length, currentPage, isProjectsArranged, setCurrentPage])
 
 
   useFrame(() => {
