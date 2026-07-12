@@ -4,9 +4,9 @@ import Experience from '@/Experience.jsx'
 export default function SceneCanvas() {
     return (
         <Canvas
-            dpr={[1, 1.5]}
+            dpr={[1, 2]}
             gl={{
-                antialias: false,
+                antialias: true,
                 alpha: false,
                 stencil: false,
                 depth: true,
