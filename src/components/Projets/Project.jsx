@@ -6,7 +6,6 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useStore } from '@/stores/store'
 import { useShallow } from 'zustand/react/shallow'
 import styles from './Project.module.scss'
-import { Navigation } from '@/components/Interface/Interface'
 import ProjectOverlay from './ProjectOverlay'
 import { useContentTexture, useContentText } from '@/utils/contentLoader'
 import projectsData from '@/data/projects.json'
@@ -28,6 +27,110 @@ const getBackFaceFlip = (isProjectsArranged) => ({
   x: isProjectsArranged ? ARRANGED_BACK_FACE_FLIP.x : FREE_BACK_FACE_FLIP.x,
   y: isProjectsArranged ? ARRANGED_BACK_FACE_FLIP.y : FREE_BACK_FACE_FLIP.y,
 })
+
+const drawNavigationIcon = (context, size, type) => {
+  const center = size / 2
+  context.lineCap = 'square'
+  context.lineJoin = 'miter'
+
+  if (type === 'cross') {
+    const arm = size * 0.31
+    context.lineWidth = Math.round(size * 0.055)
+    context.beginPath()
+    context.moveTo(center - arm, center - arm)
+    context.lineTo(center + arm, center + arm)
+    context.moveTo(center + arm, center - arm)
+    context.lineTo(center - arm, center + arm)
+    context.stroke()
+    return
+  }
+
+  context.save()
+  context.translate(center, center)
+  if (type === 'arrow-down') {
+    context.rotate(Math.PI)
+  }
+
+  context.lineWidth = Math.round(size * 0.05)
+  const arrowScale = 1.24
+  const headHalfWidth = size * 0.245 * arrowScale
+  const headTopY = -size * 0.23 * arrowScale
+  const headBottomY = -size * 0.01 * arrowScale
+  const shaftBottomY = size * 0.27 * arrowScale
+  const shaftStartY = headTopY + (context.lineWidth * 0.2)
+
+  context.beginPath()
+  context.moveTo(-headHalfWidth, headBottomY)
+  context.lineTo(0, headTopY)
+  context.lineTo(headHalfWidth, headBottomY)
+  context.stroke()
+
+  context.beginPath()
+  context.moveTo(0, shaftStartY)
+  context.lineTo(0, shaftBottomY)
+  context.stroke()
+  context.restore()
+}
+
+const createNavigationIconTexture = (type, color, backgroundColor) => {
+  if (typeof document === 'undefined') {
+    return null
+  }
+
+  const size = 512
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const context = canvas.getContext('2d')
+
+  if (!context) {
+    return null
+  }
+
+  context.clearRect(0, 0, size, size)
+  context.fillStyle = backgroundColor
+  context.fillRect(0, 0, size, size)
+  context.strokeStyle = color
+  drawNavigationIcon(context, size, type)
+
+  const iconTexture = new THREE.CanvasTexture(canvas)
+  iconTexture.colorSpace = THREE.SRGBColorSpace
+  iconTexture.minFilter = THREE.LinearMipmapLinearFilter
+  iconTexture.magFilter = THREE.LinearFilter
+  iconTexture.anisotropy = 4
+  iconTexture.needsUpdate = true
+  return iconTexture
+}
+
+const getNavigationIconTypeForPage = ({
+  selectedProject,
+  page,
+  maxPage,
+  gridPosition,
+  gridConfig,
+}) => {
+  if (!selectedProject || !page || page < 1) {
+    return null
+  }
+
+  if (gridPosition === gridConfig.crossPosition) {
+    return 'cross'
+  }
+
+  if (maxPage <= 1) {
+    return null
+  }
+
+  if (gridPosition === gridConfig.arrowUpPosition && page > 1) {
+    return 'arrow-up'
+  }
+
+  if (gridPosition === gridConfig.arrowDownPosition && page < maxPage) {
+    return 'arrow-down'
+  }
+
+  return null
+}
 
 const Project = forwardRef(function Project(
   { gridPosition, image, initialPosition, initialRotation },
@@ -103,7 +206,6 @@ const Project = forwardRef(function Project(
       state.isProjectsArranged,
     ]),
   )
-
   const [
     setProjectsArranged,
     setSelectedProject,
@@ -331,8 +433,55 @@ const Project = forwardRef(function Project(
     previousPage,
     previousFace,
   )
-  const maxPage = selectedProject?.contents?.length || 0
   const gridConfig = useGridConfig()
+  const maxPage = selectedProject?.contents?.length || 0
+  const navigationCurrentIconType = useMemo(() => {
+    return getNavigationIconTypeForPage({
+      selectedProject,
+      page: currentPage,
+      maxPage,
+      gridPosition,
+      gridConfig,
+    })
+  }, [selectedProject, currentPage, maxPage, gridPosition, gridConfig])
+  const navigationCurrentTexture = useMemo(() => {
+    if (!navigationCurrentIconType) {
+      return null
+    }
+
+    const iconColor = selectedProject?.color?.text || '#000000'
+    const backgroundColor = selectedProject?.color?.background || '#ffffff'
+    return createNavigationIconTexture(navigationCurrentIconType, iconColor, backgroundColor)
+  }, [navigationCurrentIconType, selectedProject?.color?.text, selectedProject?.color?.background])
+  const navigationPreviousIconType = useMemo(() => {
+    if (!previousPage) {
+      return null
+    }
+
+    return getNavigationIconTypeForPage({
+      selectedProject,
+      page: previousPage,
+      maxPage,
+      gridPosition,
+      gridConfig,
+    })
+  }, [selectedProject, previousPage, maxPage, gridPosition, gridConfig])
+  const navigationPreviousTexture = useMemo(() => {
+    if (!navigationPreviousIconType) {
+      return null
+    }
+
+    const iconColor = selectedProject?.color?.text || '#000000'
+    const backgroundColor = selectedProject?.color?.background || '#ffffff'
+    return createNavigationIconTexture(navigationPreviousIconType, iconColor, backgroundColor)
+  }, [navigationPreviousIconType, selectedProject?.color?.text, selectedProject?.color?.background])
+
+  useEffect(() => {
+    return () => {
+      navigationCurrentTexture?.dispose?.()
+      navigationPreviousTexture?.dispose?.()
+    }
+  }, [navigationCurrentTexture, navigationPreviousTexture])
 
   const { contentText } = useContentText(gridPosition)
 
@@ -430,8 +579,7 @@ const Project = forwardRef(function Project(
     rippleUniforms.uTime.value = state.clock.elapsedTime
   })
 
-  // Fonction pour gérer le clic et arrêter la propagation
-  const handleMeshClick = (event) => {
+  const handleMeshClick = () => {
 
     // Navigation - Cross
     if (gridPosition === gridConfig.crossPosition && selectedProject) {
@@ -446,7 +594,7 @@ const Project = forwardRef(function Project(
     }
 
     // Navigation - Arrow Down
-    if (gridPosition === 14 && selectedProject && currentPage < maxPage) {
+    if (gridPosition === gridConfig.arrowDownPosition && selectedProject && currentPage < maxPage) {
       setCurrentPage(currentPage + 1)
       return
     }
@@ -469,6 +617,16 @@ const Project = forwardRef(function Project(
       isArrangementAnimationComplete &&
       currentPage > 0
     )
+    const isNavigationTile = (
+      gridPosition === gridConfig.crossPosition ||
+      gridPosition === gridConfig.arrowUpPosition ||
+      gridPosition === gridConfig.arrowDownPosition
+    )
+    const shouldUseNavigationMap = shouldUseContentMaps && isNavigationTile
+    const shouldUseBackOnlyNavigation = (
+      currentPage === 1 &&
+      isNavigationTile
+    )
     const fallbackContentMap = backgroundFallbackTexture || emptyTexture
     const nextColor = 'white'
     const baseMap = texture || emptyTexture
@@ -483,7 +641,30 @@ const Project = forwardRef(function Project(
       previousCurrentPageRef.current = currentPage
     }
 
-    if (shouldUseContentMaps) {
+    if (shouldUseNavigationMap) {
+      if (shouldUseBackOnlyNavigation) {
+        nextFrontMap = fallbackContentMap
+        nextBackMap = navigationCurrentTexture || fallbackContentMap
+      } else {
+        const currentMap = navigationCurrentTexture || fallbackContentMap
+        const settledOppositeMap = navigationPreviousTexture || fallbackContentMap
+        const transitionOppositeMap = lockedOppositeMapRef.current || settledOppositeMap
+        const shouldUseTransitionOpposite = !!lockedOppositeMapRef.current || pageChanged || isPageFlipAnimatingRef.current
+        const oppositeMap = shouldUseTransitionOpposite
+          ? transitionOppositeMap
+          : settledOppositeMap
+
+        if (targetFace === 'front') {
+          nextFrontMap = currentMap
+          nextBackMap = oppositeMap
+        } else {
+          nextFrontMap = oppositeMap
+          nextBackMap = currentMap
+        }
+      }
+
+      lastVisiblePageMapRef.current = navigationCurrentTexture || fallbackContentMap
+    } else if (shouldUseContentMaps) {
       const currentMap = currentPageTexture || fallbackContentMap
       const settledOppositeMap = previousPage
         ? (previousPageTexture || fallbackContentMap)
@@ -530,7 +711,7 @@ const Project = forwardRef(function Project(
 
     material.color.set(nextColor)
 
-    if (!shouldUseContentMaps) {
+    if (!shouldUseContentMaps && !shouldUseNavigationMap) {
       lastVisiblePageMapRef.current = texture || coverOrFallbackMap
     }
   }, [
@@ -541,10 +722,13 @@ const Project = forwardRef(function Project(
     previousPageTexture,
     previousPage,
     targetFace,
-    selectedProject?.color?.background,
     currentPage,
     emptyTexture,
     backgroundFallbackTexture,
+    navigationCurrentTexture,
+    navigationPreviousTexture,
+    gridPosition,
+    gridConfig,
     rippleUniforms,
   ])
 
@@ -648,12 +832,6 @@ const Project = forwardRef(function Project(
                     </ProjectOverlay>
                   </>
                 )}
-                <Navigation
-                  selectedProject={selectedProject}
-                  currentPage={currentPage}
-                  gridPosition={gridPosition}
-                  projectSize={projectSize}
-                />
                 {contentText && (
                   <ProjectOverlay
                     condition={selectedProject}

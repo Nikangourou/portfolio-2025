@@ -62,22 +62,26 @@ export const useGridConfig = () => {
   )
 
   return useMemo(() => {
+    const cols = currentIsMobile ? 3 : 5
+    const rows = currentIsMobile ? 5 : 3
+
     return {
       // Configuration de base
       isMobile: currentIsMobile,
-      cols: currentIsMobile ? 3 : 5,
-      rows: currentIsMobile ? 5 : 3,
-      
+      cols,
+      rows,
+
       // Configuration des bordures
       borderColsLeft: currentIsMobile ? 4 : 3,
       borderColsRight: currentIsMobile ? 4 : 3,
       borderRowsTop: currentIsMobile ? 6 : 4,
       borderRowsBottom: currentIsMobile ? 6 : 4,
-      
+
       // Positions adaptatives pour la navigation
       arrowUpPosition: currentIsMobile ? 12 : 4,
+      arrowDownPosition: (cols * rows) - 1,
       crossPosition: currentIsMobile ? 13 : 9,
-      
+
       // Configuration de la grille
       projectSize: 1,
       gap: 0.005,
