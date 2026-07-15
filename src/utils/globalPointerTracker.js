@@ -27,10 +27,7 @@ const isAllowedPointerTarget = (canvas, targetElement) => {
         return false
     }
 
-    const isCanvasTarget = targetElement === canvas || canvas.contains(targetElement)
-    const isOverlayTarget = !!targetElement.closest('[data-overlay-interactive="true"]')
-
-    return isCanvasTarget || isOverlayTarget
+    return targetElement === canvas || canvas.contains(targetElement)
 }
 
 export const getGlobalCanvasPointerState = (canvas) => getPointerState(canvas)

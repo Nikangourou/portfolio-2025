@@ -4,6 +4,7 @@ import Experience from '@/Experience.jsx'
 export default function SceneCanvas() {
     return (
         <Canvas
+            eventPrefix="client"
             dpr={[1, 2]}
             gl={{
                 antialias: true,
