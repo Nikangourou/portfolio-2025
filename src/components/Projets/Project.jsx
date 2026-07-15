@@ -13,11 +13,10 @@ import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
 import { getCachedGeometry, AnimatedMesh } from './OptimizedGeometry'
 import { getSpringConfig } from '@/utils/springConfig'
 import { useGridConfig } from '@/hooks/useGridConfig'
+import { getGlobalCanvasPointerState, subscribeGlobalCanvasPointerState } from '@/utils/globalPointerTracker'
 
 const CURSOR_RESPONSE = 9
 const RIPPLE_RESPONSE = 7.2
-const TRAIL_RESPONSE = 2.2
-const TRAIL_DECAY = 0.92
 
 const ARRANGED_BACK_FACE_FLIP = { x: 0.0, y: 0.0 }
 const FREE_BACK_FACE_FLIP = { x: 1.0, y: 1.0 }
@@ -153,7 +152,8 @@ const Project = forwardRef(function Project(
   const projectedCenterRef = useRef(new THREE.Vector3())
   const previousPointerRef = useRef(new THREE.Vector2())
   const hasPointerSampleRef = useRef(false)
-  const { camera, pointer } = useThree()
+  const canvasPointerStateRef = useRef(null)
+  const { camera, pointer, gl } = useThree()
 
   const emptyTexture = useMemo(() => {
     const data = new Uint8Array([255, 255, 255, 255])
@@ -171,9 +171,7 @@ const Project = forwardRef(function Project(
 
   const rippleUniforms = useMemo(() => ({
     uRippleCursor: { value: new THREE.Vector2(999, 999) },
-    uTrailCursor: { value: new THREE.Vector2(999, 999) },
     uRippleStrength: { value: 0 },
-    uTrailStrength: { value: 0 },
     uRippleTint: { value: new THREE.Color('#eef4ff') },
     uFrontMap: { value: emptyTexture },
     uBackMap: { value: emptyTexture },
@@ -261,9 +259,7 @@ const Project = forwardRef(function Project(
   const applyPressureRippleShader = useCallback((material) => {
     material.onBeforeCompile = (shader) => {
       shader.uniforms.uRippleCursor = rippleUniforms.uRippleCursor
-      shader.uniforms.uTrailCursor = rippleUniforms.uTrailCursor
       shader.uniforms.uRippleStrength = rippleUniforms.uRippleStrength
-      shader.uniforms.uTrailStrength = rippleUniforms.uTrailStrength
       shader.uniforms.uRippleTint = rippleUniforms.uRippleTint
       shader.uniforms.uFrontMap = rippleUniforms.uFrontMap
       shader.uniforms.uBackMap = rippleUniforms.uBackMap
@@ -277,9 +273,7 @@ const Project = forwardRef(function Project(
 
       shader.vertexShader = `
         uniform vec2 uRippleCursor;
-        uniform vec2 uTrailCursor;
         uniform float uRippleStrength;
-        uniform float uTrailStrength;
         uniform float uTime;
         uniform mat3 uFrontMapTransform;
         uniform mat3 uBackMapTransform;
@@ -301,30 +295,24 @@ const Project = forwardRef(function Project(
           vRippleUv = uv;
 
           float cursorDistance = distance(position.xy, uRippleCursor);
-          float trailDistance = distance(position.xy, uTrailCursor);
           float cursorField = smoothstep(1.45, 0.0, cursorDistance) * uRippleStrength;
-          float trailField = smoothstep(1.8, 0.0, trailDistance) * uTrailStrength;
-          float rippleField = max(cursorField, trailField * 0.8);
+          float rippleField = cursorField;
 
           vec2 cursorVector = position.xy - uRippleCursor;
           float cursorRadius = max(length(cursorVector), 0.0001);
           vec2 cursorDirection = cursorVector / cursorRadius;
-          vec2 trailVector = position.xy - uTrailCursor;
-          float trailRadius = max(length(trailVector), 0.0001);
 
           float cursorRipple = sin(cursorRadius * 20.0 - uTime * 9.0);
-          float trailRipple = sin(trailRadius * 16.0 - uTime * 6.5);
           float cursorEnvelope = exp(-cursorRadius * 2.8);
-          float trailEnvelope = exp(-trailRadius * 2.1);
           float sheetBias = smoothstep(0.0, 1.0, 1.0 - abs(uv.x * 2.0 - 1.0) * 0.55);
-          float ripple = cursorRipple * cursorEnvelope * cursorField + trailRipple * trailEnvelope * trailField * 0.75;
+          float ripple = cursorRipple * cursorEnvelope * cursorField;
           float bend = ripple * (0.12 + sheetBias * 0.08);
 
           transformed.z += bend;
           transformed.x += cursorDirection.x * rippleField * 0.035 * cursorEnvelope;
           transformed.y += cursorDirection.y * rippleField * 0.035 * cursorEnvelope;
 
-          vRippleMask = clamp(abs(ripple) * 2.4 + rippleField * 0.35, 0.0, 1.0);
+          vRippleMask = clamp(abs(ripple) * 2.2 + rippleField * 0.3, 0.0, 1.0);
           vRipplePhase = ripple;
         `,
       )
@@ -362,19 +350,19 @@ const Project = forwardRef(function Project(
         `
           float rippleHighlight = smoothstep(0.12, 1.0, vRippleMask);
           float shimmer = 0.5 + 0.5 * sin(uTime * 4.5 + vRippleUv.y * 22.0 + vRippleUv.x * 10.0);
-          float ringLine = smoothstep(0.35, 0.95, 0.5 + 0.5 * vRipplePhase);
           float centerBias = smoothstep(0.08, 0.92, 1.0 - distance(vRippleUv, vec2(0.5)) * 1.2);
+          float ringLine = smoothstep(0.35, 0.95, 0.5 + 0.5 * vRipplePhase);
           vec3 rippleTint = mix(gl_FragColor.rgb, uRippleTint, rippleHighlight * (0.16 + shimmer * 0.08));
 
           gl_FragColor.rgb = mix(gl_FragColor.rgb, rippleTint, rippleHighlight * 0.52);
-          gl_FragColor.rgb += ringLine * rippleHighlight * 0.12 * (0.65 + centerBias * 0.35);
+          gl_FragColor.rgb += ringLine * rippleHighlight * 0.08 * (0.65 + centerBias * 0.35);
 
           #include <dithering_fragment>
         `,
       )
     }
 
-    material.customProgramCacheKey = () => 'pressure-ripple-v1'
+    material.customProgramCacheKey = () => 'pressure-ripple-v3'
     material.needsUpdate = true
   }, [rippleUniforms])
 
@@ -491,19 +479,34 @@ const Project = forwardRef(function Project(
     }
   }, [applyPressureRippleShader])
 
+  useEffect(() => {
+    const canvas = gl?.domElement
+    canvasPointerStateRef.current = getGlobalCanvasPointerState(canvas)
+    return subscribeGlobalCanvasPointerState(canvas)
+  }, [gl])
+
   useFrame((state, delta) => {
     if (!pageGroupRef.current) {
       return
     }
 
+    const canvasPointerState = canvasPointerStateRef.current
+    const activePointer = canvasPointerState?.hasPointer
+      ? canvasPointerState.pointer
+      : pointer
+    const hasGlobalPointer = !!canvasPointerState?.hasPointer
+    const isPointerInsideCanvas = hasGlobalPointer
+      ? !!canvasPointerState?.isInsideCanvas
+      : true
+
     const previousPointer = previousPointerRef.current
 
     if (!hasPointerSampleRef.current) {
-      previousPointer.set(pointer.x, pointer.y)
+      previousPointer.set(activePointer.x, activePointer.y)
       hasPointerSampleRef.current = true
     }
 
-    previousPointer.set(pointer.x, pointer.y)
+    previousPointer.set(activePointer.x, activePointer.y)
 
     pageGroupRef.current.getWorldPosition(planeOriginRef.current)
     pageGroupRef.current.getWorldQuaternion(planeQuaternionRef.current)
@@ -516,13 +519,29 @@ const Project = forwardRef(function Project(
       planeOriginRef.current,
     )
 
-    raycasterRef.current.setFromCamera(pointer, camera)
+    if (!isPointerInsideCanvas) {
+      rippleUniforms.uRippleStrength.value = THREE.MathUtils.lerp(
+        rippleUniforms.uRippleStrength.value,
+        0,
+        1 - Math.exp(-delta * RIPPLE_RESPONSE),
+      )
+      rippleUniforms.uTime.value = state.clock.elapsedTime
+      return
+    }
+
+    raycasterRef.current.setFromCamera(activePointer, camera)
     const hasIntersection = raycasterRef.current.ray.intersectPlane(
       worldPlaneRef.current,
       hitPointRef.current,
     )
 
     if (!hasIntersection) {
+      rippleUniforms.uRippleStrength.value = THREE.MathUtils.lerp(
+        rippleUniforms.uRippleStrength.value,
+        0,
+        1 - Math.exp(-delta * RIPPLE_RESPONSE),
+      )
+      rippleUniforms.uTime.value = state.clock.elapsedTime
       return
     }
 
@@ -531,16 +550,28 @@ const Project = forwardRef(function Project(
 
     const halfWidth = projectSize.width * 0.5
     const halfHeight = projectSize.height * 0.5
-    const normalizedX = localCursorRef.current.x / (halfWidth * 1.35)
-    const normalizedY = localCursorRef.current.y / (halfHeight * 1.35)
+    const normalizedX = localCursorRef.current.x / halfWidth
+    const normalizedY = localCursorRef.current.y / halfHeight
+    const isCursorInsideSheet = Math.abs(normalizedX) <= 1 && Math.abs(normalizedY) <= 1
+
+    if (!isCursorInsideSheet) {
+      rippleUniforms.uRippleStrength.value = THREE.MathUtils.lerp(
+        rippleUniforms.uRippleStrength.value,
+        0,
+        1 - Math.exp(-delta * RIPPLE_RESPONSE),
+      )
+      rippleUniforms.uTime.value = state.clock.elapsedTime
+      return
+    }
+
     const radialDistance = Math.sqrt(
       normalizedX * normalizedX + normalizedY * normalizedY,
     )
     const cursorInfluence = THREE.MathUtils.clamp(1 - radialDistance, 0, 1)
     projectedCenterRef.current.copy(planeOriginRef.current).project(camera)
 
-    const pointerToProjectX = pointer.x - projectedCenterRef.current.x
-    const pointerToProjectY = pointer.y - projectedCenterRef.current.y
+    const pointerToProjectX = activePointer.x - projectedCenterRef.current.x
+    const pointerToProjectY = activePointer.y - projectedCenterRef.current.y
     const screenDistance = Math.sqrt(
       pointerToProjectX * pointerToProjectX +
       pointerToProjectY * pointerToProjectY,
@@ -552,29 +583,17 @@ const Project = forwardRef(function Project(
     )
     const cursorBlend = 1 - Math.exp(-delta * CURSOR_RESPONSE)
     const strengthBlend = 1 - Math.exp(-delta * RIPPLE_RESPONSE)
-    const trailBlend = 1 - Math.exp(-delta * TRAIL_RESPONSE)
-    const residualTrailStrength = Math.max(
-      targetStrength * 0.95,
-      rippleUniforms.uTrailStrength.value * Math.exp(-delta * TRAIL_DECAY),
-    )
 
     if (rippleUniforms.uRippleCursor.value.x > 900) {
       rippleUniforms.uRippleCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
-      rippleUniforms.uTrailCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
     } else {
       rippleUniforms.uRippleCursor.value.lerp(localCursorRef.current, cursorBlend)
-      rippleUniforms.uTrailCursor.value.lerp(localCursorRef.current, trailBlend)
     }
 
     rippleUniforms.uRippleStrength.value = THREE.MathUtils.lerp(
       rippleUniforms.uRippleStrength.value,
       targetStrength,
       strengthBlend,
-    )
-    rippleUniforms.uTrailStrength.value = THREE.MathUtils.lerp(
-      rippleUniforms.uTrailStrength.value,
-      residualTrailStrength,
-      trailBlend,
     )
     rippleUniforms.uTime.value = state.clock.elapsedTime
   })
@@ -779,7 +798,7 @@ const Project = forwardRef(function Project(
                       }
                       projectSize={projectSize}
                     >
-                      <p className={styles.title}>{selectedProject?.title}</p>
+                      <p className={styles.title} data-overlay-interactive="true">{selectedProject?.title}</p>
                     </ProjectOverlay>
                     <ProjectOverlay
                       condition={
@@ -789,7 +808,7 @@ const Project = forwardRef(function Project(
                       }
                       projectSize={projectSize}
                     >
-                      <p className={styles.title}>{selectedProject?.context}</p>
+                      <p className={styles.title} data-overlay-interactive="true">{selectedProject?.context}</p>
                     </ProjectOverlay>
                     <ProjectOverlay
                       condition={
@@ -797,7 +816,7 @@ const Project = forwardRef(function Project(
                       }
                       projectSize={projectSize}
                     >
-                      <p className={styles.title}>{selectedProject?.year}</p>
+                      <p className={styles.title} data-overlay-interactive="true">{selectedProject?.year}</p>
                     </ProjectOverlay>
                     <ProjectOverlay
                       condition={
@@ -809,7 +828,7 @@ const Project = forwardRef(function Project(
                     >
                       <div className={styles.technoContainer}>
                         {selectedProject?.technologies.map((techno) => (
-                          <p key={techno} className={styles.techno}>
+                          <p key={techno} className={styles.techno} data-overlay-interactive="true">
                             {techno}
                           </p>
                         ))}
@@ -826,8 +845,9 @@ const Project = forwardRef(function Project(
                         target="_blank"
                         rel="noopener noreferrer"
                         className={styles.linkButton}
+                        data-overlay-interactive="true"
                       >
-                        Link
+                        <span className={styles.linkButtonLabel} data-overlay-interactive="true">Link</span>
                       </a>
                     </ProjectOverlay>
                   </>
@@ -838,7 +858,9 @@ const Project = forwardRef(function Project(
                     projectSize={projectSize}
                     reverse={true}
                   >
-                    <p className={styles.contentText}>{contentText.text}</p>
+                    <p className={styles.contentText}>
+                      <span className={styles.contentTextValue} data-overlay-interactive="true">{contentText.text}</span>
+                    </p>
                   </ProjectOverlay>
                 )}
               </>

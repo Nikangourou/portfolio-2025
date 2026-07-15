@@ -17,7 +17,8 @@
       text-align: center;
       padding: 0;
       margin: 0;
-      // pointer-events: auto;
+      pointer-events: auto;
+      user-select: text;
 
     }
 
@@ -27,7 +28,7 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      // pointer-events: auto;
+      pointer-events: none;
 
 
       .techno {
@@ -36,6 +37,8 @@
         text-align: center;
         padding: 0;
         margin: 0;
+        pointer-events: auto;
+        user-select: text;
       }
     }
 
@@ -44,7 +47,13 @@
       color: var(--theme-text);
       font-size: 3.5px;
       z-index: 1;
-      // pointer-events: auto;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .contentTextValue {
+      pointer-events: auto;
+      user-select: text;
     }
 
     .linkButton {
@@ -57,10 +66,14 @@
       font-family: 'Allerta Stencil', sans-serif;
       font-size: 6px;
       padding: 2px 4px;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .linkButtonLabel {
       pointer-events: auto;
       cursor: pointer;
-      pointer-events: auto;
-
+      user-select: text;
     }
   }
 }

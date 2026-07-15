@@ -2,7 +2,11 @@ import { Html } from '@react-three/drei'
 import styles from './Project.module.scss'
 import { useStore } from '@/stores/store'
 
-const ProjectOverlay = ({ condition, children, projectSize }) => {
+const ProjectOverlay = ({
+  condition,
+  children,
+  projectSize,
+}) => {
   if (!condition) return null
 
   const currentPage = useStore((state) => state.currentPage)
@@ -23,6 +27,7 @@ const ProjectOverlay = ({ condition, children, projectSize }) => {
     >
       <div
         className={styles.container}
+        style={{ pointerEvents: 'none' }}
       >
         {children}
       </div>
