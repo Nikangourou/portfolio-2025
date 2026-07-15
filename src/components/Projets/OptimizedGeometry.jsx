@@ -45,9 +45,17 @@ export const AnimatedMesh = ({ children, projectId, onClick, ...props }) => {
     return selectedProject && (
       projectId === gridConfig.crossPosition ||
       (projectId === gridConfig.arrowUpPosition && currentPage > 1) ||
-      (projectId === 14 && currentPage < maxPage)
+      (projectId === gridConfig.arrowDownPosition && currentPage < maxPage)
     )
-  }, [selectedProject, projectId, gridConfig.crossPosition, gridConfig.arrowUpPosition, currentPage, maxPage])
+  }, [
+    selectedProject,
+    projectId,
+    gridConfig.crossPosition,
+    gridConfig.arrowUpPosition,
+    gridConfig.arrowDownPosition,
+    currentPage,
+    maxPage,
+  ])
 
   const isBorder = useMemo(() => {
     return projectId && projectId.toString().startsWith('border-')

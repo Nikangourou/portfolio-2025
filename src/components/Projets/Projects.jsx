@@ -10,6 +10,7 @@ import ProjectInfoFloating from '../Interface/ProjectInfoFloating'
 import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
 import { useGridConfig } from '@/hooks/useGridConfig'
 import { useProjectInteraction } from '@/hooks/useProjectInteraction'
+import { useSceneRippleField } from '@/hooks/useGlobalRipple'
 
 export default function Projects() {
   // console.log('Projects rendered')
@@ -71,6 +72,8 @@ export default function Projects() {
     displaySpring,
     displayApi
   } = useProjectInteraction()
+
+  useSceneRippleField()
 
   const findValidPosition = (positions = [], maxAttempts = 100) => {
     const xRange = [-2, 2]

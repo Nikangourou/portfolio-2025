@@ -2,11 +2,9 @@ import { useRef, forwardRef, useCallback, useEffect, useImperativeHandle, useMem
 import * as THREE from 'three'
 import { useTexture } from '@react-three/drei'
 import { animated, useSpring } from '@react-spring/three'
-import { useFrame, useThree } from '@react-three/fiber'
 import { useStore } from '@/stores/store'
 import { useShallow } from 'zustand/react/shallow'
 import styles from './Project.module.scss'
-import { Navigation } from '@/components/Interface/Interface'
 import ProjectOverlay from './ProjectOverlay'
 import { useContentTexture, useContentText } from '@/utils/contentLoader'
 import projectsData from '@/data/projects.json'
@@ -14,11 +12,8 @@ import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
 import { getCachedGeometry, AnimatedMesh } from './OptimizedGeometry'
 import { getSpringConfig } from '@/utils/springConfig'
 import { useGridConfig } from '@/hooks/useGridConfig'
-
-const CURSOR_RESPONSE = 9
-const RIPPLE_RESPONSE = 7.2
-const TRAIL_RESPONSE = 2.2
-const TRAIL_DECAY = 0.92
+import { useGlobalRipple } from '@/hooks/useGlobalRipple'
+import { applyProjectRippleShader } from '@/utils/rippleShader'
 
 const ARRANGED_BACK_FACE_FLIP = { x: 0.0, y: 0.0 }
 const FREE_BACK_FACE_FLIP = { x: 1.0, y: 1.0 }
@@ -28,6 +23,110 @@ const getBackFaceFlip = (isProjectsArranged) => ({
   x: isProjectsArranged ? ARRANGED_BACK_FACE_FLIP.x : FREE_BACK_FACE_FLIP.x,
   y: isProjectsArranged ? ARRANGED_BACK_FACE_FLIP.y : FREE_BACK_FACE_FLIP.y,
 })
+
+const drawNavigationIcon = (context, size, type) => {
+  const center = size / 2
+  context.lineCap = 'square'
+  context.lineJoin = 'miter'
+
+  if (type === 'cross') {
+    const arm = size * 0.31
+    context.lineWidth = Math.round(size * 0.055)
+    context.beginPath()
+    context.moveTo(center - arm, center - arm)
+    context.lineTo(center + arm, center + arm)
+    context.moveTo(center + arm, center - arm)
+    context.lineTo(center - arm, center + arm)
+    context.stroke()
+    return
+  }
+
+  context.save()
+  context.translate(center, center)
+  if (type === 'arrow-down') {
+    context.rotate(Math.PI)
+  }
+
+  context.lineWidth = Math.round(size * 0.05)
+  const arrowScale = 1.24
+  const headHalfWidth = size * 0.245 * arrowScale
+  const headTopY = -size * 0.23 * arrowScale
+  const headBottomY = -size * 0.01 * arrowScale
+  const shaftBottomY = size * 0.27 * arrowScale
+  const shaftStartY = headTopY + (context.lineWidth * 0.2)
+
+  context.beginPath()
+  context.moveTo(-headHalfWidth, headBottomY)
+  context.lineTo(0, headTopY)
+  context.lineTo(headHalfWidth, headBottomY)
+  context.stroke()
+
+  context.beginPath()
+  context.moveTo(0, shaftStartY)
+  context.lineTo(0, shaftBottomY)
+  context.stroke()
+  context.restore()
+}
+
+const createNavigationIconTexture = (type, color, backgroundColor) => {
+  if (typeof document === 'undefined') {
+    return null
+  }
+
+  const size = 512
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const context = canvas.getContext('2d')
+
+  if (!context) {
+    return null
+  }
+
+  context.clearRect(0, 0, size, size)
+  context.fillStyle = backgroundColor
+  context.fillRect(0, 0, size, size)
+  context.strokeStyle = color
+  drawNavigationIcon(context, size, type)
+
+  const iconTexture = new THREE.CanvasTexture(canvas)
+  iconTexture.colorSpace = THREE.SRGBColorSpace
+  iconTexture.minFilter = THREE.LinearMipmapLinearFilter
+  iconTexture.magFilter = THREE.LinearFilter
+  iconTexture.anisotropy = 4
+  iconTexture.needsUpdate = true
+  return iconTexture
+}
+
+const getNavigationIconTypeForPage = ({
+  selectedProject,
+  page,
+  maxPage,
+  gridPosition,
+  gridConfig,
+}) => {
+  if (!selectedProject || !page || page < 1) {
+    return null
+  }
+
+  if (gridPosition === gridConfig.crossPosition) {
+    return 'cross'
+  }
+
+  if (maxPage <= 1) {
+    return null
+  }
+
+  if (gridPosition === gridConfig.arrowUpPosition && page > 1) {
+    return 'arrow-up'
+  }
+
+  if (gridPosition === gridConfig.arrowDownPosition && page < maxPage) {
+    return 'arrow-down'
+  }
+
+  return null
+}
 
 const Project = forwardRef(function Project(
   { gridPosition, image, initialPosition, initialRotation },
@@ -40,17 +139,6 @@ const Project = forwardRef(function Project(
   const lastVisiblePageMapRef = useRef(null)
   const isPageFlipAnimatingRef = useRef(false)
   const lockedOppositeMapRef = useRef(null)
-  const raycasterRef = useRef(new THREE.Raycaster())
-  const worldPlaneRef = useRef(new THREE.Plane())
-  const planeOriginRef = useRef(new THREE.Vector3())
-  const planeNormalRef = useRef(new THREE.Vector3())
-  const planeQuaternionRef = useRef(new THREE.Quaternion())
-  const hitPointRef = useRef(new THREE.Vector3())
-  const localCursorRef = useRef(new THREE.Vector3())
-  const projectedCenterRef = useRef(new THREE.Vector3())
-  const previousPointerRef = useRef(new THREE.Vector2())
-  const hasPointerSampleRef = useRef(false)
-  const { camera, pointer } = useThree()
 
   const emptyTexture = useMemo(() => {
     const data = new Uint8Array([255, 255, 255, 255])
@@ -68,9 +156,7 @@ const Project = forwardRef(function Project(
 
   const rippleUniforms = useMemo(() => ({
     uRippleCursor: { value: new THREE.Vector2(999, 999) },
-    uTrailCursor: { value: new THREE.Vector2(999, 999) },
     uRippleStrength: { value: 0 },
-    uTrailStrength: { value: 0 },
     uRippleTint: { value: new THREE.Color('#eef4ff') },
     uFrontMap: { value: emptyTexture },
     uBackMap: { value: emptyTexture },
@@ -103,7 +189,6 @@ const Project = forwardRef(function Project(
       state.isProjectsArranged,
     ]),
   )
-
   const [
     setProjectsArranged,
     setSelectedProject,
@@ -157,123 +242,7 @@ const Project = forwardRef(function Project(
   }, [predefinedPositions, gridPosition])
 
   const applyPressureRippleShader = useCallback((material) => {
-    material.onBeforeCompile = (shader) => {
-      shader.uniforms.uRippleCursor = rippleUniforms.uRippleCursor
-      shader.uniforms.uTrailCursor = rippleUniforms.uTrailCursor
-      shader.uniforms.uRippleStrength = rippleUniforms.uRippleStrength
-      shader.uniforms.uTrailStrength = rippleUniforms.uTrailStrength
-      shader.uniforms.uRippleTint = rippleUniforms.uRippleTint
-      shader.uniforms.uFrontMap = rippleUniforms.uFrontMap
-      shader.uniforms.uBackMap = rippleUniforms.uBackMap
-      shader.uniforms.uBackFlipX = rippleUniforms.uBackFlipX
-      shader.uniforms.uBackFlipY = rippleUniforms.uBackFlipY
-      shader.uniforms.uFrontMapTransform = rippleUniforms.uFrontMapTransform
-      shader.uniforms.uBackMapTransform = rippleUniforms.uBackMapTransform
-      shader.uniforms.uTime = rippleUniforms.uTime
-
-      material.userData.shader = shader
-
-      shader.vertexShader = `
-        uniform vec2 uRippleCursor;
-        uniform vec2 uTrailCursor;
-        uniform float uRippleStrength;
-        uniform float uTrailStrength;
-        uniform float uTime;
-        uniform mat3 uFrontMapTransform;
-        uniform mat3 uBackMapTransform;
-        varying vec2 vFrontUv;
-        varying vec2 vBackUv;
-        varying vec2 vRippleUv;
-        varying float vRippleMask;
-        varying float vRipplePhase;
-      ` + shader.vertexShader
-
-      shader.vertexShader = shader.vertexShader.replace(
-        '#include <begin_vertex>',
-        `
-          #include <begin_vertex>
-
-          vFrontUv = (uFrontMapTransform * vec3(uv, 1.0)).xy;
-          vec2 backFaceUv = vec2(uv.x, 1.0 - uv.y);
-          vBackUv = (uBackMapTransform * vec3(backFaceUv, 1.0)).xy;
-          vRippleUv = uv;
-
-          float cursorDistance = distance(position.xy, uRippleCursor);
-          float trailDistance = distance(position.xy, uTrailCursor);
-          float cursorField = smoothstep(1.45, 0.0, cursorDistance) * uRippleStrength;
-          float trailField = smoothstep(1.8, 0.0, trailDistance) * uTrailStrength;
-          float rippleField = max(cursorField, trailField * 0.8);
-
-          vec2 cursorVector = position.xy - uRippleCursor;
-          float cursorRadius = max(length(cursorVector), 0.0001);
-          vec2 cursorDirection = cursorVector / cursorRadius;
-          vec2 trailVector = position.xy - uTrailCursor;
-          float trailRadius = max(length(trailVector), 0.0001);
-
-          float cursorRipple = sin(cursorRadius * 20.0 - uTime * 9.0);
-          float trailRipple = sin(trailRadius * 16.0 - uTime * 6.5);
-          float cursorEnvelope = exp(-cursorRadius * 2.8);
-          float trailEnvelope = exp(-trailRadius * 2.1);
-          float sheetBias = smoothstep(0.0, 1.0, 1.0 - abs(uv.x * 2.0 - 1.0) * 0.55);
-          float ripple = cursorRipple * cursorEnvelope * cursorField + trailRipple * trailEnvelope * trailField * 0.75;
-          float bend = ripple * (0.12 + sheetBias * 0.08);
-
-          transformed.z += bend;
-          transformed.x += cursorDirection.x * rippleField * 0.035 * cursorEnvelope;
-          transformed.y += cursorDirection.y * rippleField * 0.035 * cursorEnvelope;
-
-          vRippleMask = clamp(abs(ripple) * 2.4 + rippleField * 0.35, 0.0, 1.0);
-          vRipplePhase = ripple;
-        `,
-      )
-
-      shader.fragmentShader = `
-        uniform sampler2D uFrontMap;
-        uniform sampler2D uBackMap;
-        uniform float uBackFlipX;
-        uniform float uBackFlipY;
-        uniform vec3 uRippleTint;
-        uniform float uTime;
-        varying vec2 vFrontUv;
-        varying vec2 vBackUv;
-        varying vec2 vRippleUv;
-        varying float vRippleMask;
-        varying float vRipplePhase;
-      ` + shader.fragmentShader
-
-      shader.fragmentShader = shader.fragmentShader.replace(
-        '#include <map_fragment>',
-        `
-          float sampledBackX = mix(vBackUv.x, 1.0 - vBackUv.x, uBackFlipX);
-          float sampledBackY = mix(vBackUv.y, 1.0 - vBackUv.y, uBackFlipY);
-          vec2 backSampleUv = vec2(sampledBackX, sampledBackY);
-          vec4 sampledDiffuseColor = gl_FrontFacing
-            ? texture2D(uFrontMap, vFrontUv)
-            : texture2D(uBackMap, backSampleUv);
-
-          diffuseColor *= sampledDiffuseColor;
-        `,
-      )
-
-      shader.fragmentShader = shader.fragmentShader.replace(
-        '#include <dithering_fragment>',
-        `
-          float rippleHighlight = smoothstep(0.12, 1.0, vRippleMask);
-          float shimmer = 0.5 + 0.5 * sin(uTime * 4.5 + vRippleUv.y * 22.0 + vRippleUv.x * 10.0);
-          float ringLine = smoothstep(0.35, 0.95, 0.5 + 0.5 * vRipplePhase);
-          float centerBias = smoothstep(0.08, 0.92, 1.0 - distance(vRippleUv, vec2(0.5)) * 1.2);
-          vec3 rippleTint = mix(gl_FragColor.rgb, uRippleTint, rippleHighlight * (0.16 + shimmer * 0.08));
-
-          gl_FragColor.rgb = mix(gl_FragColor.rgb, rippleTint, rippleHighlight * 0.52);
-          gl_FragColor.rgb += ringLine * rippleHighlight * 0.12 * (0.65 + centerBias * 0.35);
-
-          #include <dithering_fragment>
-        `,
-      )
-    }
-
-    material.customProgramCacheKey = () => 'pressure-ripple-v1'
-    material.needsUpdate = true
+    applyProjectRippleShader(material, rippleUniforms)
   }, [rippleUniforms])
 
   // Delays précalculés pour éviter les recalculs
@@ -331,8 +300,55 @@ const Project = forwardRef(function Project(
     previousPage,
     previousFace,
   )
-  const maxPage = selectedProject?.contents?.length || 0
   const gridConfig = useGridConfig()
+  const maxPage = selectedProject?.contents?.length || 0
+  const navigationCurrentIconType = useMemo(() => {
+    return getNavigationIconTypeForPage({
+      selectedProject,
+      page: currentPage,
+      maxPage,
+      gridPosition,
+      gridConfig,
+    })
+  }, [selectedProject, currentPage, maxPage, gridPosition, gridConfig])
+  const navigationCurrentTexture = useMemo(() => {
+    if (!navigationCurrentIconType) {
+      return null
+    }
+
+    const iconColor = selectedProject?.color?.text || '#000000'
+    const backgroundColor = selectedProject?.color?.background || '#ffffff'
+    return createNavigationIconTexture(navigationCurrentIconType, iconColor, backgroundColor)
+  }, [navigationCurrentIconType, selectedProject?.color?.text, selectedProject?.color?.background])
+  const navigationPreviousIconType = useMemo(() => {
+    if (!previousPage) {
+      return null
+    }
+
+    return getNavigationIconTypeForPage({
+      selectedProject,
+      page: previousPage,
+      maxPage,
+      gridPosition,
+      gridConfig,
+    })
+  }, [selectedProject, previousPage, maxPage, gridPosition, gridConfig])
+  const navigationPreviousTexture = useMemo(() => {
+    if (!navigationPreviousIconType) {
+      return null
+    }
+
+    const iconColor = selectedProject?.color?.text || '#000000'
+    const backgroundColor = selectedProject?.color?.background || '#ffffff'
+    return createNavigationIconTexture(navigationPreviousIconType, iconColor, backgroundColor)
+  }, [navigationPreviousIconType, selectedProject?.color?.text, selectedProject?.color?.background])
+
+  useEffect(() => {
+    return () => {
+      navigationCurrentTexture?.dispose?.()
+      navigationPreviousTexture?.dispose?.()
+    }
+  }, [navigationCurrentTexture, navigationPreviousTexture])
 
   const { contentText } = useContentText(gridPosition)
 
@@ -342,96 +358,13 @@ const Project = forwardRef(function Project(
     }
   }, [applyPressureRippleShader])
 
-  useFrame((state, delta) => {
-    if (!pageGroupRef.current) {
-      return
-    }
-
-    const previousPointer = previousPointerRef.current
-
-    if (!hasPointerSampleRef.current) {
-      previousPointer.set(pointer.x, pointer.y)
-      hasPointerSampleRef.current = true
-    }
-
-    previousPointer.set(pointer.x, pointer.y)
-
-    pageGroupRef.current.getWorldPosition(planeOriginRef.current)
-    pageGroupRef.current.getWorldQuaternion(planeQuaternionRef.current)
-    planeNormalRef.current.set(0, 0, 1)
-      .applyQuaternion(planeQuaternionRef.current)
-      .normalize()
-
-    worldPlaneRef.current.setFromNormalAndCoplanarPoint(
-      planeNormalRef.current,
-      planeOriginRef.current,
-    )
-
-    raycasterRef.current.setFromCamera(pointer, camera)
-    const hasIntersection = raycasterRef.current.ray.intersectPlane(
-      worldPlaneRef.current,
-      hitPointRef.current,
-    )
-
-    if (!hasIntersection) {
-      return
-    }
-
-    localCursorRef.current.copy(hitPointRef.current)
-    pageGroupRef.current.worldToLocal(localCursorRef.current)
-
-    const halfWidth = projectSize.width * 0.5
-    const halfHeight = projectSize.height * 0.5
-    const normalizedX = localCursorRef.current.x / (halfWidth * 1.35)
-    const normalizedY = localCursorRef.current.y / (halfHeight * 1.35)
-    const radialDistance = Math.sqrt(
-      normalizedX * normalizedX + normalizedY * normalizedY,
-    )
-    const cursorInfluence = THREE.MathUtils.clamp(1 - radialDistance, 0, 1)
-    projectedCenterRef.current.copy(planeOriginRef.current).project(camera)
-
-    const pointerToProjectX = pointer.x - projectedCenterRef.current.x
-    const pointerToProjectY = pointer.y - projectedCenterRef.current.y
-    const screenDistance = Math.sqrt(
-      pointerToProjectX * pointerToProjectX +
-      pointerToProjectY * pointerToProjectY,
-    )
-    const screenInfluence = THREE.MathUtils.clamp(1 - screenDistance / 0.72, 0, 1)
-    const targetStrength = Math.max(
-      cursorInfluence,
-      screenInfluence * 0.62,
-    )
-    const cursorBlend = 1 - Math.exp(-delta * CURSOR_RESPONSE)
-    const strengthBlend = 1 - Math.exp(-delta * RIPPLE_RESPONSE)
-    const trailBlend = 1 - Math.exp(-delta * TRAIL_RESPONSE)
-    const residualTrailStrength = Math.max(
-      targetStrength * 0.95,
-      rippleUniforms.uTrailStrength.value * Math.exp(-delta * TRAIL_DECAY),
-    )
-
-    if (rippleUniforms.uRippleCursor.value.x > 900) {
-      rippleUniforms.uRippleCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
-      rippleUniforms.uTrailCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
-    } else {
-      rippleUniforms.uRippleCursor.value.lerp(localCursorRef.current, cursorBlend)
-      rippleUniforms.uTrailCursor.value.lerp(localCursorRef.current, trailBlend)
-    }
-
-    rippleUniforms.uRippleStrength.value = THREE.MathUtils.lerp(
-      rippleUniforms.uRippleStrength.value,
-      targetStrength,
-      strengthBlend,
-    )
-    rippleUniforms.uTrailStrength.value = THREE.MathUtils.lerp(
-      rippleUniforms.uTrailStrength.value,
-      residualTrailStrength,
-      trailBlend,
-    )
-    rippleUniforms.uTime.value = state.clock.elapsedTime
+  useGlobalRipple({
+    targetRef: pageGroupRef,
+    projectSize,
+    rippleUniforms,
   })
 
-  // Fonction pour gérer le clic et arrêter la propagation
-  const handleMeshClick = (event) => {
+  const handleMeshClick = () => {
 
     // Navigation - Cross
     if (gridPosition === gridConfig.crossPosition && selectedProject) {
@@ -446,7 +379,7 @@ const Project = forwardRef(function Project(
     }
 
     // Navigation - Arrow Down
-    if (gridPosition === 14 && selectedProject && currentPage < maxPage) {
+    if (gridPosition === gridConfig.arrowDownPosition && selectedProject && currentPage < maxPage) {
       setCurrentPage(currentPage + 1)
       return
     }
@@ -469,6 +402,16 @@ const Project = forwardRef(function Project(
       isArrangementAnimationComplete &&
       currentPage > 0
     )
+    const isNavigationTile = (
+      gridPosition === gridConfig.crossPosition ||
+      gridPosition === gridConfig.arrowUpPosition ||
+      gridPosition === gridConfig.arrowDownPosition
+    )
+    const shouldUseNavigationMap = shouldUseContentMaps && isNavigationTile
+    const shouldUseBackOnlyNavigation = (
+      currentPage === 1 &&
+      isNavigationTile
+    )
     const fallbackContentMap = backgroundFallbackTexture || emptyTexture
     const nextColor = 'white'
     const baseMap = texture || emptyTexture
@@ -483,7 +426,30 @@ const Project = forwardRef(function Project(
       previousCurrentPageRef.current = currentPage
     }
 
-    if (shouldUseContentMaps) {
+    if (shouldUseNavigationMap) {
+      if (shouldUseBackOnlyNavigation) {
+        nextFrontMap = fallbackContentMap
+        nextBackMap = navigationCurrentTexture || fallbackContentMap
+      } else {
+        const currentMap = navigationCurrentTexture || fallbackContentMap
+        const settledOppositeMap = navigationPreviousTexture || fallbackContentMap
+        const transitionOppositeMap = lockedOppositeMapRef.current || settledOppositeMap
+        const shouldUseTransitionOpposite = !!lockedOppositeMapRef.current || pageChanged || isPageFlipAnimatingRef.current
+        const oppositeMap = shouldUseTransitionOpposite
+          ? transitionOppositeMap
+          : settledOppositeMap
+
+        if (targetFace === 'front') {
+          nextFrontMap = currentMap
+          nextBackMap = oppositeMap
+        } else {
+          nextFrontMap = oppositeMap
+          nextBackMap = currentMap
+        }
+      }
+
+      lastVisiblePageMapRef.current = navigationCurrentTexture || fallbackContentMap
+    } else if (shouldUseContentMaps) {
       const currentMap = currentPageTexture || fallbackContentMap
       const settledOppositeMap = previousPage
         ? (previousPageTexture || fallbackContentMap)
@@ -530,7 +496,7 @@ const Project = forwardRef(function Project(
 
     material.color.set(nextColor)
 
-    if (!shouldUseContentMaps) {
+    if (!shouldUseContentMaps && !shouldUseNavigationMap) {
       lastVisiblePageMapRef.current = texture || coverOrFallbackMap
     }
   }, [
@@ -541,10 +507,13 @@ const Project = forwardRef(function Project(
     previousPageTexture,
     previousPage,
     targetFace,
-    selectedProject?.color?.background,
     currentPage,
     emptyTexture,
     backgroundFallbackTexture,
+    navigationCurrentTexture,
+    navigationPreviousTexture,
+    gridPosition,
+    gridConfig,
     rippleUniforms,
   ])
 
@@ -595,7 +564,7 @@ const Project = forwardRef(function Project(
                       }
                       projectSize={projectSize}
                     >
-                      <p className={styles.title}>{selectedProject?.title}</p>
+                      <p className={styles.title} data-overlay-interactive="true">{selectedProject?.title}</p>
                     </ProjectOverlay>
                     <ProjectOverlay
                       condition={
@@ -605,7 +574,7 @@ const Project = forwardRef(function Project(
                       }
                       projectSize={projectSize}
                     >
-                      <p className={styles.title}>{selectedProject?.context}</p>
+                      <p className={styles.title} data-overlay-interactive="true">{selectedProject?.context}</p>
                     </ProjectOverlay>
                     <ProjectOverlay
                       condition={
@@ -613,7 +582,7 @@ const Project = forwardRef(function Project(
                       }
                       projectSize={projectSize}
                     >
-                      <p className={styles.title}>{selectedProject?.year}</p>
+                      <p className={styles.title} data-overlay-interactive="true">{selectedProject?.year}</p>
                     </ProjectOverlay>
                     <ProjectOverlay
                       condition={
@@ -625,7 +594,7 @@ const Project = forwardRef(function Project(
                     >
                       <div className={styles.technoContainer}>
                         {selectedProject?.technologies.map((techno) => (
-                          <p key={techno} className={styles.techno}>
+                          <p key={techno} className={styles.techno} data-overlay-interactive="true">
                             {techno}
                           </p>
                         ))}
@@ -642,25 +611,22 @@ const Project = forwardRef(function Project(
                         target="_blank"
                         rel="noopener noreferrer"
                         className={styles.linkButton}
+                        data-overlay-interactive="true"
                       >
-                        Link
+                        <span className={styles.linkButtonLabel} data-overlay-interactive="true">Link</span>
                       </a>
                     </ProjectOverlay>
                   </>
                 )}
-                <Navigation
-                  selectedProject={selectedProject}
-                  currentPage={currentPage}
-                  gridPosition={gridPosition}
-                  projectSize={projectSize}
-                />
                 {contentText && (
                   <ProjectOverlay
                     condition={selectedProject}
                     projectSize={projectSize}
                     reverse={true}
                   >
-                    <p className={styles.contentText}>{contentText.text}</p>
+                    <p className={styles.contentText}>
+                      <span className={styles.contentTextValue} data-overlay-interactive="true">{contentText.text}</span>
+                    </p>
                   </ProjectOverlay>
                 )}
               </>
