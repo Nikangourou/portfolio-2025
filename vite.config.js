@@ -43,13 +43,5 @@ export default {
         outDir: '../dist', // Output in the dist/ folder
         emptyOutDir: true, // Empty the folder first
         sourcemap: false,
-        rollupOptions: {
-            output: {
-                manualChunks: {
-                    'three-vendor': ['three', '@react-three/fiber'],
-                    'animation': ['@react-spring/web', '@react-spring/three'],
-                }
-            }
-        }
     },
 }
