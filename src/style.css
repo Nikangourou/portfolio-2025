@@ -18,5 +18,5 @@ body {
   background-color: var(--theme-background);
   color: var(--theme-text);
   transition: background-color 0.3s ease, color 0.3s ease;
-  font-family: "Michroma", sans-serif;
+  font-family: "Fragment Mono", monospace;
 }
