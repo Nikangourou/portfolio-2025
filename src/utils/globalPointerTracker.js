@@ -1,6 +1,11 @@
 import * as THREE from 'three'
 
 const canvasPointerStateMap = new WeakMap()
+const visualPointerState = {
+    clientX: 0,
+    clientY: 0,
+    hasPointer: false,
+}
 
 const getPointerState = (canvas) => {
     if (!canvas) {
@@ -40,7 +45,56 @@ const normalizeCanvasPoint = (clientX, clientY, rect) => {
     }
 }
 
+const normalizeVisualPointerForCanvas = (canvas) => {
+    if (!canvas || !visualPointerState.hasPointer) {
+        return null
+    }
+
+    const rect = canvas.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) {
+        return null
+    }
+
+    const localX = visualPointerState.clientX - rect.left
+    const localY = visualPointerState.clientY - rect.top
+    const isInsideCanvas = (
+        localX >= 0 &&
+        localX <= rect.width &&
+        localY >= 0 &&
+        localY <= rect.height
+    )
+
+    const pointer = normalizeCanvasPoint(
+        visualPointerState.clientX,
+        visualPointerState.clientY,
+        rect,
+    )
+
+    return {
+        pointer,
+        isInsideCanvas,
+    }
+}
+
 export const getGlobalCanvasPointerState = (canvas) => getPointerState(canvas)
+
+export const setGlobalVisualPointerState = (clientX, clientY) => {
+    if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) {
+        return
+    }
+
+    visualPointerState.clientX = clientX
+    visualPointerState.clientY = clientY
+    visualPointerState.hasPointer = true
+}
+
+export const clearGlobalVisualPointerState = () => {
+    visualPointerState.hasPointer = false
+}
+
+export const getGlobalVisualPointerState = (canvas) => {
+    return normalizeVisualPointerForCanvas(canvas)
+}
 
 export const subscribeGlobalCanvasPointerState = (canvas) => {
     const state = getPointerState(canvas)

@@ -1,7 +1,11 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
-import { getGlobalCanvasPointerState, subscribeGlobalCanvasPointerState } from '@/utils/globalPointerTracker'
+import {
+    getGlobalCanvasPointerState,
+    getGlobalVisualPointerState,
+    subscribeGlobalCanvasPointerState,
+} from '@/utils/globalPointerTracker'
 import { useStore } from '@/stores/store'
 
 const CURSOR_RESPONSE = 9
@@ -27,6 +31,7 @@ const getSceneRippleField = (canvas) => {
             ray: new THREE.Ray(),
             isPointerInsideCanvas: false,
             hasPointerState: false,
+            isUsingVisualPointer: false,
             time: 0,
         }
         sceneRippleFieldMap.set(canvas, field)
@@ -52,16 +57,19 @@ export const useSceneRippleField = () => {
             return
         }
 
+        const visualPointerState = getGlobalVisualPointerState(canvas)
         const canvasPointerState = getGlobalCanvasPointerState(canvas)
-        const activePointer = canvasPointerState?.hasPointer
-            ? canvasPointerState.pointer
-            : pointer
+        const hasVisualPointer = !!visualPointerState
+        const activePointer = hasVisualPointer
+            ? visualPointerState.pointer
+            : (canvasPointerState?.hasPointer ? canvasPointerState.pointer : pointer)
 
         sceneRippleField.activePointer.copy(activePointer)
-        sceneRippleField.hasPointerState = !!canvasPointerState?.hasPointer
-        sceneRippleField.isPointerInsideCanvas = sceneRippleField.hasPointerState
-            ? !!canvasPointerState?.isInsideCanvas
-            : true
+        sceneRippleField.isUsingVisualPointer = hasVisualPointer
+        sceneRippleField.hasPointerState = hasVisualPointer || !!canvasPointerState?.hasPointer
+        sceneRippleField.isPointerInsideCanvas = hasVisualPointer
+            ? !!visualPointerState?.isInsideCanvas
+            : (sceneRippleField.hasPointerState ? !!canvasPointerState?.isInsideCanvas : true)
         sceneRippleField.time = state.clock.elapsedTime
 
         if (!sceneRippleField.isPointerInsideCanvas) {
@@ -108,6 +116,7 @@ export const useGlobalRipple = ({
         const sceneRippleField = sceneRippleFieldRef.current
         const activePointer = sceneRippleField?.activePointer
         const isPointerInsideCanvas = !!sceneRippleField?.isPointerInsideCanvas
+        const isUsingVisualPointer = !!sceneRippleField?.isUsingVisualPointer
 
         targetRef.current.getWorldPosition(planeOriginRef.current)
         targetRef.current.getWorldQuaternion(planeQuaternionRef.current)
@@ -233,7 +242,9 @@ export const useGlobalRipple = ({
             return
         }
 
-        if (rippleUniforms.uRippleCursor.value.x > 900) {
+        if (isUsingVisualPointer) {
+            rippleUniforms.uRippleCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
+        } else if (rippleUniforms.uRippleCursor.value.x > 900) {
             rippleUniforms.uRippleCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
         } else {
             rippleUniforms.uRippleCursor.value.lerp(localCursorRef.current, cursorBlend)

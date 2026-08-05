@@ -1,7 +1,11 @@
 import { useEffect, useRef } from 'react'
+import {
+    clearGlobalVisualPointerState,
+    setGlobalVisualPointerState,
+} from '@/utils/globalPointerTracker'
 
 const MAX_POINTS = 18
-const HEAD_LERP = 0.22
+const HEAD_LERP = 0.17
 const TAIL_LERP = 0.16
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max)
@@ -158,6 +162,11 @@ export default function SceneMouseTrail() {
                 point.offsetY += ((normalY * organicOffset) - point.offsetY) * 0.16
             }
 
+            const head = points[0]
+            if (head) {
+                setGlobalVisualPointerState(head.x, head.y)
+            }
+
             context.save()
             context.globalCompositeOperation = 'source-over'
             drawSmokeLayer(time, 1.05, 0.18, 1.0, 3, 8)
@@ -242,6 +251,7 @@ export default function SceneMouseTrail() {
             if (animationFrame !== null) {
                 window.cancelAnimationFrame(animationFrame)
             }
+            clearGlobalVisualPointerState()
             window.removeEventListener('resize', resize)
             window.removeEventListener('pointermove', handlePointerMove)
             document.removeEventListener('visibilitychange', handleVisibilityChange)
