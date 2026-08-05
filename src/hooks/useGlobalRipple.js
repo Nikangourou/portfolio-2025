@@ -2,9 +2,15 @@ import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { getGlobalCanvasPointerState, subscribeGlobalCanvasPointerState } from '@/utils/globalPointerTracker'
+import { useStore } from '@/stores/store'
 
 const CURSOR_RESPONSE = 9
 const RIPPLE_RESPONSE = 7.2
+const HOVER_INFLUENCE_THRESHOLD = 0.065
+const CENTER_BURST_MIN_STRENGTH = 0.11
+const CENTER_BURST_MAX_STRENGTH = 0.5
+const CENTER_BURST_DECAY_RESPONSE = 2.2
+const CENTER_BURST_CURSOR_RESPONSE = 10
 
 const sceneRippleFieldMap = new WeakMap()
 
@@ -80,9 +86,14 @@ export const useGlobalRipple = ({
     const planeQuaternionRef = useRef(new THREE.Quaternion())
     const hitPointRef = useRef(new THREE.Vector3())
     const localCursorRef = useRef(new THREE.Vector3())
+    const centerCursorRef = useRef(new THREE.Vector2(0, 0))
+    const wasHoveringRef = useRef(false)
+    const centerBurstActiveRef = useRef(false)
+    const centerBurstStrengthRef = useRef(0)
     const projectedCenterRef = useRef(new THREE.Vector3())
     const sceneRippleFieldRef = useRef(null)
     const { camera, gl } = useThree()
+    const isProjectsArranged = useStore((state) => state.isProjectsArranged)
 
     useEffect(() => {
         const canvas = gl?.domElement
@@ -110,6 +121,9 @@ export const useGlobalRipple = ({
         )
 
         if (!isPointerInsideCanvas) {
+            wasHoveringRef.current = false
+            centerBurstActiveRef.current = false
+            centerBurstStrengthRef.current = 0
             rippleUniforms.uRippleStrength.value = THREE.MathUtils.lerp(
                 rippleUniforms.uRippleStrength.value,
                 0,
@@ -125,6 +139,9 @@ export const useGlobalRipple = ({
         )
 
         if (!hasIntersection) {
+            wasHoveringRef.current = false
+            centerBurstActiveRef.current = false
+            centerBurstStrengthRef.current = 0
             rippleUniforms.uRippleStrength.value = THREE.MathUtils.lerp(
                 rippleUniforms.uRippleStrength.value,
                 0,
@@ -163,6 +180,58 @@ export const useGlobalRipple = ({
         const targetStrength = Math.max(cursorInfluence, screenInfluence * 0.62)
         const cursorBlend = 1 - Math.exp(-delta * CURSOR_RESPONSE)
         const strengthBlend = 1 - Math.exp(-delta * RIPPLE_RESPONSE)
+        const centerCursorBlend = 1 - Math.exp(-delta * CENTER_BURST_CURSOR_RESPONSE)
+
+        const isHoveringProject = cursorInfluence > HOVER_INFLUENCE_THRESHOLD
+        const justLeftHover = wasHoveringRef.current && !isHoveringProject
+
+        if (!isProjectsArranged && justLeftHover) {
+            centerBurstActiveRef.current = true
+            centerBurstStrengthRef.current = THREE.MathUtils.clamp(
+                Math.max(
+                    rippleUniforms.uRippleStrength.value,
+                    targetStrength,
+                    CENTER_BURST_MIN_STRENGTH,
+                ),
+                CENTER_BURST_MIN_STRENGTH,
+                CENTER_BURST_MAX_STRENGTH,
+            )
+        }
+
+        if (isHoveringProject || isProjectsArranged) {
+            centerBurstActiveRef.current = false
+            centerBurstStrengthRef.current = 0
+        }
+
+        wasHoveringRef.current = isHoveringProject
+
+        if (!isProjectsArranged && centerBurstActiveRef.current && !isHoveringProject) {
+            centerBurstStrengthRef.current = THREE.MathUtils.lerp(
+                centerBurstStrengthRef.current,
+                0,
+                1 - Math.exp(-delta * CENTER_BURST_DECAY_RESPONSE),
+            )
+
+            if (rippleUniforms.uRippleCursor.value.x > 900) {
+                rippleUniforms.uRippleCursor.value.set(0, 0)
+            } else {
+                rippleUniforms.uRippleCursor.value.lerp(centerCursorRef.current, centerCursorBlend)
+            }
+
+            rippleUniforms.uRippleStrength.value = THREE.MathUtils.lerp(
+                rippleUniforms.uRippleStrength.value,
+                centerBurstStrengthRef.current,
+                strengthBlend,
+            )
+
+            if (centerBurstStrengthRef.current <= 0.008) {
+                centerBurstActiveRef.current = false
+                centerBurstStrengthRef.current = 0
+            }
+
+            rippleUniforms.uTime.value = sceneRippleField?.time || state.clock.elapsedTime
+            return
+        }
 
         if (rippleUniforms.uRippleCursor.value.x > 900) {
             rippleUniforms.uRippleCursor.value.set(localCursorRef.current.x, localCursorRef.current.y)
