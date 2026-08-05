@@ -30,6 +30,16 @@ const isAllowedPointerTarget = (canvas, targetElement) => {
     return targetElement === canvas || canvas.contains(targetElement)
 }
 
+const normalizeCanvasPoint = (clientX, clientY, rect) => {
+    const width = Math.max(rect?.width || 0, 1)
+    const height = Math.max(rect?.height || 0, 1)
+
+    return {
+        x: ((clientX - (rect?.left || 0)) / width) * 2 - 1,
+        y: -((clientY - (rect?.top || 0)) / height) * 2 + 1,
+    }
+}
+
 export const getGlobalCanvasPointerState = (canvas) => getPointerState(canvas)
 
 export const subscribeGlobalCanvasPointerState = (canvas) => {
@@ -71,8 +81,9 @@ export const subscribeGlobalCanvasPointerState = (canvas) => {
                 return
             }
 
-            const x = (localX / rect.width) * 2 - 1
-            const y = -((localY / rect.height) * 2 - 1)
+            const normalizedPoint = normalizeCanvasPoint(event.clientX, event.clientY, rect)
+            const x = normalizedPoint.x
+            const y = normalizedPoint.y
 
             if (state.hasPointer && state.isInsideCanvas) {
                 const deltaX = x - state.pointer.x
