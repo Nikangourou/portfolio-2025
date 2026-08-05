@@ -1,4 +1,4 @@
-import { useRef, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo } from 'react'
+import { useRef, useState, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo } from 'react'
 import * as THREE from 'three'
 import { useTexture } from '@react-three/drei'
 import { animated, useSpring } from '@react-spring/three'
@@ -139,6 +139,15 @@ const Project = forwardRef(function Project(
   const lastVisiblePageMapRef = useRef(null)
   const isPageFlipAnimatingRef = useRef(false)
   const lockedOppositeMapRef = useRef(null)
+  const [overlayPage, setOverlayPage] = useState(0)
+  const pendingOverlayPageRef = useRef(0)
+  const overlayFlipTransitionRef = useRef({
+    armed: false,
+    switched: false,
+    direction: 1,
+    midpointAngle: 0,
+    toPage: 0,
+  })
 
   const emptyTexture = useMemo(() => {
     const data = new Uint8Array([255, 255, 255, 255])
@@ -189,6 +198,21 @@ const Project = forwardRef(function Project(
       state.isProjectsArranged,
     ]),
   )
+
+  useEffect(() => {
+    pendingOverlayPageRef.current = currentPage || 0
+  }, [currentPage])
+
+  useEffect(() => {
+    if (!isProjectsArranged) {
+      setOverlayPage(currentPage || 0)
+      return
+    }
+
+    if (isArrangementAnimationComplete && overlayPage <= 0 && currentPage > 0) {
+      setOverlayPage(currentPage)
+    }
+  }, [isProjectsArranged, isArrangementAnimationComplete, currentPage, overlayPage])
   const [
     setProjectsArranged,
     setSelectedProject,
@@ -279,9 +303,60 @@ const Project = forwardRef(function Project(
     config: getSpringConfig('projectRotation'),
     onStart: () => {
       isPageFlipAnimatingRef.current = true
+
+      if (!isProjectsArranged) {
+        overlayFlipTransitionRef.current.armed = false
+        return
+      }
+
+      const fromPage = overlayPage
+      const toPage = pendingOverlayPageRef.current
+
+      if (fromPage === toPage) {
+        overlayFlipTransitionRef.current.armed = false
+        return
+      }
+
+      overlayFlipTransitionRef.current = {
+        armed: true,
+        switched: false,
+        direction: toPage > fromPage ? 1 : -1,
+        midpointAngle: ((fromPage + toPage) * 0.5) * Math.PI,
+        toPage,
+      }
+    },
+    onChange: (values) => {
+      const transition = overlayFlipTransitionRef.current
+      if (!transition.armed || transition.switched) {
+        return
+      }
+
+      const rawValue = values?.value
+      const angle = typeof rawValue === 'number'
+        ? rawValue
+        : rawValue?.pageRotationX
+
+      if (!Number.isFinite(angle)) {
+        return
+      }
+
+      const crossedMidpoint = transition.direction > 0
+        ? angle >= transition.midpointAngle
+        : angle <= transition.midpointAngle
+
+      if (!crossedMidpoint) {
+        return
+      }
+
+      transition.switched = true
+      setOverlayPage(transition.toPage)
     },
     onRest: () => {
       isPageFlipAnimatingRef.current = false
+      if (isProjectsArranged) {
+        setOverlayPage(pendingOverlayPageRef.current)
+      }
+      overlayFlipTransitionRef.current.armed = false
     },
   })
 
@@ -350,7 +425,7 @@ const Project = forwardRef(function Project(
     }
   }, [navigationCurrentTexture, navigationPreviousTexture])
 
-  const { contentText } = useContentText(gridPosition)
+  const { contentText } = useContentText(gridPosition, overlayPage || null)
 
   useEffect(() => {
     if (pageMaterialRef.current) {
@@ -557,13 +632,14 @@ const Project = forwardRef(function Project(
           <group>
             {isArrangementAnimationComplete && (
               <>
-                {currentPage === 1 && (
+                {overlayPage === 1 && (
                   <>
                     <ProjectOverlay
                       condition={
                         selectedProject && gridPosition === 0 && selectedProject.title
                       }
                       projectSize={projectSize}
+                      page={overlayPage}
                     >
                       <p className={styles.title} data-overlay-interactive="true">{selectedProject?.title}</p>
                     </ProjectOverlay>
@@ -574,6 +650,7 @@ const Project = forwardRef(function Project(
                         selectedProject.context
                       }
                       projectSize={projectSize}
+                      page={overlayPage}
                     >
                       <p className={styles.title} data-overlay-interactive="true">{selectedProject?.context}</p>
                     </ProjectOverlay>
@@ -582,6 +659,7 @@ const Project = forwardRef(function Project(
                         selectedProject && gridPosition === 2 && selectedProject.year
                       }
                       projectSize={projectSize}
+                      page={overlayPage}
                     >
                       <p className={styles.title} data-overlay-interactive="true">{selectedProject?.year}</p>
                     </ProjectOverlay>
@@ -592,6 +670,7 @@ const Project = forwardRef(function Project(
                         selectedProject.technologies
                       }
                       projectSize={projectSize}
+                      page={overlayPage}
                     >
                       <div className={styles.technoContainer}>
                         {selectedProject?.technologies.map((techno) => (
@@ -606,6 +685,7 @@ const Project = forwardRef(function Project(
                         selectedProject && gridPosition === 4 && selectedProject.link
                       }
                       projectSize={projectSize}
+                      page={overlayPage}
                     >
                       <a
                         href={selectedProject?.link}
@@ -623,6 +703,7 @@ const Project = forwardRef(function Project(
                   <ProjectOverlay
                     condition={selectedProject}
                     projectSize={projectSize}
+                    page={overlayPage}
                   >
                     <p className={styles.contentText}>
                       <span className={styles.contentTextValue} data-overlay-interactive="true">{contentText.text}</span>

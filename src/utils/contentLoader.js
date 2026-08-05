@@ -281,17 +281,19 @@ export const useContentTexture = (gridPosition, pageNumber = undefined, forcedFa
 /**
  * Hook pour récupérer les textes de contenu
  */
-export const useContentText = (gridPosition) => {
+export const useContentText = (gridPosition, pageNumber = undefined) => {
   const selectedProject = useStore((state) => state.selectedProject)
   const currentPage = useStore((state) => state.currentPage)
   const gridConfig = useGridConfig()
+  const resolvedPage = pageNumber === undefined ? currentPage : pageNumber
 
   // Trouver le texte correspondant à cette position de grille
   const contentText = useMemo(() => {
     if (!selectedProject?.contents) return null
+    if (!resolvedPage || resolvedPage < 1) return null
 
     // Récupérer le contenu de la page actuelle
-    const currentContent = selectedProject.contents[currentPage - 1]
+    const currentContent = selectedProject.contents[resolvedPage - 1]
     if (!currentContent?.texts) return null
 
     // Chercher le texte qui correspond à cette position
@@ -314,7 +316,7 @@ export const useContentText = (gridPosition) => {
     }
 
     return null
-  }, [selectedProject, currentPage, gridPosition, gridConfig.isMobile])
+  }, [selectedProject, resolvedPage, gridPosition, gridConfig.isMobile])
 
   return { contentText }
 } 

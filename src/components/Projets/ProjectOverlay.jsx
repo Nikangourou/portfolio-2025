@@ -6,11 +6,13 @@ const ProjectOverlay = ({
   condition,
   children,
   projectSize,
+  page,
 }) => {
   if (!condition) return null
 
   const currentPage = useStore((state) => state.currentPage)
-  const shouldFlipOverlay = currentPage % 2 === 1
+  const overlayPage = page ?? currentPage
+  const shouldFlipOverlay = overlayPage % 2 === 1
 
   return (
     <Html
