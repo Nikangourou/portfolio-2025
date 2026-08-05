@@ -18,10 +18,10 @@ import { applyProjectRippleShader } from '@/utils/rippleShader'
 const ARRANGED_BACK_FACE_FLIP = { x: 0.0, y: 0.0 }
 const FREE_BACK_FACE_FLIP = { x: 1.0, y: 1.0 }
 
-const getBackFaceFlip = (isProjectsArranged) => ({
-  // Keep arranged/non-arranged orientation stable across shader/UV changes.
-  x: isProjectsArranged ? ARRANGED_BACK_FACE_FLIP.x : FREE_BACK_FACE_FLIP.x,
-  y: isProjectsArranged ? ARRANGED_BACK_FACE_FLIP.y : FREE_BACK_FACE_FLIP.y,
+const getBackFaceFlip = (isArrangedUvMode) => ({
+  // Keep free-mode UV orientation during arrange transition to avoid one-frame upside-down flips.
+  x: isArrangedUvMode ? ARRANGED_BACK_FACE_FLIP.x : FREE_BACK_FACE_FLIP.x,
+  y: isArrangedUvMode ? ARRANGED_BACK_FACE_FLIP.y : FREE_BACK_FACE_FLIP.y,
 })
 
 const drawNavigationIcon = (context, size, type) => {
@@ -396,7 +396,8 @@ const Project = forwardRef(function Project(
     if (!pageMaterialRef.current) return
 
     const material = pageMaterialRef.current
-    const backFaceFlip = getBackFaceFlip(isProjectsArranged)
+    const isArrangedUvMode = isProjectsArranged && isArrangementAnimationComplete
+    const backFaceFlip = getBackFaceFlip(isArrangedUvMode)
     const shouldUseContentMaps = (
       isProjectsArranged &&
       isArrangementAnimationComplete &&
@@ -622,7 +623,6 @@ const Project = forwardRef(function Project(
                   <ProjectOverlay
                     condition={selectedProject}
                     projectSize={projectSize}
-                    reverse={true}
                   >
                     <p className={styles.contentText}>
                       <span className={styles.contentTextValue} data-overlay-interactive="true">{contentText.text}</span>

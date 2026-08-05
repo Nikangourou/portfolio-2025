@@ -10,15 +10,15 @@ const ProjectOverlay = ({
   if (!condition) return null
 
   const currentPage = useStore((state) => state.currentPage)
-  const evenPage = currentPage % 2
+  const shouldFlipOverlay = currentPage % 2 === 1
 
   return (
     <Html
       occlude
       transform
       pointerEvents="none"
-      position={evenPage ? [0, 0, -0.01] : [0, 0, 0.01]}
-      rotation={evenPage ? [Math.PI, 0, 0] : [0, 0, 0]}
+      position={shouldFlipOverlay ? [0, 0, -0.01] : [0, 0, 0.01]}
+      rotation={shouldFlipOverlay ? [Math.PI, 0, 0] : [0, 0, 0]}
       className={styles.project}
       style={{
         width: `${projectSize.width * 40}px`,
