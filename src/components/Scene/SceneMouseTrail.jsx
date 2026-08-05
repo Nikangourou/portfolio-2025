@@ -218,7 +218,17 @@ export default function SceneMouseTrail() {
             pointer.velocityX *= 0.92
             pointer.velocityY *= 0.92
 
-            animationFrame = window.requestAnimationFrame(draw)
+            if (!document.hidden) {
+                animationFrame = window.requestAnimationFrame(draw)
+            } else {
+                animationFrame = null
+            }
+        }
+
+        const handleVisibilityChange = () => {
+            if (!document.hidden && animationFrame === null) {
+                animationFrame = window.requestAnimationFrame(draw)
+            }
         }
 
         resize()
@@ -226,6 +236,7 @@ export default function SceneMouseTrail() {
 
         window.addEventListener('resize', resize)
         window.addEventListener('pointermove', handlePointerMove, { passive: true })
+        document.addEventListener('visibilitychange', handleVisibilityChange)
 
         return () => {
             if (animationFrame !== null) {
@@ -233,6 +244,7 @@ export default function SceneMouseTrail() {
             }
             window.removeEventListener('resize', resize)
             window.removeEventListener('pointermove', handlePointerMove)
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
         }
     }, [])
 
