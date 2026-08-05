@@ -30,7 +30,7 @@ const isAllowedPointerTarget = (canvas, targetElement) => {
     return targetElement === canvas || canvas.contains(targetElement)
 }
 
-export const normalizeCanvasPoint = (clientX, clientY, rect) => {
+const normalizeCanvasPoint = (clientX, clientY, rect) => {
     const width = Math.max(rect?.width || 0, 1)
     const height = Math.max(rect?.height || 0, 1)
 
