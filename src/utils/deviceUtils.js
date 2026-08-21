@@ -9,13 +9,13 @@
 export const isMobile = () => {
   // Détection basée sur la largeur d'écran
   const isSmallScreen = window.innerWidth < 768
-  
+
   // Détection basée sur l'user agent
   const isMobileUA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-  
+
   // Détection basée sur le support du touch
   const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-  
+
   // Combinaison des détections pour plus de fiabilité
   return isSmallScreen || (isMobileUA && hasTouch)
 }
@@ -27,13 +27,13 @@ export const isMobile = () => {
 export const isLowEndDevice = () => {
   // Détection basée sur la mémoire (si disponible)
   const lowMemory = navigator.deviceMemory && navigator.deviceMemory <= 4
-  
+
   // Détection basée sur le nombre de cœurs CPU (si disponible)
   const lowCPU = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4
-  
+
   // Si on est sur mobile, on considère par défaut comme potentiellement peu puissant
   const mobile = isMobile()
-  
+
   return lowMemory || lowCPU || mobile
 }
 

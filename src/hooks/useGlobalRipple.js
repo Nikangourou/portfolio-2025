@@ -6,6 +6,7 @@ import {
     getGlobalVisualPointerState,
     subscribeGlobalCanvasPointerState,
 } from '@/utils/globalPointerTracker'
+import { isMobile } from '@/utils/deviceUtils'
 import { useStore } from '@/stores/store'
 
 const CURSOR_RESPONSE = 9
@@ -15,6 +16,7 @@ const CENTER_BURST_MIN_STRENGTH = 0.11
 const CENTER_BURST_MAX_STRENGTH = 0.5
 const CENTER_BURST_DECAY_RESPONSE = 2.2
 const CENTER_BURST_CURSOR_RESPONSE = 10
+const DISABLE_RIPPLE_ON_MOBILE = typeof window !== 'undefined' && isMobile()
 
 const sceneRippleFieldMap = new WeakMap()
 
@@ -45,12 +47,21 @@ export const useSceneRippleField = () => {
     const { camera, pointer, gl } = useThree()
 
     useEffect(() => {
+        if (DISABLE_RIPPLE_ON_MOBILE) {
+            sceneRippleFieldRef.current = null
+            return undefined
+        }
+
         const canvas = gl?.domElement
         sceneRippleFieldRef.current = getSceneRippleField(canvas)
         return subscribeGlobalCanvasPointerState(canvas)
     }, [gl])
 
     useFrame((state) => {
+        if (DISABLE_RIPPLE_ON_MOBILE) {
+            return
+        }
+
         const canvas = gl?.domElement
         const sceneRippleField = sceneRippleFieldRef.current || getSceneRippleField(canvas)
         if (!sceneRippleField) {
@@ -104,11 +115,30 @@ export const useGlobalRipple = ({
     const isProjectsArranged = useStore((state) => state.isProjectsArranged)
 
     useEffect(() => {
+        if (!DISABLE_RIPPLE_ON_MOBILE) {
+            return
+        }
+
+        rippleUniforms.uRippleCursor.value.set(999, 999)
+        rippleUniforms.uRippleStrength.value = 0
+    }, [rippleUniforms])
+
+    useEffect(() => {
+        if (DISABLE_RIPPLE_ON_MOBILE) {
+            sceneRippleFieldRef.current = null
+            return
+        }
+
         const canvas = gl?.domElement
         sceneRippleFieldRef.current = getSceneRippleField(canvas)
     }, [gl])
 
     useFrame((state, delta) => {
+        if (DISABLE_RIPPLE_ON_MOBILE) {
+            rippleUniforms.uTime.value = state.clock.elapsedTime
+            return
+        }
+
         if (!targetRef.current) {
             return
         }

@@ -562,12 +562,26 @@ const Project = forwardRef(function Project(
     rippleUniforms.uBackMapTransform.value.copy(nextBackMap.matrix)
 
     if (material.userData.shader) {
-      material.userData.shader.uniforms.uFrontMap.value = nextFrontMap
-      material.userData.shader.uniforms.uBackMap.value = nextBackMap
-      material.userData.shader.uniforms.uBackFlipX.value = backFaceFlip.x
-      material.userData.shader.uniforms.uBackFlipY.value = backFaceFlip.y
-      material.userData.shader.uniforms.uFrontMapTransform.value.copy(nextFrontMap.matrix)
-      material.userData.shader.uniforms.uBackMapTransform.value.copy(nextBackMap.matrix)
+      const { uniforms } = material.userData.shader
+
+      if (uniforms.uFrontMap) {
+        uniforms.uFrontMap.value = nextFrontMap
+      }
+      if (uniforms.uBackMap) {
+        uniforms.uBackMap.value = nextBackMap
+      }
+      if (uniforms.uBackFlipX) {
+        uniforms.uBackFlipX.value = backFaceFlip.x
+      }
+      if (uniforms.uBackFlipY) {
+        uniforms.uBackFlipY.value = backFaceFlip.y
+      }
+      if (uniforms.uFrontMapTransform) {
+        uniforms.uFrontMapTransform.value.copy(nextFrontMap.matrix)
+      }
+      if (uniforms.uBackMapTransform) {
+        uniforms.uBackMapTransform.value.copy(nextBackMap.matrix)
+      }
     }
 
     material.color.set(nextColor)

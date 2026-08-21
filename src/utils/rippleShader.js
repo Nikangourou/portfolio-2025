@@ -1,3 +1,7 @@
+import { isMobile } from '@/utils/deviceUtils'
+
+const DISABLE_RIPPLE_SHADERS_ON_MOBILE = typeof window !== 'undefined' && isMobile()
+
 const injectBaseRippleVertexShader = ({
     shader,
     vertexPrefix,
@@ -76,6 +80,64 @@ const injectBaseRippleFragmentFooter = ({
 }
 
 export const applyProjectRippleShader = (material, rippleUniforms) => {
+    if (DISABLE_RIPPLE_SHADERS_ON_MOBILE) {
+        material.onBeforeCompile = (shader) => {
+            shader.uniforms.uFrontMap = rippleUniforms.uFrontMap
+            shader.uniforms.uBackMap = rippleUniforms.uBackMap
+            shader.uniforms.uBackFlipX = rippleUniforms.uBackFlipX
+            shader.uniforms.uBackFlipY = rippleUniforms.uBackFlipY
+            shader.uniforms.uFrontMapTransform = rippleUniforms.uFrontMapTransform
+            shader.uniforms.uBackMapTransform = rippleUniforms.uBackMapTransform
+
+            material.userData.shader = shader
+
+            shader.vertexShader = `
+                uniform mat3 uFrontMapTransform;
+                uniform mat3 uBackMapTransform;
+                varying vec2 vFrontUv;
+                varying vec2 vBackUv;
+            ${shader.vertexShader}`
+
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <begin_vertex>',
+                `
+                #include <begin_vertex>
+
+                vFrontUv = (uFrontMapTransform * vec3(uv, 1.0)).xy;
+                vec2 backFaceUv = vec2(uv.x, 1.0 - uv.y);
+                vBackUv = (uBackMapTransform * vec3(backFaceUv, 1.0)).xy;
+            `,
+            )
+
+            shader.fragmentShader = `
+                uniform sampler2D uFrontMap;
+                uniform sampler2D uBackMap;
+                uniform float uBackFlipX;
+                uniform float uBackFlipY;
+                varying vec2 vFrontUv;
+                varying vec2 vBackUv;
+            ${shader.fragmentShader}`
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <map_fragment>',
+                `
+                float sampledBackX = mix(vBackUv.x, 1.0 - vBackUv.x, uBackFlipX);
+                float sampledBackY = mix(vBackUv.y, 1.0 - vBackUv.y, uBackFlipY);
+                vec2 backSampleUv = vec2(sampledBackX, sampledBackY);
+                vec4 sampledDiffuseColor = gl_FrontFacing
+                    ? texture2D(uFrontMap, vFrontUv)
+                    : texture2D(uBackMap, backSampleUv);
+
+                diffuseColor *= sampledDiffuseColor;
+            `,
+            )
+        }
+
+        material.customProgramCacheKey = () => 'pressure-ripple-disabled-mobile-v3'
+        material.needsUpdate = true
+        return
+    }
+
     material.onBeforeCompile = (shader) => {
         shader.uniforms.uRippleCursor = rippleUniforms.uRippleCursor
         shader.uniforms.uRippleStrength = rippleUniforms.uRippleStrength
@@ -153,6 +215,14 @@ export const applyProjectRippleShader = (material, rippleUniforms) => {
 }
 
 export const applyBorderRippleShader = (material, rippleUniforms) => {
+    if (DISABLE_RIPPLE_SHADERS_ON_MOBILE) {
+        material.onBeforeCompile = () => { }
+        material.customProgramCacheKey = () => 'border-pressure-ripple-disabled-mobile-v1'
+        delete material.userData.shader
+        material.needsUpdate = true
+        return
+    }
+
     material.onBeforeCompile = (shader) => {
         shader.uniforms.uRippleCursor = rippleUniforms.uRippleCursor
         shader.uniforms.uRippleStrength = rippleUniforms.uRippleStrength

@@ -1,8 +1,11 @@
 import { Canvas } from '@react-three/fiber'
 import Experience from '@/Experience.jsx'
 import SceneMouseTrail from './SceneMouseTrail.jsx'
+import { isMobile } from '@/utils/deviceUtils'
 
 export default function SceneCanvas() {
+    const shouldRenderTrail = typeof window !== 'undefined' && !isMobile()
+
     return (
         <div style={{ position: 'relative', width: '100%', height: '100%' }}>
             <Canvas
@@ -26,7 +29,7 @@ export default function SceneCanvas() {
                 <color args={[1, 1, 1]} attach="background" />
                 <Experience />
             </Canvas>
-            <SceneMouseTrail />
+            {shouldRenderTrail ? <SceneMouseTrail /> : null}
         </div>
     )
 }
