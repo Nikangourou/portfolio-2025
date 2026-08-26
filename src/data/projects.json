@@ -1349,25 +1349,26 @@
     },
     {
       "id": 14,
-      "title": "DATAVIZ",
-      "year": "2023",
-      "context": "School project",
-      "description": "Data visualization project on classmates' travel data",
+      "title": "Vasava",
+      "year": "2026",
+      "context": "Dallonses",
+      "description": "Website for the Vasava studio",
       "technologies": [
-        "Javascript",
-        "GSAP"
+        "Next.JS",
+        "TailwindCSS",
+        "Framer"
       ],
-      "link": "https://datavis-transport.netlify.app/",
-      "cover": "/images/DataViz/dataViz.webp",
+      "link": "https://www.vasava.es/en",
+      "cover": "/images/Vasava/vasava.webp",
       "color": {
-        "background": "#554E11",
-        "text": "#D5CE95"
+        "background": "#181818",
+        "text": "#FFFFFF"
       },
       "contents": [
         {
           "images": [
             {
-              "url": "/images/DataViz/intro.webp",
+              "url": "/images/Vasava/intro.webp",
               "span": "3-2",
               "position": {
                 "desktop": 5,
@@ -1377,7 +1378,7 @@
           ],
           "texts": [
             {
-              "text": "Data visualization project on classmates' travel data.",
+              "text": "Custom module development for the Vasava agency website.",
               "position": {
                 "desktop": 13,
                 "mobile": 12
@@ -1388,28 +1389,41 @@
         {
           "images": [
             {
-              "url": "/images/DataViz/c1.webp",
-              "span": "2-2",
+              "url": "/images/Vasava/slider.webp",
+              "span": "4-2",
               "position": {
                 "desktop": 0,
                 "mobile": 0
-              }
-            },
-            {
-              "url": "/images/DataViz/c2.webp",
-              "span": "2-2",
-              "position": {
-                "desktop": 7,
-                "mobile": 7
               }
             }
           ],
           "texts": [
             {
-              "text": "Horizontal scrolling site.",
+              "text": "Development of a custom Embla slider module.",
               "position": {
-                "desktop": 11,
-                "mobile": 6
+                "desktop": 12,
+                "mobile": 7
+              }
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Vasava/popup.webp",
+              "span": "3-3",
+              "position": {
+                "desktop": 0,
+                "mobile": 0
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Development of a pop-up image gallery.",
+              "position": {
+                "desktop": 13,
+                "mobile": 10
               }
             }
           ]
