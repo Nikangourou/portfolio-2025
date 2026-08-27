@@ -454,24 +454,26 @@
     },
     {
       "id": 5,
-      "title": "La Fenêtre Immersive",
-      "year": "2021",
-      "context": "Pando Studio",
-      "description": "Interactive installation to create a link between SNCF stations",
+      "title": "Dallonses",
+      "year": "2026",
+      "context": "Dallonses",
+      "description": "Website for the Dallonses agency",
       "technologies": [
-        "Javascript"
+        "Next.JS",
+        "TailwindCSS",
+        "Framer"
       ],
-      "link": "https://digitalandmarks.com/",
-      "cover": "/images/Fenetre_Immersive/fenetre_immersive.webp",
+      "link": "https://www.dallonses.com/en/",
+      "cover": "/images/Dallonses/dallonses.webp",
       "color": {
-        "background": "#213B56",
-        "text": "#2D83D8"
+        "background": "#242424",
+        "text": "#FFFFFF"
       },
       "contents": [
         {
           "images": [
             {
-              "url": "/images/Fenetre_Immersive/install.webp",
+              "url": "/images/Dallonses/intro.webp",
               "span": "3-2",
               "position": {
                 "desktop": 5,
@@ -481,7 +483,7 @@
           ],
           "texts": [
             {
-              "text": "Interactive media display.",
+              "text": "Custom module development for the Dallonses agency website.",
               "position": {
                 "desktop": 13,
                 "mobile": 12
@@ -492,8 +494,8 @@
         {
           "images": [
             {
-              "url": "/images/Fenetre_Immersive/map.webp",
-              "span": "3-2",
+              "url": "/images/Dallonses/slider.webp",
+              "span": "4-2",
               "position": {
                 "desktop": 0,
                 "mobile": 0
@@ -502,7 +504,7 @@
           ],
           "texts": [
             {
-              "text": "Development of an interactive map available in the installation",
+              "text": "Development of a custom slider module.",
               "position": {
                 "desktop": 11,
                 "mobile": 11
