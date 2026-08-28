@@ -140,6 +140,7 @@ export const useContentTexture = (gridPosition, pageNumber = undefined, forcedFa
 
   const disposeTexture = (texture) => {
     if (texture?.dispose) {
+      texture.userData?.disposeMedia?.()
       texture.dispose()
     }
   }

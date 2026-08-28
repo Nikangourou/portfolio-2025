@@ -24,6 +24,10 @@ const getBackFaceFlip = (isArrangedUvMode) => ({
   y: isArrangedUvMode ? ARRANGED_BACK_FACE_FLIP.y : FREE_BACK_FACE_FLIP.y,
 })
 
+const getSamplerTexture = (texture) => texture?.userData?.sharedVideoTexture || texture
+const getTextureTransform = (texture) => texture?.userData?.contentTransformMatrix || texture?.matrix
+const isVideoTexture = (texture) => !!(texture?.userData?.isVideo || texture?.userData?.sharedVideoTexture?.userData?.isVideo)
+
 const drawNavigationIcon = (context, size, type) => {
   const center = size / 2
   context.lineCap = 'square'
@@ -169,6 +173,8 @@ const Project = forwardRef(function Project(
     uRippleTint: { value: new THREE.Color('#eef4ff') },
     uFrontMap: { value: emptyTexture },
     uBackMap: { value: emptyTexture },
+    uFrontMapIsVideo: { value: 0 },
+    uBackMapIsVideo: { value: 0 },
     uBackFlipX: { value: 1.0 },
     uBackFlipY: { value: 0.0 },
     uFrontMapTransform: { value: new THREE.Matrix3() },
@@ -552,23 +558,38 @@ const Project = forwardRef(function Project(
     nextFrontMap.updateMatrix()
     nextBackMap.updateMatrix()
 
-    material.userData.frontMap = nextFrontMap
-    material.userData.backMap = nextBackMap
-    rippleUniforms.uFrontMap.value = nextFrontMap
-    rippleUniforms.uBackMap.value = nextBackMap
+    const nextFrontSampler = getSamplerTexture(nextFrontMap)
+    const nextBackSampler = getSamplerTexture(nextBackMap)
+    const nextFrontTransform = getTextureTransform(nextFrontMap)
+    const nextBackTransform = getTextureTransform(nextBackMap)
+    const nextFrontIsVideo = isVideoTexture(nextFrontMap)
+    const nextBackIsVideo = isVideoTexture(nextBackMap)
+
+    material.userData.frontMap = nextFrontSampler
+    material.userData.backMap = nextBackSampler
+    rippleUniforms.uFrontMap.value = nextFrontSampler
+    rippleUniforms.uBackMap.value = nextBackSampler
+    rippleUniforms.uFrontMapIsVideo.value = nextFrontIsVideo ? 1 : 0
+    rippleUniforms.uBackMapIsVideo.value = nextBackIsVideo ? 1 : 0
     rippleUniforms.uBackFlipX.value = backFaceFlip.x
     rippleUniforms.uBackFlipY.value = backFaceFlip.y
-    rippleUniforms.uFrontMapTransform.value.copy(nextFrontMap.matrix)
-    rippleUniforms.uBackMapTransform.value.copy(nextBackMap.matrix)
+    rippleUniforms.uFrontMapTransform.value.copy(nextFrontTransform)
+    rippleUniforms.uBackMapTransform.value.copy(nextBackTransform)
 
     if (material.userData.shader) {
       const { uniforms } = material.userData.shader
 
       if (uniforms.uFrontMap) {
-        uniforms.uFrontMap.value = nextFrontMap
+        uniforms.uFrontMap.value = nextFrontSampler
       }
       if (uniforms.uBackMap) {
-        uniforms.uBackMap.value = nextBackMap
+        uniforms.uBackMap.value = nextBackSampler
+      }
+      if (uniforms.uFrontMapIsVideo) {
+        uniforms.uFrontMapIsVideo.value = nextFrontIsVideo ? 1 : 0
+      }
+      if (uniforms.uBackMapIsVideo) {
+        uniforms.uBackMapIsVideo.value = nextBackIsVideo ? 1 : 0
       }
       if (uniforms.uBackFlipX) {
         uniforms.uBackFlipX.value = backFaceFlip.x
@@ -577,10 +598,10 @@ const Project = forwardRef(function Project(
         uniforms.uBackFlipY.value = backFaceFlip.y
       }
       if (uniforms.uFrontMapTransform) {
-        uniforms.uFrontMapTransform.value.copy(nextFrontMap.matrix)
+        uniforms.uFrontMapTransform.value.copy(nextFrontTransform)
       }
       if (uniforms.uBackMapTransform) {
-        uniforms.uBackMapTransform.value.copy(nextBackMap.matrix)
+        uniforms.uBackMapTransform.value.copy(nextBackTransform)
       }
     }
 

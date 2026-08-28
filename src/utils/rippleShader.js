@@ -84,6 +84,8 @@ export const applyProjectRippleShader = (material, rippleUniforms) => {
         material.onBeforeCompile = (shader) => {
             shader.uniforms.uFrontMap = rippleUniforms.uFrontMap
             shader.uniforms.uBackMap = rippleUniforms.uBackMap
+            shader.uniforms.uFrontMapIsVideo = rippleUniforms.uFrontMapIsVideo
+            shader.uniforms.uBackMapIsVideo = rippleUniforms.uBackMapIsVideo
             shader.uniforms.uBackFlipX = rippleUniforms.uBackFlipX
             shader.uniforms.uBackFlipY = rippleUniforms.uBackFlipY
             shader.uniforms.uFrontMapTransform = rippleUniforms.uFrontMapTransform
@@ -112,6 +114,8 @@ export const applyProjectRippleShader = (material, rippleUniforms) => {
             shader.fragmentShader = `
                 uniform sampler2D uFrontMap;
                 uniform sampler2D uBackMap;
+                uniform float uFrontMapIsVideo;
+                uniform float uBackMapIsVideo;
                 uniform float uBackFlipX;
                 uniform float uBackFlipY;
                 varying vec2 vFrontUv;
@@ -127,6 +131,11 @@ export const applyProjectRippleShader = (material, rippleUniforms) => {
                 vec4 sampledDiffuseColor = gl_FrontFacing
                     ? texture2D(uFrontMap, vFrontUv)
                     : texture2D(uBackMap, backSampleUv);
+
+                float isVideoTexture = gl_FrontFacing ? uFrontMapIsVideo : uBackMapIsVideo;
+                if (isVideoTexture > 0.5) {
+                    sampledDiffuseColor = sRGBTransferEOTF(sampledDiffuseColor);
+                }
 
                 diffuseColor *= sampledDiffuseColor;
             `,
@@ -144,6 +153,8 @@ export const applyProjectRippleShader = (material, rippleUniforms) => {
         shader.uniforms.uRippleTint = rippleUniforms.uRippleTint
         shader.uniforms.uFrontMap = rippleUniforms.uFrontMap
         shader.uniforms.uBackMap = rippleUniforms.uBackMap
+        shader.uniforms.uFrontMapIsVideo = rippleUniforms.uFrontMapIsVideo
+        shader.uniforms.uBackMapIsVideo = rippleUniforms.uBackMapIsVideo
         shader.uniforms.uBackFlipX = rippleUniforms.uBackFlipX
         shader.uniforms.uBackFlipY = rippleUniforms.uBackFlipY
         shader.uniforms.uFrontMapTransform = rippleUniforms.uFrontMapTransform
@@ -182,6 +193,8 @@ export const applyProjectRippleShader = (material, rippleUniforms) => {
             fragmentPrefix: `
         uniform sampler2D uFrontMap;
         uniform sampler2D uBackMap;
+        uniform float uFrontMapIsVideo;
+        uniform float uBackMapIsVideo;
         uniform float uBackFlipX;
         uniform float uBackFlipY;
         uniform vec3 uRippleTint;
@@ -199,6 +212,11 @@ export const applyProjectRippleShader = (material, rippleUniforms) => {
         vec4 sampledDiffuseColor = gl_FrontFacing
           ? texture2D(uFrontMap, vFrontUv)
           : texture2D(uBackMap, backSampleUv);
+
+                float isVideoTexture = gl_FrontFacing ? uFrontMapIsVideo : uBackMapIsVideo;
+                if (isVideoTexture > 0.5) {
+                    sampledDiffuseColor = sRGBTransferEOTF(sampledDiffuseColor);
+                }
 
         diffuseColor *= sampledDiffuseColor;
       `,

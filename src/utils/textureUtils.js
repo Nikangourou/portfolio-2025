@@ -5,8 +5,10 @@ textureLoader.setCrossOrigin('anonymous')
 
 // Cache global pour les textures par URL et couleur de fond
 const textureCache = new Map()
+const videoTextureCache = new Map()
 // Cache pour les promesses en cours pour éviter les requêtes parallèles
 const pendingPromises = new Map()
+const pendingVideoPromises = new Map()
 const MAX_CACHE_SIZE = 100
 
 /**
@@ -38,6 +40,10 @@ const isOpaqueImageFormat = (imageUrl) => {
   return /\.jpe?g([?#].*)?$/i.test(imageUrl)
 }
 
+const isMp4Format = (imageUrl) => {
+  return /\.mp4([?#].*)?$/i.test(imageUrl)
+}
+
 const applyTextureDefaults = (texture) => {
   texture.colorSpace = THREE.SRGBColorSpace
   texture.minFilter = THREE.LinearFilter
@@ -64,6 +70,10 @@ const cloneTexture = (originalTexture) => {
  * @returns {Promise<THREE.Texture>} - Texture modifiée (clonée du cache si disponible)
  */
 export const createTextureWithBackground = (imageUrl, backgroundColor = '#ffffff') => {
+  if (isMp4Format(imageUrl)) {
+    return createMp4Texture(imageUrl)
+  }
+
   const cacheKey = getCacheKey(imageUrl, backgroundColor)
 
   // Vérifier si la texture est déjà en cache
@@ -186,6 +196,96 @@ export const createTextureWithBackground = (imageUrl, backgroundColor = '#ffffff
   return promise.then(texture => cloneTexture(texture))
 }
 
+const createSharedVideoTexture = (cacheKey, cachedEntry) => {
+  cachedEntry.refCount += 1
+
+  const texture = cachedEntry.texture.clone()
+  applyTextureDefaults(texture)
+  texture.userData.isVideo = true
+  texture.userData.sharedVideoTexture = cachedEntry.texture
+  texture.userData.disposeMedia = () => {
+    if (texture.userData.isReleased) {
+      return
+    }
+
+    texture.userData.isReleased = true
+    cachedEntry.refCount -= 1
+
+    if (cachedEntry.refCount > 0) {
+      return
+    }
+
+    cachedEntry.video.pause()
+    cachedEntry.video.removeAttribute('src')
+    cachedEntry.video.load()
+    cachedEntry.texture.dispose()
+    videoTextureCache.delete(cacheKey)
+  }
+  texture.needsUpdate = true
+
+  return texture
+}
+
+const createMp4Texture = (videoUrl) => {
+  const cachedEntry = videoTextureCache.get(videoUrl)
+  if (cachedEntry) {
+    return Promise.resolve(createSharedVideoTexture(videoUrl, cachedEntry))
+  }
+
+  const pendingVideoPromise = pendingVideoPromises.get(videoUrl)
+  if (pendingVideoPromise) {
+    return pendingVideoPromise.then(entry => createSharedVideoTexture(videoUrl, entry))
+  }
+
+  const promise = new Promise((resolve, reject) => {
+    const video = document.createElement('video')
+    video.crossOrigin = 'anonymous'
+    video.muted = true
+    video.loop = true
+    video.playsInline = true
+    video.preload = 'auto'
+
+    const handleLoadedData = () => {
+      cleanup()
+
+      const texture = new THREE.VideoTexture(video)
+      applyTextureDefaults(texture)
+      texture.userData.isVideo = true
+
+      const cachedEntry = {
+        texture,
+        video,
+        refCount: 0,
+        timestamp: Date.now(),
+      }
+      videoTextureCache.set(videoUrl, cachedEntry)
+      pendingVideoPromises.delete(videoUrl)
+
+      video.play().catch(() => { })
+      resolve(cachedEntry)
+    }
+
+    const handleError = (error) => {
+      cleanup()
+      pendingVideoPromises.delete(videoUrl)
+      reject(error)
+    }
+
+    const cleanup = () => {
+      video.removeEventListener('loadeddata', handleLoadedData)
+      video.removeEventListener('error', handleError)
+    }
+
+    video.addEventListener('loadeddata', handleLoadedData, { once: true })
+    video.addEventListener('error', handleError, { once: true })
+    video.src = videoUrl
+    video.load()
+  })
+
+  pendingVideoPromises.set(videoUrl, promise)
+  return promise.then(entry => createSharedVideoTexture(videoUrl, entry))
+}
+
 /**
  * Nettoie manuellement le cache des textures (utile lors du changement de projet)
  */
@@ -195,8 +295,16 @@ export const clearTextureCache = () => {
       cachedEntry.texture.dispose()
     }
   })
+  videoTextureCache.forEach((cachedEntry) => {
+    cachedEntry.video?.pause?.()
+    cachedEntry.video?.removeAttribute?.('src')
+    cachedEntry.video?.load?.()
+    cachedEntry.texture?.dispose?.()
+  })
   textureCache.clear()
+  videoTextureCache.clear()
   pendingPromises.clear()
+  pendingVideoPromises.clear()
 }
 
 /**
@@ -205,9 +313,13 @@ export const clearTextureCache = () => {
 export const getTextureCacheStats = () => {
   return {
     size: textureCache.size,
+    videoSize: videoTextureCache.size,
     pendingSize: pendingPromises.size,
+    pendingVideoSize: pendingVideoPromises.size,
     keys: Array.from(textureCache.keys()),
-    pendingKeys: Array.from(pendingPromises.keys())
+    videoKeys: Array.from(videoTextureCache.keys()),
+    pendingKeys: Array.from(pendingPromises.keys()),
+    pendingVideoKeys: Array.from(pendingVideoPromises.keys())
   }
 }
 
@@ -235,6 +347,9 @@ export const configureTexture = (texture, span, validPositions, _targetFace) => 
     validPositions.offsetX,
     validPositions.offsetY
   )
+
+  texture.updateMatrix()
+  texture.userData.contentTransformMatrix = texture.matrix.clone()
 
 }
 
