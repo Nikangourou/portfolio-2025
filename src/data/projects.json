@@ -494,8 +494,8 @@
         {
           "images": [
             {
-              "url": "/images/Dallonses/slider.mp4",
-              "type": "video",
+              "url": "/images/Dallonses/slider.webp",
+              "type": "image",
               "span": "4-2",
               "position": {
                 "desktop": 0,
@@ -1406,7 +1406,7 @@
               "text": "Custom module development for the Vasava agency website.",
               "position": {
                 "desktop": 13,
-                "mobile": 12
+                "mobile": 1
               }
             }
           ]
