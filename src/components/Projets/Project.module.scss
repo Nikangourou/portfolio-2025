@@ -12,7 +12,7 @@
 
 
     .title {
-      font-size: 6px;
+      font-size: 24px;
       font-family: 'Allerta Stencil', sans-serif;
       text-align: center;
       padding: 0;
@@ -33,7 +33,7 @@
 
       .techno {
         font-family: 'Allerta Stencil', sans-serif;
-        font-size: 5px;
+        font-size: 20px;
         text-align: center;
         padding: 0;
         margin: 0;
@@ -43,9 +43,9 @@
     }
 
     .contentText {
-      padding: 5px;
+      padding: 20px;
       color: var(--theme-text);
-      font-size: 3.5px;
+      font-size: 14px;
       z-index: 1;
       pointer-events: none;
       user-select: none;
@@ -64,8 +64,8 @@
       color: var(--theme-background);
       text-decoration: none;
       font-family: 'Allerta Stencil', sans-serif;
-      font-size: 6px;
-      padding: 2px 4px;
+      font-size: 24px;
+      padding: 8px 16px;
       pointer-events: none;
       user-select: none;
     }
