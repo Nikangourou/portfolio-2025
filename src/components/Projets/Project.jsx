@@ -17,7 +17,7 @@ import { applyProjectRippleShader } from '@/utils/rippleShader'
 
 // Décalage entre le flip de deux tuiles voisines : trop grand, le texte d'une tuile disparaît
 // bien avant que celui de la tuile suivante n'apparaisse.
-const PAGE_FLIP_STAGGER_MS = 30
+const PAGE_FLIP_STAGGER_MS = 100
 
 const ARRANGED_BACK_FACE_FLIP = { x: 0.0, y: 0.0 }
 const FREE_BACK_FACE_FLIP = { x: 1.0, y: 1.0 }
