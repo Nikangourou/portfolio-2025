@@ -152,7 +152,6 @@ const Project = forwardRef(function Project(
   const isPageFlipAnimatingRef = useRef(false)
   const lockedOppositeMapRef = useRef(null)
   const [overlayPage, setOverlayPage] = useState(0)
-  const pendingOverlayPageRef = useRef(0)
 
   const emptyTexture = useMemo(() => {
     const data = new Uint8Array([255, 255, 255, 255])
@@ -205,10 +204,6 @@ const Project = forwardRef(function Project(
       state.isProjectsArranged,
     ]),
   )
-
-  useEffect(() => {
-    pendingOverlayPageRef.current = currentPage || 0
-  }, [currentPage])
 
   useEffect(() => {
     if (!isProjectsArranged) {
@@ -313,18 +308,18 @@ const Project = forwardRef(function Project(
     },
     onRest: () => {
       isPageFlipAnimatingRef.current = false
-      if (isProjectsArranged) {
-        setOverlayPage(pendingOverlayPageRef.current)
-      }
+      // Resynchroniser sur l'angle réel (et non sur la page cible, qui peut déjà avoir changé si on a
+      // cliqué pendant que cette animation finissait de se stabiliser).
+      syncOverlayPageWithCamera()
     },
   })
 
   // Le texte change quand la tuile est réellement de chant pour la caméra (et non à 90° de rotation :
   // une tuile au-dessus ou en dessous de l'axe de la caméra est de chant à un autre angle).
   const camera = useThree((state) => state.camera)
-  useFrame(() => {
+  const syncOverlayPageWithCamera = () => {
     const group = pageGroupRef.current
-    if (!isProjectsArranged || !group || !isPageFlipAnimatingRef.current) {
+    if (!isProjectsArranged || !group) {
       return
     }
 
@@ -345,6 +340,11 @@ const Project = forwardRef(function Project(
 
     if (visiblePage > 0) {
       setOverlayPage(visiblePage)
+    }
+  }
+  useFrame(() => {
+    if (isPageFlipAnimatingRef.current) {
+      syncOverlayPageWithCamera()
     }
   })
 
