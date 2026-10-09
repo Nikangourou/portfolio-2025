@@ -15,10 +15,6 @@ import { useGridConfig } from '@/hooks/useGridConfig'
 import { useGlobalRipple } from '@/hooks/useGlobalRipple'
 import { applyProjectRippleShader } from '@/utils/rippleShader'
 
-// Décalage entre le flip de deux tuiles voisines : trop grand, le texte d'une tuile disparaît
-// bien avant que celui de la tuile suivante n'apparaisse.
-const PAGE_FLIP_STAGGER_MS = 30
-
 const ARRANGED_BACK_FACE_FLIP = { x: 0.0, y: 0.0 }
 const FREE_BACK_FACE_FLIP = { x: 1.0, y: 1.0 }
 
@@ -275,7 +271,7 @@ const Project = forwardRef(function Project(
   // Delays précalculés pour éviter les recalculs
   const animationDelays = useMemo(() => ({
     arrangement: isProjectsArranged ? gridPosition * 50 : Math.random() * 500,
-    pageRotation: gridPosition * PAGE_FLIP_STAGGER_MS
+    pageRotation: gridPosition * 100
   }), [gridPosition, isProjectsArranged])
 
   // Gestion des positions et rotations avec springs - OPTIMISÉE
