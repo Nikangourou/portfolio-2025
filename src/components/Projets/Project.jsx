@@ -145,13 +145,6 @@ const Project = forwardRef(function Project(
   const lockedOppositeMapRef = useRef(null)
   const [overlayPage, setOverlayPage] = useState(0)
   const pendingOverlayPageRef = useRef(0)
-  const overlayFlipTransitionRef = useRef({
-    armed: false,
-    switched: false,
-    direction: 1,
-    midpointAngle: 0,
-    toPage: 0,
-  })
 
   const emptyTexture = useMemo(() => {
     const data = new Uint8Array([255, 255, 255, 255])
@@ -309,31 +302,9 @@ const Project = forwardRef(function Project(
     config: getSpringConfig('projectRotation'),
     onStart: () => {
       isPageFlipAnimatingRef.current = true
-
-      if (!isProjectsArranged) {
-        overlayFlipTransitionRef.current.armed = false
-        return
-      }
-
-      const fromPage = overlayPage
-      const toPage = pendingOverlayPageRef.current
-
-      if (fromPage === toPage) {
-        overlayFlipTransitionRef.current.armed = false
-        return
-      }
-
-      overlayFlipTransitionRef.current = {
-        armed: true,
-        switched: false,
-        direction: toPage > fromPage ? 1 : -1,
-        midpointAngle: ((fromPage + toPage) * 0.5) * Math.PI,
-        toPage,
-      }
     },
     onChange: (values) => {
-      const transition = overlayFlipTransitionRef.current
-      if (!transition.armed || transition.switched) {
+      if (!isProjectsArranged) {
         return
       }
 
@@ -346,23 +317,18 @@ const Project = forwardRef(function Project(
         return
       }
 
-      const crossedMidpoint = transition.direction > 0
-        ? angle >= transition.midpointAngle
-        : angle <= transition.midpointAngle
-
-      if (!crossedMidpoint) {
-        return
+      // La page affichée dérive directement de l'angle (page N = N * PI) : le texte change
+      // quand la tuile est de chant, même si la page cible change en plein flip.
+      const visiblePage = Math.round(angle / Math.PI)
+      if (visiblePage > 0) {
+        setOverlayPage(visiblePage)
       }
-
-      transition.switched = true
-      setOverlayPage(transition.toPage)
     },
     onRest: () => {
       isPageFlipAnimatingRef.current = false
       if (isProjectsArranged) {
         setOverlayPage(pendingOverlayPageRef.current)
       }
-      overlayFlipTransitionRef.current.armed = false
     },
   })
 
