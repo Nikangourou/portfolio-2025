@@ -1,6 +1,7 @@
 import { useRef, useState, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo } from 'react'
 import * as THREE from 'three'
 import { useTexture } from '@react-three/drei'
+import { useFrame, useThree } from '@react-three/fiber'
 import { animated, useSpring } from '@react-spring/three'
 import { useStore } from '@/stores/store'
 import { useShallow } from 'zustand/react/shallow'
@@ -14,6 +15,13 @@ import { getSpringConfig } from '@/utils/springConfig'
 import { useGridConfig } from '@/hooks/useGridConfig'
 import { useGlobalRipple } from '@/hooks/useGlobalRipple'
 import { applyProjectRippleShader } from '@/utils/rippleShader'
+
+const TILE_NORMAL = new THREE.Vector3()
+const TILE_TO_CAMERA = new THREE.Vector3()
+const TILE_POSITION = new THREE.Vector3()
+
+// Décalage (ms) entre le flip de deux tuiles voisines
+const PAGE_FLIP_STAGGER_MS = 100
 
 const ARRANGED_BACK_FACE_FLIP = { x: 0.0, y: 0.0 }
 const FREE_BACK_FACE_FLIP = { x: 1.0, y: 1.0 }
@@ -144,14 +152,6 @@ const Project = forwardRef(function Project(
   const isPageFlipAnimatingRef = useRef(false)
   const lockedOppositeMapRef = useRef(null)
   const [overlayPage, setOverlayPage] = useState(0)
-  const pendingOverlayPageRef = useRef(0)
-  const overlayFlipTransitionRef = useRef({
-    armed: false,
-    switched: false,
-    direction: 1,
-    midpointAngle: 0,
-    toPage: 0,
-  })
 
   const emptyTexture = useMemo(() => {
     const data = new Uint8Array([255, 255, 255, 255])
@@ -204,10 +204,6 @@ const Project = forwardRef(function Project(
       state.isProjectsArranged,
     ]),
   )
-
-  useEffect(() => {
-    pendingOverlayPageRef.current = currentPage || 0
-  }, [currentPage])
 
   useEffect(() => {
     if (!isProjectsArranged) {
@@ -278,7 +274,7 @@ const Project = forwardRef(function Project(
   // Delays précalculés pour éviter les recalculs
   const animationDelays = useMemo(() => ({
     arrangement: isProjectsArranged ? gridPosition * 50 : Math.random() * 500,
-    pageRotation: gridPosition * 100
+    pageRotation: gridPosition * PAGE_FLIP_STAGGER_MS
   }), [gridPosition, isProjectsArranged])
 
   // Gestion des positions et rotations avec springs - OPTIMISÉE
@@ -309,61 +305,47 @@ const Project = forwardRef(function Project(
     config: getSpringConfig('projectRotation'),
     onStart: () => {
       isPageFlipAnimatingRef.current = true
-
-      if (!isProjectsArranged) {
-        overlayFlipTransitionRef.current.armed = false
-        return
-      }
-
-      const fromPage = overlayPage
-      const toPage = pendingOverlayPageRef.current
-
-      if (fromPage === toPage) {
-        overlayFlipTransitionRef.current.armed = false
-        return
-      }
-
-      overlayFlipTransitionRef.current = {
-        armed: true,
-        switched: false,
-        direction: toPage > fromPage ? 1 : -1,
-        midpointAngle: ((fromPage + toPage) * 0.5) * Math.PI,
-        toPage,
-      }
-    },
-    onChange: (values) => {
-      const transition = overlayFlipTransitionRef.current
-      if (!transition.armed || transition.switched) {
-        return
-      }
-
-      const rawValue = values?.value
-      const angle = typeof rawValue === 'number'
-        ? rawValue
-        : rawValue?.pageRotationX
-
-      if (!Number.isFinite(angle)) {
-        return
-      }
-
-      const crossedMidpoint = transition.direction > 0
-        ? angle >= transition.midpointAngle
-        : angle <= transition.midpointAngle
-
-      if (!crossedMidpoint) {
-        return
-      }
-
-      transition.switched = true
-      setOverlayPage(transition.toPage)
     },
     onRest: () => {
       isPageFlipAnimatingRef.current = false
-      if (isProjectsArranged) {
-        setOverlayPage(pendingOverlayPageRef.current)
-      }
-      overlayFlipTransitionRef.current.armed = false
+      // Resynchroniser sur l'angle réel (et non sur la page cible, qui peut déjà avoir changé si on a
+      // cliqué pendant que cette animation finissait de se stabiliser).
+      syncOverlayPageWithCamera()
     },
+  })
+
+  // Le texte change quand la tuile est réellement de chant pour la caméra (et non à 90° de rotation :
+  // une tuile au-dessus ou en dessous de l'axe de la caméra est de chant à un autre angle).
+  const camera = useThree((state) => state.camera)
+  const syncOverlayPageWithCamera = () => {
+    const group = pageGroupRef.current
+    if (!isProjectsArranged || !group) {
+      return
+    }
+
+    group.updateWorldMatrix(true, false)
+    const elements = group.matrixWorld.elements
+    TILE_NORMAL.set(elements[8], elements[9], elements[10]).normalize()
+    TILE_TO_CAMERA
+      .setFromMatrixPosition(camera.matrixWorld)
+      .sub(TILE_POSITION.setFromMatrixPosition(group.matrixWorld))
+
+    const frontFaceVisible = TILE_NORMAL.dot(TILE_TO_CAMERA) > 0
+    const turns = pageRotationX.get() / Math.PI
+    let visiblePage = Math.round(turns)
+    // Page paire = face avant visible, impaire = face arrière : on prend l'entier de bonne parité le plus proche.
+    if ((visiblePage % 2 === 0) !== frontFaceVisible) {
+      visiblePage += turns > visiblePage ? 1 : -1
+    }
+
+    if (visiblePage > 0) {
+      setOverlayPage(visiblePage)
+    }
+  }
+  useFrame(() => {
+    if (isPageFlipAnimatingRef.current) {
+      syncOverlayPageWithCamera()
+    }
   })
 
   // Utiliser les hooks personnalisés

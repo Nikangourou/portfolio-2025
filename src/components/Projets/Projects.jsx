@@ -11,6 +11,7 @@ import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
 import { useGridConfig } from '@/hooks/useGridConfig'
 import { useProjectInteraction } from '@/hooks/useProjectInteraction'
 import { useSceneRippleField } from '@/hooks/useGlobalRipple'
+import { preloadProjectContents } from '@/utils/contentLoader'
 
 export default function Projects() {
   // console.log('Projects rendered')
@@ -62,6 +63,11 @@ export default function Projects() {
     gridConfig.borderRowsBottom,
     recalculateAll
   ])
+
+  // Précharger toutes les images du projet dès sa sélection (évite le délai à chaque changement de page)
+  useEffect(() => {
+    preloadProjectContents(selectedProject, gridConfig.isMobile)
+  }, [selectedProject, gridConfig.isMobile])
 
   // Hook pour la gestion des interactions
   const {
