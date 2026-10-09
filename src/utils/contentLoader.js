@@ -128,6 +128,31 @@ const cleanCache = () => {
 }
 
 /**
+ * Précharge (fetch + décodage) toutes les images d'un projet dans le cache de textures,
+ * pour que le changement de page ne déclenche plus de chargement réseau/décodage.
+ * Les vidéos sont ignorées (elles sont partagées et comptées par référence).
+ */
+export const preloadProjectContents = (project, isMobile) => {
+  if (!project?.contents) return
+
+  const backgroundColor = project.color?.background || '#ffffff'
+  const urls = new Set()
+
+  project.contents.forEach((content) => {
+    content.images?.forEach((image) => {
+      const url = getAdaptiveUrl(image.url, isMobile)
+      if (typeof url === 'string' && !/\.mp4([?#].*)?$/i.test(url)) {
+        urls.add(url)
+      }
+    })
+  })
+
+  urls.forEach((url) => {
+    createTextureWithBackground(url, backgroundColor).catch(() => { })
+  })
+}
+
+/**
  * Hook pour charger les textures de contenu
  */
 export const useContentTexture = (gridPosition, pageNumber = undefined, forcedFace = null) => {
