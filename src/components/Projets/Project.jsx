@@ -1,6 +1,7 @@
 import { useRef, useState, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo } from 'react'
 import * as THREE from 'three'
 import { useTexture } from '@react-three/drei'
+import { useFrame, useThree } from '@react-three/fiber'
 import { animated, useSpring } from '@react-spring/three'
 import { useStore } from '@/stores/store'
 import { useShallow } from 'zustand/react/shallow'
@@ -15,8 +16,11 @@ import { useGridConfig } from '@/hooks/useGridConfig'
 import { useGlobalRipple } from '@/hooks/useGlobalRipple'
 import { applyProjectRippleShader } from '@/utils/rippleShader'
 
-// Décalage entre le flip de deux tuiles voisines : trop grand, le texte d'une tuile disparaît
-// bien avant que celui de la tuile suivante n'apparaisse.
+const TILE_NORMAL = new THREE.Vector3()
+const TILE_TO_CAMERA = new THREE.Vector3()
+const TILE_POSITION = new THREE.Vector3()
+
+// Décalage (ms) entre le flip de deux tuiles voisines
 const PAGE_FLIP_STAGGER_MS = 100
 
 const ARRANGED_BACK_FACE_FLIP = { x: 0.0, y: 0.0 }
@@ -307,33 +311,41 @@ const Project = forwardRef(function Project(
     onStart: () => {
       isPageFlipAnimatingRef.current = true
     },
-    onChange: (values) => {
-      if (!isProjectsArranged) {
-        return
-      }
-
-      const rawValue = values?.value
-      const angle = typeof rawValue === 'number'
-        ? rawValue
-        : rawValue?.pageRotationX
-
-      if (!Number.isFinite(angle)) {
-        return
-      }
-
-      // La page affichée dérive directement de l'angle (page N = N * PI) : le texte change
-      // quand la tuile est de chant, même si la page cible change en plein flip.
-      const visiblePage = Math.round(angle / Math.PI)
-      if (visiblePage > 0) {
-        setOverlayPage(visiblePage)
-      }
-    },
     onRest: () => {
       isPageFlipAnimatingRef.current = false
       if (isProjectsArranged) {
         setOverlayPage(pendingOverlayPageRef.current)
       }
     },
+  })
+
+  // Le texte change quand la tuile est réellement de chant pour la caméra (et non à 90° de rotation :
+  // une tuile au-dessus ou en dessous de l'axe de la caméra est de chant à un autre angle).
+  const camera = useThree((state) => state.camera)
+  useFrame(() => {
+    const group = pageGroupRef.current
+    if (!isProjectsArranged || !group || !isPageFlipAnimatingRef.current) {
+      return
+    }
+
+    group.updateWorldMatrix(true, false)
+    const elements = group.matrixWorld.elements
+    TILE_NORMAL.set(elements[8], elements[9], elements[10]).normalize()
+    TILE_TO_CAMERA
+      .setFromMatrixPosition(camera.matrixWorld)
+      .sub(TILE_POSITION.setFromMatrixPosition(group.matrixWorld))
+
+    const frontFaceVisible = TILE_NORMAL.dot(TILE_TO_CAMERA) > 0
+    const turns = pageRotationX.get() / Math.PI
+    let visiblePage = Math.round(turns)
+    // Page paire = face avant visible, impaire = face arrière : on prend l'entier de bonne parité le plus proche.
+    if ((visiblePage % 2 === 0) !== frontFaceVisible) {
+      visiblePage += turns > visiblePage ? 1 : -1
+    }
+
+    if (visiblePage > 0) {
+      setOverlayPage(visiblePage)
+    }
   })
 
   // Utiliser les hooks personnalisés
