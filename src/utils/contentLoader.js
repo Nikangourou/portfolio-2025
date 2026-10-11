@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useStore } from '@/stores/store'
-import { createTextureWithBackground, configureTexture } from './textureUtils'
+import { createTextureWithBackground, configureTexture, releaseTexturesForUrls } from './textureUtils'
 import { useGridConfig } from '../hooks/useGridConfig'
 
 /**
@@ -127,29 +127,49 @@ const cleanCache = () => {
   }
 }
 
+const isMp4Url = (url) => /\.mp4([?#].*)?$/i.test(url)
+
+/**
+ * URLs d'images (hors vidéos) de toutes les pages d'un projet, pour l'appareil donné.
+ */
+const getProjectImageUrls = (project, isMobile) => {
+  const urls = new Set()
+
+  project?.contents?.forEach((content) => {
+    content.images?.forEach((image) => {
+      const url = getAdaptiveUrl(image.url, isMobile)
+      if (typeof url === 'string' && !isMp4Url(url)) {
+        urls.add(url)
+      }
+    })
+  })
+
+  return urls
+}
+
 /**
  * Précharge (fetch + décodage) toutes les images d'un projet dans le cache de textures,
  * pour que le changement de page ne déclenche plus de chargement réseau/décodage.
  * Les vidéos sont ignorées (elles sont partagées et comptées par référence).
  */
 export const preloadProjectContents = (project, isMobile) => {
-  if (!project?.contents) return
+  if (!project) return
 
   const backgroundColor = project.color?.background || '#ffffff'
-  const urls = new Set()
 
-  project.contents.forEach((content) => {
-    content.images?.forEach((image) => {
-      const url = getAdaptiveUrl(image.url, isMobile)
-      if (typeof url === 'string' && !/\.mp4([?#].*)?$/i.test(url)) {
-        urls.add(url)
-      }
-    })
-  })
-
-  urls.forEach((url) => {
+  getProjectImageUrls(project, isMobile).forEach((url) => {
     createTextureWithBackground(url, backgroundColor).catch(() => { })
   })
+}
+
+/**
+ * Libère du cache les images d'un projet (à appeler à sa fermeture) : une image décodée
+ * pèse plusieurs Mo en mémoire et ne serait sinon jamais retirée.
+ */
+export const releaseProjectContents = (project, isMobile) => {
+  if (!project) return
+
+  releaseTexturesForUrls(getProjectImageUrls(project, isMobile))
 }
 
 /**

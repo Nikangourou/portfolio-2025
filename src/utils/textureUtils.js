@@ -308,6 +308,26 @@ export const clearTextureCache = () => {
 }
 
 /**
+ * Libère du cache les textures d'images des URLs données (ex. à la fermeture d'un projet).
+ * Les vidéos ne sont pas concernées : elles sont partagées et libérées par comptage de références.
+ * @param {Iterable<string>} urls - URLs d'images à retirer du cache
+ */
+export const releaseTexturesForUrls = (urls) => {
+  const urlSet = new Set(urls)
+
+  Array.from(textureCache.keys()).forEach((key) => {
+    // La clé est `${url}#${couleur}` et la couleur commence elle-même par '#' (ex. '#ffffff').
+    const url = key.slice(0, key.indexOf('#'))
+    if (!urlSet.has(url)) {
+      return
+    }
+
+    textureCache.get(key)?.texture?.dispose?.()
+    textureCache.delete(key)
+  })
+}
+
+/**
  * Retourne les statistiques du cache pour le debug
  */
 export const getTextureCacheStats = () => {
