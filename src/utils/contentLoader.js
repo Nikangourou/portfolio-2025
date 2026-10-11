@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useStore } from '@/stores/store'
-import { createTextureWithBackground, configureTexture } from './textureUtils'
+import { createTextureWithBackground, configureTexture, releaseTexturesForUrls } from './textureUtils'
 import { useGridConfig } from '../hooks/useGridConfig'
 
 /**
@@ -127,29 +127,106 @@ const cleanCache = () => {
   }
 }
 
-/**
- * Précharge (fetch + décodage) toutes les images d'un projet dans le cache de textures,
- * pour que le changement de page ne déclenche plus de chargement réseau/décodage.
- * Les vidéos sont ignorées (elles sont partagées et comptées par référence).
- */
-export const preloadProjectContents = (project, isMobile) => {
-  if (!project?.contents) return
+const isMp4Url = (url) => /\.mp4([?#].*)?$/i.test(url)
 
-  const backgroundColor = project.color?.background || '#ffffff'
+/**
+ * URLs d'images (hors vidéos) d'un projet pour l'appareil donné.
+ * `pageFilter` reçoit l'index de page (0 = première page) pour ne garder que certaines pages.
+ */
+const getProjectImageUrls = (project, isMobile, pageFilter = () => true) => {
   const urls = new Set()
 
-  project.contents.forEach((content) => {
+  project?.contents?.forEach((content, pageIndex) => {
+    if (!pageFilter(pageIndex)) {
+      return
+    }
+
     content.images?.forEach((image) => {
       const url = getAdaptiveUrl(image.url, isMobile)
-      if (typeof url === 'string' && !/\.mp4([?#].*)?$/i.test(url)) {
+      if (typeof url === 'string' && !isMp4Url(url)) {
         urls.add(url)
       }
     })
   })
 
-  urls.forEach((url) => {
-    createTextureWithBackground(url, backgroundColor).catch(() => { })
+  return urls
+}
+
+const isFirstPage = (pageIndex) => pageIndex === 0
+const isNotFirstPage = (pageIndex) => pageIndex > 0
+
+const warmTexture = (url, backgroundColor) => {
+  return createTextureWithBackground(url, backgroundColor).catch(() => { })
+}
+
+/**
+ * Précharge les premières pages de tous les projets, une image à la fois pendant les temps
+ * morts du navigateur (le décodage des images est coûteux : tout charger d'un coup ferait
+ * saccader l'animation d'accueil). Ces images restent en cache toute la session.
+ * @returns {() => void} fonction d'annulation
+ */
+export const preloadFirstPages = (projects, isMobile) => {
+  let cancelled = false
+
+  const queue = []
+  projects.forEach((project) => {
+    const backgroundColor = project.color?.background || '#ffffff'
+    getProjectImageUrls(project, isMobile, isFirstPage).forEach((url) => {
+      queue.push({ url, backgroundColor })
+    })
   })
+
+  const scheduleNext = () => {
+    if (typeof globalThis.requestIdleCallback === 'function') {
+      globalThis.requestIdleCallback(loadNext, { timeout: 2000 })
+    } else {
+      setTimeout(loadNext, 200)
+    }
+  }
+
+  const loadNext = () => {
+    if (cancelled || queue.length === 0) {
+      return
+    }
+
+    const { url, backgroundColor } = queue.shift()
+    warmTexture(url, backgroundColor).then(scheduleNext)
+  }
+
+  scheduleNext()
+
+  return () => {
+    cancelled = true
+  }
+}
+
+/**
+ * Précharge (fetch + décodage) les pages suivantes d'un projet qu'on vient d'ouvrir,
+ * pour que le changement de page ne déclenche plus de chargement réseau/décodage.
+ * Les premières pages sont déjà en cache (voir preloadFirstPages) et les vidéos sont ignorées.
+ */
+export const preloadProjectContents = (project, isMobile) => {
+  if (!project) return
+
+  const backgroundColor = project.color?.background || '#ffffff'
+
+  getProjectImageUrls(project, isMobile).forEach((url) => {
+    warmTexture(url, backgroundColor)
+  })
+}
+
+/**
+ * Libère du cache les images des pages suivantes d'un projet (à appeler à sa fermeture) :
+ * une image décodée pèse plusieurs Mo en mémoire. Les premières pages sont conservées.
+ */
+export const releaseProjectContents = (project, isMobile) => {
+  if (!project) return
+
+  const firstPageUrls = getProjectImageUrls(project, isMobile, isFirstPage)
+  const urlsToRelease = Array.from(getProjectImageUrls(project, isMobile, isNotFirstPage))
+    .filter((url) => !firstPageUrls.has(url))
+
+  releaseTexturesForUrls(urlsToRelease)
 }
 
 /**
