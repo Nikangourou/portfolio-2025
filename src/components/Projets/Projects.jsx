@@ -11,7 +11,7 @@ import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
 import { useGridConfig } from '@/hooks/useGridConfig'
 import { useProjectInteraction } from '@/hooks/useProjectInteraction'
 import { useSceneRippleField } from '@/hooks/useGlobalRipple'
-import { preloadProjectContents, releaseProjectContents } from '@/utils/contentLoader'
+import { preloadFirstPages, preloadProjectContents, releaseProjectContents } from '@/utils/contentLoader'
 
 export default function Projects() {
   // console.log('Projects rendered')
@@ -63,6 +63,11 @@ export default function Projects() {
     gridConfig.borderRowsBottom,
     recalculateAll
   ])
+
+  // Premières pages de tous les projets : préchargées en tâche de fond et gardées en cache
+  useEffect(() => {
+    return preloadFirstPages(projectsData.projects, gridConfig.isMobile)
+  }, [gridConfig.isMobile])
 
   // Précharger toutes les images du projet dès sa sélection (évite le délai à chaque changement de page)
   // et les libérer à la fermeture du projet (le cleanup s'exécute quand selectedProject change).
