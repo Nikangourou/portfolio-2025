@@ -7,8 +7,6 @@ import {
 const MAX_POINTS = 18
 const HEAD_LERP = 0.17
 const TAIL_LERP = 0.16
-// Sans mouvement de souris pendant ce délai, la boucle de dessin s'arrête (elle repart au prochain mouvement).
-const IDLE_STOP_MS = 3000
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max)
 const length = (x, y) => Math.hypot(x, y)
@@ -49,7 +47,6 @@ export default function SceneMouseTrail() {
         }
 
         let animationFrame = null
-        let lastPointerMoveTime = performance.now()
 
         const resize = () => {
             const dpr = Math.min(window.devicePixelRatio || 1, 2)
@@ -84,11 +81,6 @@ export default function SceneMouseTrail() {
             pointer.y = event.clientY
             pointer.velocityX = pointer.x - pointer.previousX
             pointer.velocityY = pointer.y - pointer.previousY
-            lastPointerMoveTime = performance.now()
-
-            if (animationFrame === null && !document.hidden) {
-                animationFrame = window.requestAnimationFrame(draw)
-            }
         }
 
         const drawSmokeLayer = (time, radiusScale, alphaScale, offsetScale, sampleStep, lift) => {
@@ -235,21 +227,15 @@ export default function SceneMouseTrail() {
             pointer.velocityX *= 0.92
             pointer.velocityY *= 0.92
 
-            if (document.hidden) {
-                animationFrame = null
-            } else if (time - lastPointerMoveTime > IDLE_STOP_MS) {
-                // Souris immobile depuis un moment : on efface et on arrête de redessiner à chaque image.
-                context.clearRect(0, 0, window.innerWidth, window.innerHeight)
-                rippleContext.clearRect(0, 0, window.innerWidth, window.innerHeight)
-                animationFrame = null
-            } else {
+            if (!document.hidden) {
                 animationFrame = window.requestAnimationFrame(draw)
+            } else {
+                animationFrame = null
             }
         }
 
         const handleVisibilityChange = () => {
             if (!document.hidden && animationFrame === null) {
-                lastPointerMoveTime = performance.now()
                 animationFrame = window.requestAnimationFrame(draw)
             }
         }
