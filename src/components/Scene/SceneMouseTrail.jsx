@@ -8,6 +8,24 @@ const MAX_POINTS = 18
 const HEAD_LERP = 0.17
 const TAIL_LERP = 0.16
 
+// La fumée est très floue : on la dessine à demi-résolution (4x moins de pixels à remplir/fondre).
+const SMOKE_RESOLUTION = 0.5
+const SPRITE_SIZE = 128
+
+// Dégradé radial pré-rendu une fois : drawImage + globalAlpha remplace ~250 createRadialGradient par image.
+const createGradientSprite = (innerRatio, stops) => {
+    const sprite = document.createElement('canvas')
+    sprite.width = SPRITE_SIZE
+    sprite.height = SPRITE_SIZE
+    const spriteContext = sprite.getContext('2d')
+    const half = SPRITE_SIZE / 2
+    const gradient = spriteContext.createRadialGradient(half, half, half * innerRatio, half, half, half)
+    stops.forEach(([offset, color]) => gradient.addColorStop(offset, color))
+    spriteContext.fillStyle = gradient
+    spriteContext.fillRect(0, 0, SPRITE_SIZE, SPRITE_SIZE)
+    return sprite
+}
+
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max)
 const length = (x, y) => Math.hypot(x, y)
 
@@ -27,6 +45,19 @@ export default function SceneMouseTrail() {
         if (!context || !rippleContext) {
             return undefined
         }
+
+        // Mêmes couleurs/arrêts que les anciens dégradés ; l'intensité passe par globalAlpha.
+        const smokeSprite = createGradientSprite(0.08, [
+            [0, 'rgba(88, 106, 130, 0.9)'],
+            [0.22, 'rgba(116, 136, 158, 0.75)'],
+            [0.58, 'rgba(156, 176, 198, 0.22)'],
+            [1, 'rgba(255, 255, 255, 0)'],
+        ])
+        const glowSprite = createGradientSprite(0, [
+            [0, 'rgba(255, 255, 255, 1)'],
+            [0.35, 'rgba(142, 222, 255, 0.75)'],
+            [1, 'rgba(255, 255, 255, 0)'],
+        ])
 
         const points = Array.from({ length: MAX_POINTS }, () => ({
             x: 0,
@@ -53,11 +84,12 @@ export default function SceneMouseTrail() {
             const width = window.innerWidth
             const height = window.innerHeight
 
-            canvas.width = Math.floor(width * dpr)
-            canvas.height = Math.floor(height * dpr)
+            const smokeScale = dpr * SMOKE_RESOLUTION
+            canvas.width = Math.floor(width * smokeScale)
+            canvas.height = Math.floor(height * smokeScale)
             canvas.style.width = `${width}px`
             canvas.style.height = `${height}px`
-            context.setTransform(dpr, 0, 0, dpr, 0, 0)
+            context.setTransform(smokeScale, 0, 0, smokeScale, 0, 0)
 
             rippleCanvas.width = Math.floor(width * dpr)
             rippleCanvas.height = Math.floor(height * dpr)
@@ -104,24 +136,8 @@ export default function SceneMouseTrail() {
                     const y = baseY - localProgress * lift + flutter * (4 + localProgress * 10) * offsetScale
                     const radius = (16 + localProgress * 54) * radiusScale
                     const alpha = (0.01 + localProgress * 0.04) * alphaScale
-                    const gradient = context.createRadialGradient(
-                        x,
-                        y,
-                        radius * 0.08,
-                        x,
-                        y,
-                        radius,
-                    )
-
-                    gradient.addColorStop(0, `rgba(88, 106, 130, ${alpha * 0.9})`)
-                    gradient.addColorStop(0.22, `rgba(116, 136, 158, ${alpha * 0.75})`)
-                    gradient.addColorStop(0.58, `rgba(156, 176, 198, ${alpha * 0.22})`)
-                    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
-
-                    context.fillStyle = gradient
-                    context.beginPath()
-                    context.arc(x, y, radius, 0, Math.PI * 2)
-                    context.fill()
+                    context.globalAlpha = alpha
+                    context.drawImage(smokeSprite, x - radius, y - radius, radius * 2, radius * 2)
                 }
             }
         }
@@ -203,23 +219,10 @@ export default function SceneMouseTrail() {
                 const progress = index / Math.max(points.length - 1, 1)
                 const alpha = 0.16 + progress * 0.42
                 const radius = 3 + progress * 8
-                const gradient = rippleContext.createRadialGradient(
-                    point.x,
-                    point.y,
-                    0,
-                    point.x,
-                    point.y,
-                    radius * 2.2,
-                )
+                const glowRadius = radius * 2.2
 
-                gradient.addColorStop(0, `rgba(255, 255, 255, ${alpha})`)
-                gradient.addColorStop(0.35, `rgba(142, 222, 255, ${alpha * 0.75})`)
-                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
-
-                rippleContext.fillStyle = gradient
-                rippleContext.beginPath()
-                rippleContext.arc(point.x, point.y, radius * 2.2, 0, Math.PI * 2)
-                rippleContext.fill()
+                rippleContext.globalAlpha = alpha
+                rippleContext.drawImage(glowSprite, point.x - glowRadius, point.y - glowRadius, glowRadius * 2, glowRadius * 2)
             })
 
             rippleContext.restore()
