@@ -44,8 +44,7 @@ const BorderTile = ({ spring, state, index, currentTheme, projectSize, isDoubleS
       <AnimatedMesh
         projectId={`border-${index}`}
       >
-        <mesh ref={meshRef}>
-          <primitive object={getCachedGeometry().clone()} />
+        <mesh ref={meshRef} geometry={getCachedGeometry()} dispose={null}>
           <meshBasicMaterial
             ref={materialRef}
             side={isDoubleSided ? THREE.DoubleSide : THREE.BackSide}

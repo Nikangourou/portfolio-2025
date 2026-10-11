@@ -631,8 +631,8 @@ const Project = forwardRef(function Project(
           projectId={gridPosition}
           onClick={handleMeshClick}
         >
-          <mesh>
-            <primitive object={getCachedGeometry().clone()} />
+          {/* Géométrie partagée (jamais clonée au rendu : un clone par rendu fuyait côté GPU) */}
+          <mesh geometry={getCachedGeometry()} dispose={null}>
             <meshBasicMaterial
               ref={pageMaterialRef}
               map={emptyTexture}
