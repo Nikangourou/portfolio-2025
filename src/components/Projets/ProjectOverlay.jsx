@@ -10,9 +10,11 @@ const ProjectOverlay = ({
   projectSize,
   page,
 }) => {
+  // Les hooks doivent être appelés avant tout return conditionnel (sinon React plante si `condition` bascule).
+  const currentPage = useStore((state) => state.currentPage)
+
   if (!condition) return null
 
-  const currentPage = useStore((state) => state.currentPage)
   const overlayPage = page ?? currentPage
   const shouldFlipOverlay = overlayPage % 2 === 1
   const overlayWidth = projectSize.width * 40
