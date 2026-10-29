@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import projectsData from '../data/projects.json'
 
 export const useProjectPositionsStore = create((set, get) => ({
   // État calculé
@@ -38,7 +37,7 @@ export const useProjectPositionsStore = create((set, get) => ({
 
     // Calcul des positions des projets
     const predefinedPositions = []
-    const totalProjects = projectsData.projects.length
+    const totalProjects = gridConfig.tileCount
 
     for (let i = 0; i < totalProjects; i++) {
       const row = Math.floor(i / cols)

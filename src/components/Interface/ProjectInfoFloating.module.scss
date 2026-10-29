@@ -1,43 +1,30 @@
 .floatingInfo {
   color: #181818;
   padding: 18px 26px;
-  border-radius: 10px;
-  max-width: 340px;
+  max-width: 420px;
   font-family: 'Allerta Stencil', sans-serif;
-    
+
   .title {
-    margin: 0 0 8px 0;
-    font-size: 1.3em;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-  }
-
-  .meta {
-    margin: 0 0 8px 0;
-    font-size: 1em;
-  }
-
-  .description {
     margin: 0 0 10px 0;
-    font-size: 1em;
+    font-size: 2em;
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: 0.01em;
+  }
+
+  // L'accroche passe avant les métadonnées : c'est elle qui donne envie d'ouvrir le projet
+  .description {
+    margin: 0 0 12px 0;
+    font-size: 1.15em;
     line-height: 1.3;
   }
 
-  .techList {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+  .meta {
+    margin: 0;
+    font-family: 'Fragment Mono', monospace;
+    font-size: 0.75em;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+    opacity: 0.6;
   }
-
-  .tech {
-    background: #444;
-    color: #fff;
-    font-size: 0.95em;
-    padding: 2px 8px;
-    border-radius: 4px;
-    margin-right: 4px;
-    margin-bottom: 2px;
-    letter-spacing: 0.01em;
-    opacity: 0.85;
-  }
-} 
+}

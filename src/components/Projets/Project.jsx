@@ -36,6 +36,32 @@ const getSamplerTexture = (texture) => texture?.userData?.sharedVideoTexture || 
 const getTextureTransform = (texture) => texture?.userData?.contentTransformMatrix || texture?.matrix
 const isVideoTexture = (texture) => !!(texture?.userData?.isVideo || texture?.userData?.sharedVideoTexture?.userData?.isVideo)
 
+// Largeur utile d'une cellule d'en-tête (160px - 2 x 14px de marge) et bornes de la taille du titre
+const TITLE_MAX_WIDTH = 128
+const TITLE_MAX_SIZE = 34
+const TITLE_MIN_SIZE = 18
+
+let titleMeasureContext = null
+
+// Plus le titre est court, plus on peut l'écrire grand : on mesure son mot le plus long
+// pour qu'il tienne dans la cellule, sans jamais être coupé.
+const getTitleFontSize = (title = '') => {
+  if (typeof document === 'undefined') return TITLE_MIN_SIZE
+
+  if (!titleMeasureContext) {
+    titleMeasureContext = document.createElement('canvas').getContext('2d')
+  }
+
+  titleMeasureContext.font = "100px 'Allerta Stencil', sans-serif"
+  const longestWordWidth = Math.max(
+    ...title.split(/\s+/).map((word) => titleMeasureContext.measureText(word).width),
+  )
+  if (!longestWordWidth) return TITLE_MIN_SIZE
+
+  const fittingSize = Math.floor((TITLE_MAX_WIDTH / longestWordWidth) * 100)
+  return Math.max(TITLE_MIN_SIZE, Math.min(TITLE_MAX_SIZE, fittingSize))
+}
+
 const drawNavigationIcon = (context, size, type) => {
   const center = size / 2
   context.lineCap = 'square'
@@ -141,7 +167,7 @@ const getNavigationIconTypeForPage = ({
 }
 
 const Project = forwardRef(function Project(
-  { gridPosition, image, initialPosition, initialRotation },
+  { gridPosition, image, initialPosition, initialRotation, isFiller = false },
   ref,
 ) {
   const pageMaterialRef = useRef(null)
@@ -152,6 +178,8 @@ const Project = forwardRef(function Project(
   const isPageFlipAnimatingRef = useRef(false)
   const lockedOppositeMapRef = useRef(null)
   const [overlayPage, setOverlayPage] = useState(0)
+  const gridConfig = useGridConfig()
+  const [isFillerShown, setIsFillerShown] = useState(false)
 
   const emptyTexture = useMemo(() => {
     const data = new Uint8Array([255, 255, 255, 255])
@@ -288,7 +316,7 @@ const Project = forwardRef(function Project(
     config: isProjectsArranged ? getSpringConfig('arrangement') : getSpringConfig('smooth'),
     onChange: (values) => {
       // Marquer l'animation comme terminée à la moitié pour le dernier projet - OPTIMISÉ
-      if (isProjectsArranged && gridPosition === projectsData.projects.length - 1 && targetArrangedPosition[0] !== 0) {
+      if (isProjectsArranged && gridPosition === gridConfig.tileCount - 1 && targetArrangedPosition[0] !== 0) {
         const progress = Math.abs(values.value.position[0] / targetArrangedPosition[0]);
         if (progress >= 0.7 && !isArrangementAnimationComplete) {
           setArrangementAnimationComplete(true);
@@ -363,7 +391,6 @@ const Project = forwardRef(function Project(
     previousPage,
     previousFace,
   )
-  const gridConfig = useGridConfig()
   const maxPage = selectedProject?.contents?.length || 0
   const navigationCurrentIconType = useMemo(() => {
     return getNavigationIconTypeForPage({
@@ -427,6 +454,19 @@ const Project = forwardRef(function Project(
     rippleUniforms,
   })
 
+  // Une tuile vide n'est visible que quand les projets sont rangés (on laisse les autres revenir avant de la masquer)
+  useEffect(() => {
+    if (!isFiller) return undefined
+
+    if (isProjectsArranged) {
+      setIsFillerShown(true)
+      return undefined
+    }
+
+    const timeoutId = setTimeout(() => setIsFillerShown(false), 900)
+    return () => clearTimeout(timeoutId)
+  }, [isFiller, isProjectsArranged])
+
   const handleMeshClick = () => {
 
     // Navigation - Cross
@@ -448,9 +488,10 @@ const Project = forwardRef(function Project(
     }
 
     // Logique de sélection du projet (pour toutes les autres positions)
-    if (!isProjectsArranged) {
+    const project = projectsData.projects[gridPosition]
+    if (!isProjectsArranged && project) {
       setProjectsArranged(true)
-      setSelectedProject(projectsData.projects[gridPosition])
+      setSelectedProject(project)
     }
   }
 
@@ -622,6 +663,7 @@ const Project = forwardRef(function Project(
       ref={projectRef}
       position={position}
       rotation={rotation}
+      visible={!isFiller || isFillerShown}
     >
       <animated.group
         ref={pageGroupRef}
@@ -649,70 +691,95 @@ const Project = forwardRef(function Project(
           <group>
             {isArrangementAnimationComplete && (
               <>
-                {overlayPage === 1 && (
+                {overlayPage === 1 && selectedProject && (
                   <>
                     <ProjectOverlay
-                      condition={
-                        selectedProject && gridPosition === 0 && selectedProject.title
-                      }
+                      condition={gridPosition === 0 && selectedProject.title}
                       projectSize={projectSize}
                       page={overlayPage}
                     >
-                      <p className={styles.title} data-overlay-interactive="true">{selectedProject?.title}</p>
-                    </ProjectOverlay>
-                    <ProjectOverlay
-                      condition={
-                        selectedProject &&
-                        gridPosition === 1 &&
-                        selectedProject.context
-                      }
-                      projectSize={projectSize}
-                      page={overlayPage}
-                    >
-                      <p className={styles.title} data-overlay-interactive="true">{selectedProject?.context}</p>
-                    </ProjectOverlay>
-                    <ProjectOverlay
-                      condition={
-                        selectedProject && gridPosition === 2 && selectedProject.year
-                      }
-                      projectSize={projectSize}
-                      page={overlayPage}
-                    >
-                      <p className={styles.title} data-overlay-interactive="true">{selectedProject?.year}</p>
-                    </ProjectOverlay>
-                    <ProjectOverlay
-                      condition={
-                        selectedProject &&
-                        gridPosition === 3 &&
-                        selectedProject.technologies
-                      }
-                      projectSize={projectSize}
-                      page={overlayPage}
-                    >
-                      <div className={styles.technoContainer}>
-                        {selectedProject?.technologies.map((techno) => (
-                          <p key={techno} className={styles.techno} data-overlay-interactive="true">
-                            {techno}
-                          </p>
-                        ))}
+                      <div className={styles.cell}>
+                        <p
+                          className={`${styles.cellValue} ${styles.cellTitle}`}
+                          style={{ fontSize: `${getTitleFontSize(selectedProject.title)}px` }}
+                          data-overlay-interactive="true"
+                        >
+                          {selectedProject.title}
+                        </p>
                       </div>
                     </ProjectOverlay>
                     <ProjectOverlay
-                      condition={
-                        selectedProject && gridPosition === 4 && selectedProject.link
-                      }
+                      condition={gridPosition === 1 && selectedProject.context}
                       projectSize={projectSize}
                       page={overlayPage}
                     >
-                      <a
-                        href={selectedProject?.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.linkButton}
-                        data-overlay-interactive="true"
-                      >
-                        <span className={styles.linkButtonLabel} data-overlay-interactive="true">Link</span>
-                      </a>
+                      <div className={styles.cell}>
+                        <p className={styles.cellLabel}>Context</p>
+                        <p className={styles.cellValue} data-overlay-interactive="true">{selectedProject.context}</p>
+                      </div>
+                    </ProjectOverlay>
+                    <ProjectOverlay
+                      condition={gridPosition === 2 && selectedProject.year}
+                      projectSize={projectSize}
+                      page={overlayPage}
+                    >
+                      <div className={styles.cell}>
+                        <p className={styles.cellLabel}>Year</p>
+                        <p className={styles.cellValue} data-overlay-interactive="true">{selectedProject.year}</p>
+                      </div>
+                    </ProjectOverlay>
+                    <ProjectOverlay
+                      condition={gridPosition === 3 && selectedProject.technologies}
+                      projectSize={projectSize}
+                      page={overlayPage}
+                    >
+                      <div className={styles.cell}>
+                        <p className={styles.cellLabel}>Stack</p>
+                        <div className={styles.technoContainer}>
+                          {selectedProject.technologies.map((techno) => (
+                            <p
+                              key={techno}
+                              className={styles.techno}
+                              style={{ fontSize: selectedProject.technologies.length > 3 ? '14px' : '17px' }}
+                              data-overlay-interactive="true"
+                            >
+                              {techno}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    </ProjectOverlay>
+                    <ProjectOverlay
+                      condition={gridPosition === 4 && selectedProject.link}
+                      projectSize={projectSize}
+                      page={overlayPage}
+                    >
+                      <div className={styles.cell}>
+                        <p className={styles.cellLabel}>Link</p>
+                        <a
+                          href={selectedProject.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.linkButton}
+                          data-overlay-interactive="true"
+                        >
+                          <span className={styles.linkButtonLabel} data-overlay-interactive="true">
+                            {selectedProject.linkLabel || 'Visit'} ↗
+                          </span>
+                        </a>
+                      </div>
+                    </ProjectOverlay>
+                    <ProjectOverlay
+                      condition={gridPosition === (gridConfig.isMobile ? 5 : 8) && selectedProject.role}
+                      projectSize={projectSize}
+                      page={overlayPage}
+                    >
+                      <div className={styles.cell}>
+                        <p className={styles.cellLabel}>Role</p>
+                        <p className={`${styles.cellValue} ${styles.cellRole}`} data-overlay-interactive="true">
+                          {selectedProject.role}
+                        </p>
+                      </div>
                     </ProjectOverlay>
                   </>
                 )}
@@ -722,9 +789,10 @@ const Project = forwardRef(function Project(
                     projectSize={projectSize}
                     page={overlayPage}
                   >
-                    <p className={styles.contentText}>
-                      <span className={styles.contentTextValue} data-overlay-interactive="true">{contentText.text}</span>
-                    </p>
+                    <div className={`${styles.contentText} ${contentText.lead ? styles.contentTextLead : ''}`}>
+                      {contentText.label && <p className={styles.cellLabel}>{contentText.label}</p>}
+                      <p className={styles.contentTextValue} data-overlay-interactive="true">{contentText.text}</p>
+                    </div>
                   </ProjectOverlay>
                 )}
               </>

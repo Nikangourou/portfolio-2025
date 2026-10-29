@@ -129,7 +129,8 @@ export default function Projects() {
   const projectData = useMemo(() => {
     const usedPositions = []
 
-    return projectsData.projects.map((project, index) => {
+    return Array.from({ length: gridConfig.tileCount }, (_, index) => {
+      const project = projectsData.projects[index] || null
       const randomPosition = findValidPosition(usedPositions)
       usedPositions.push(randomPosition)
 
@@ -146,7 +147,7 @@ export default function Projects() {
         pageRotationDelay: Math.random() * 0.5,
       }
     })
-  }, [])
+  }, [gridConfig.tileCount])
 
   // Mettre à jour la ref pour le raycasting
   useEffect(() => {

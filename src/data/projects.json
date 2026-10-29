@@ -2,26 +2,30 @@
   "projects": [
     {
       "id": 1,
-      "title": "Espace 22",
-      "year": "2021",
-      "context": "Pando Studio",
-      "description": "Creation of an e-commerce for a stylist",
+      "title": "Vraiment",
+      "year": "2024",
+      "context": "School project",
+      "tagline": "A board game where AI invents false memories.",
       "technologies": [
-        "Wordpress",
-        "Woocommerce"
+        "Next.JS",
+        "Three.js",
+        "GSAP",
+        "Socket.io",
+        "Express.js"
       ],
-      "link": "",
-      "cover": "/images/Espace22/espace22.webp",
+      "link": "https://vraiment.netlify.app/",
+      "linkLabel": "Visit the site",
+      "cover": "/images/Vraiment/vraiment.webp",
       "color": {
-        "background": "#1E244D",
-        "text": "#E2E6FF"
+        "background": "#131651",
+        "text": "#EDEAE1"
       },
       "contents": [
         {
           "images": [
             {
-              "url": "/images/Espace22/space2.webp",
-              "span": "2-2",
+              "url": "/images/Vraiment/intro.webp",
+              "span": "3-2",
               "position": {
                 "desktop": 5,
                 "mobile": 6
@@ -30,82 +34,156 @@
           ],
           "texts": [
             {
-              "text": "Development of an e-commerce site for a fashion designer.",
+              "text": "A board game where AI invents false memories.",
               "position": {
-                "desktop": 12,
-                "mobile": 8
-              }
+                "desktop": 13,
+                "mobile": 12
+              },
+              "lead": true
             }
           ]
         },
         {
           "images": [
             {
-              "url": "/images/Espace22/space5.webp",
-              "span": "3-2",
+              "url": "/images/Vraiment/p1.webp",
+              "span": "4-3",
               "position": {
                 "desktop": 0,
-                "mobile": 3
+                "mobile": 0
               }
             }
           ],
           "texts": [
             {
-              "text": "Shop page.",
-              "position": {
-                "desktop": 12,
-                "mobile": 10
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": "/images/Espace22/space6.webp",
-              "span": "3-2",
-              "position": {
-                "desktop": 5,
-                "mobile": 6
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Cart page.",
+              "text": "Player selection.",
               "position": {
                 "desktop": 3,
-                "mobile": 3
-              }
+                "mobile": 6
+              },
+              "label": "Step 1"
             }
           ]
         },
         {
           "images": [
             {
-              "url": "/images/Espace22/space4.webp",
-              "span": "2-1",
+              "url": "/images/Vraiment/i1.webp",
+              "span": "1-2",
               "position": {
                 "desktop": 0,
                 "mobile": 0
               }
             },
             {
-              "url": "/images/Espace22/space3.webp",
-              "span": "3-2",
+              "url": "/images/Vraiment/i2.webp",
+              "span": "1-2",
               "position": {
                 "desktop": 6,
-                "mobile": 6
+                "mobile": 1
+              }
+            },
+            {
+              "url": "/images/Vraiment/i3.webp",
+              "span": "1-2",
+              "position": {
+                "desktop": 1,
+                "mobile": 7
+              }
+            },
+            {
+              "url": "/images/Vraiment/i4.webp",
+              "span": "1-2",
+              "position": {
+                "desktop": 8,
+                "mobile": 8
               }
             }
           ],
           "texts": [
             {
-              "text": "100% editable.",
+              "text": "A player steps aside and describes a memory.",
               "position": {
                 "desktop": 10,
-                "mobile": 4
+                "mobile": 9
+              },
+              "label": "Step 2"
+            },
+            {
+              "text": "The AI generates two images of it: one true, one false.",
+              "position": {
+                "desktop": 3,
+                "mobile": 2
+              },
+              "label": "Step 3"
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Vraiment/v1.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 0,
+                "mobile": 7
               }
+            },
+            {
+              "url": "/images/Vraiment/v2.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 7,
+                "mobile": 0
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "The others ask questions to find the true memory.",
+              "position": {
+                "desktop": 3,
+                "mobile": 9
+              },
+              "label": "Step 4"
+            },
+            {
+              "text": "When time runs out, everyone votes.",
+              "position": {
+                "desktop": 11,
+                "mobile": 2
+              },
+              "label": "Step 5"
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Vraiment/score.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 0,
+                "mobile": 7
+              }
+            },
+            {
+              "url": "/images/Vraiment/game.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 7,
+                "mobile": 0
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Scores are shown after each turn.",
+              "position": {
+                "desktop": 10,
+                "mobile": 9
+              },
+              "label": "Step 6"
             }
           ]
         }
@@ -113,25 +191,25 @@
     },
     {
       "id": 2,
-      "title": "Alizora",
-      "year": "2021",
-      "context": "Personal project",
-      "description": "Creation of a tote bag brand",
+      "title": "Presage",
+      "year": "2023",
+      "context": "School project",
+      "tagline": "A road trip where your past choices reshape the world.",
       "technologies": [
-        "Wordpress",
-        "Woocommerce"
+        "React Three Fiber"
       ],
-      "link": "https://alizora.nicolasneveu.fr/",
-      "cover": "/images/Alizora/alizora.webp",
+      "link": "https://presage-game.netlify.app/",
+      "linkLabel": "Play the game",
+      "cover": "/images/Presage/presage.webp",
       "color": {
-        "background": "#7C788B",
-        "text": "#1D1633"
+        "background": "#332F2E",
+        "text": "#B95E4A"
       },
       "contents": [
         {
           "images": [
             {
-              "url": "/images/Alizora/alizora3.webp",
+              "url": "/images/Presage/intro.webp",
               "span": "3-2",
               "position": {
                 "desktop": 5,
@@ -141,76 +219,106 @@
           ],
           "texts": [
             {
-              "text": "Creation of a tote bags brand with a designer friend.",
+              "text": "A road trip where your past choices reshape the world.",
               "position": {
                 "desktop": 13,
                 "mobile": 12
-              }
+              },
+              "lead": true
             }
           ]
         },
         {
           "images": [
             {
-              "url": "/images/Alizora/alizora1.webp",
-              "span": "1-2",
-              "position": {
-                "desktop": 1,
-                "mobile": 0
-              }
-            },
-            {
-              "url": "/images/Alizora/alizora2.webp",
-              "span": "1-2",
-              "position": {
-                "desktop": 8,
-                "mobile": 7
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Shooting.",
-              "position": {
-                "desktop": 5,
-                "mobile": 4
-              }
-            },
-            {
-              "text": "Mock-up.",
-              "position": {
-                "desktop": 12,
-                "mobile": 11
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": "/images/Alizora/carte1.webp",
-              "span": "2-2",
+              "url": "/images/Presage/map1.webp",
+              "span": "3-2",
               "position": {
                 "desktop": 0,
                 "mobile": 0
               }
             },
             {
-              "url": "/images/Alizora/carte2.webp",
-              "span": "2-2",
+              "url": "/images/Presage/map2.webp",
+              "span": "1-1",
               "position": {
-                "desktop": 7,
-                "mobile": 7
+                "desktop": 8,
+                "mobile": 6
+              }
+            },
+            {
+              "url": "/images/Presage/map3.webp",
+              "span": "1-1",
+              "position": {
+                "desktop": 12,
+                "mobile": 10
               }
             }
           ],
           "texts": [
             {
-              "text": "Branding.",
+              "text": "A map to travel between scenes.",
+              "position": {
+                "desktop": 11,
+                "mobile": 8
+              },
+              "label": "Navigation"
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": {
+                "desktop": "/images/Presage/content.webp",
+                "mobile": "/images/Presage/contentMobile.webp"
+              },
+              "span": {
+                "desktop": "4-3",
+                "mobile": "3-3"
+              },
+              "position": {
+                "desktop": 0,
+                "mobile": 0
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "A puzzle to solve in each scene.",
               "position": {
                 "desktop": 10,
                 "mobile": 10
+              },
+              "label": "Gameplay"
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": {
+                "desktop": "/images/Presage/end.webp",
+                "mobile": "/images/Presage/endMobile.webp"
+              },
+              "span": {
+                "desktop": "4-2",
+                "mobile": "3-3"
+              },
+              "position": {
+                "desktop": 0,
+                "mobile": 0
               }
+            }
+          ],
+          "texts": [
+            {
+              "text": "The environment changes with your previous actions.",
+              "position": {
+                "desktop": 12,
+                "mobile": 10
+              },
+              "label": "Narrative"
             }
           ]
         }
@@ -218,25 +326,27 @@
     },
     {
       "id": 3,
-      "title": "Totoro's Veggie Feast",
+      "title": "Sizing",
       "year": "2024",
-      "context": "School project",
-      "description": "Creation of an arcade game",
+      "context": "Veepee",
+      "tagline": "Size advice for Veepee, built from each brand's size charts.",
       "technologies": [
-        "React Three Fiber"
+        "React",
+        "Strapi",
+        ".NET"
       ],
       "link": "",
-      "cover": "/images/Totoro/totoro.webp",
+      "cover": "/images/Sizing/Sizing.webp",
       "color": {
-        "background": "#332922",
-        "text": "#BB9274"
+        "background": "#432D3A",
+        "text": "#DF2695"
       },
       "contents": [
         {
           "images": [
             {
-              "url": "/images/Totoro/born1.webp",
-              "span": "2-2",
+              "url": "/images/Sizing/intro.webp",
+              "span": "3-2",
               "position": {
                 "desktop": 5,
                 "mobile": 6
@@ -245,82 +355,100 @@
           ],
           "texts": [
             {
-              "text": "Creation of an arcade game.",
+              "text": "Size advice for Veepee, built from each brand's size charts.",
               "position": {
-                "desktop": 12,
-                "mobile": 11
-              }
+                "desktop": 13,
+                "mobile": 12
+              },
+              "lead": true
             }
           ]
         },
         {
           "images": [
             {
-              "url": "/images/Totoro/player.webp",
-              "span": "2-1",
+              "url": "/images/Sizing/s1.webp",
+              "span": "2-3",
               "position": {
                 "desktop": 0,
-                "mobile": 0
+                "mobile": 4
               }
             },
             {
-              "url": "/images/Totoro/score.webp",
-              "span": "3-2",
-              "position": {
-                "desktop": 6,
-                "mobile": 6
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Variable number of players",
-              "position": {
-                "desktop": 2,
-                "mobile": 2
-              }
-            },
-            {
-              "text": "Leaderboard.",
-              "position": {
-                "desktop": 10,
-                "mobile": 5
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": "/images/Totoro/born2.webp",
+              "url": "/images/Sizing/s2.webp",
               "span": "2-2",
               "position": {
                 "desktop": 7,
-                "mobile": 7
-              }
-            },
-            {
-              "url": {
-                "desktop": "/images/Totoro/print.webp",
-                "mobile": "/images/Totoro/printMobile.webp"
-              },
-              "span": {
-                "desktop": "2-3",
-                "mobile": "2-2"
-              },
-              "position": {
-                "desktop": 0,
                 "mobile": 0
               }
             }
           ],
           "texts": [
             {
-              "text": "Poster.",
+              "text": "The recommended size is computed from each brand's size chart.",
+              "position": {
+                "desktop": 2,
+                "mobile": 2
+              },
+              "label": "How it works"
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Sizing/s3.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 5,
+                "mobile": 0
+              }
+            },
+            {
+              "url": "/images/Sizing/s4.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 2,
+                "mobile": 7
+              }
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Sizing/sr1.webp",
+              "span": "1-2",
+              "position": {
+                "desktop": 0,
+                "mobile": 0
+              }
+            },
+            {
+              "url": "/images/Sizing/sr2.webp",
+              "span": "1-2",
+              "position": {
+                "desktop": 6,
+                "mobile": 4
+              }
+            },
+            {
+              "url": "/images/Sizing/sr3.webp",
+              "span": "1-2",
               "position": {
                 "desktop": 2,
                 "mobile": 2
               }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Available in the iOS and Android apps.",
+              "position": {
+                "desktop": 13,
+                "mobile": 8
+              },
+              "label": "Platforms"
             }
           ]
         }
@@ -331,12 +459,13 @@
       "title": "Bonne Sobri Yearte",
       "year": "2023",
       "context": "Havas Factory",
-      "description": "Greeting card",
+      "tagline": "A greeting card you play: shooting and click-speed games.",
       "technologies": [
         "React Three Fiber",
         "JS"
       ],
       "link": "https://nox-front.fr/cdv2023/",
+      "linkLabel": "Open the site",
       "cover": "/images/Bonne_Sobriyearte/bonne_sobriyearte.webp",
       "color": {
         "background": "#2B2B58",
@@ -356,18 +485,20 @@
           ],
           "texts": [
             {
-              "text": "Greeting card based on the government's Turn Off",
+              "text": "A greeting card you play: shooting and click-speed games.",
               "position": {
                 "desktop": 10,
                 "mobile": 11
-              }
+              },
+              "lead": true
             },
             {
               "text": "Site of the Day.",
               "position": {
                 "desktop": 8,
                 "mobile": 8
-              }
+              },
+              "label": "Award"
             }
           ]
         },
@@ -388,7 +519,8 @@
               "position": {
                 "desktop": 13,
                 "mobile": 10
-              }
+              },
+              "label": "Game 1"
             }
           ]
         },
@@ -417,7 +549,8 @@
               "position": {
                 "desktop": 11,
                 "mobile": 6
-              }
+              },
+              "label": "Game 2"
             }
           ]
         },
@@ -442,11 +575,12 @@
           ],
           "texts": [
             {
-              "text": "Responsive.",
+              "text": "Responsive, on mobile and desktop.",
               "position": {
                 "desktop": 11,
                 "mobile": 6
-              }
+              },
+              "label": "Devices"
             }
           ]
         }
@@ -456,14 +590,16 @@
       "id": 5,
       "title": "Dallonses",
       "year": "2026",
-      "context": "Dallonses",
-      "description": "Website for the Dallonses agency",
+      "role": "Front-end development of custom modules.",
+      "context": "Dallonses agency",
+      "tagline": "Custom modules for the agency's own website.",
       "technologies": [
         "Next.JS",
         "TailwindCSS",
         "Framer"
       ],
       "link": "https://www.dallonses.com/en/",
+      "linkLabel": "Visit the site",
       "cover": "/images/Dallonses/dallonses.webp",
       "color": {
         "background": "#242424",
@@ -483,11 +619,12 @@
           ],
           "texts": [
             {
-              "text": "Custom module development for the Dallonses agency website.",
+              "text": "Custom modules for the agency's own website.",
               "position": {
                 "desktop": 13,
                 "mobile": 12
-              }
+              },
+              "lead": true
             }
           ]
         },
@@ -505,11 +642,12 @@
           ],
           "texts": [
             {
-              "text": "Development of a custom slider module.",
+              "text": "A custom slider.",
               "position": {
                 "desktop": 11,
                 "mobile": 10
-              }
+              },
+              "label": "Module"
             }
           ]
         },
@@ -527,11 +665,12 @@
           ],
           "texts": [
             {
-              "text": "Development of a scrubbed animation.",
+              "text": "A scrubbed animation.",
               "position": {
                 "desktop": 7,
                 "mobile": 8
-              }
+              },
+              "label": "Animation"
             }
           ]
         }
@@ -539,25 +678,28 @@
     },
     {
       "id": 6,
-      "title": "Histoires Et Nombres",
-      "year": "2022",
-      "context": "Studit",
-      "description": "Tool for learning reading and mathematics",
+      "title": "Vasava",
+      "year": "2026",
+      "role": "Front-end development of custom modules.",
+      "context": "Dallonses agency",
+      "tagline": "A studio website with a custom slider and image gallery.",
       "technologies": [
         "Next.JS",
-        "Symfony"
+        "TailwindCSS",
+        "Framer"
       ],
-      "link": "https://histoires-et-nombres.editions-retz.com/",
-      "cover": "/images/HistoiresEtNombres/Histoires_Et_Nombres.webp",
+      "link": "https://www.vasava.es/en",
+      "linkLabel": "Visit the site",
+      "cover": "/images/Vasava/vasava.webp",
       "color": {
-        "background": "#3E4844",
-        "text": "#71FFBF"
+        "background": "#181818",
+        "text": "#FFFFFF"
       },
       "contents": [
         {
           "images": [
             {
-              "url": "/images/HistoiresEtNombres/menu.webp",
+              "url": "/images/Vasava/intro.webp",
               "span": "3-2",
               "position": {
                 "desktop": 5,
@@ -567,61 +709,56 @@
           ],
           "texts": [
             {
-              "text": "Web application for learning reading and arithmetic.",
+              "text": "A studio website with a custom slider and image gallery.",
               "position": {
-                "desktop": 8,
-                "mobile": 12
-              }
+                "desktop": 13,
+                "mobile": 1
+              },
+              "lead": true
             }
           ]
         },
         {
           "images": [
             {
-              "url": "/images/HistoiresEtNombres/c1.webp",
-              "span": "2-2",
+              "url": "/images/Vasava/slider.webp",
+              "span": "4-2",
               "position": {
                 "desktop": 0,
                 "mobile": 0
               }
-            },
-            {
-              "url": "/images/HistoiresEtNombres/c2.webp",
-              "span": "2-2",
-              "position": {
-                "desktop": 7,
-                "mobile": 7
-              }
             }
           ],
           "texts": [
             {
-              "text": "Arithmetic.",
+              "text": "A custom slider built with Embla.",
               "position": {
-                "desktop": 3,
-                "mobile": 3
-              }
+                "desktop": 12,
+                "mobile": 7
+              },
+              "label": "Module"
             }
           ]
         },
         {
           "images": [
             {
-              "url": "/images/HistoiresEtNombres/s1.webp",
-              "span": "3-2",
+              "url": "/images/Vasava/popup.webp",
+              "span": "3-3",
               "position": {
-                "desktop": 1,
+                "desktop": 0,
                 "mobile": 0
               }
             }
           ],
           "texts": [
             {
-              "text": "Create your own stories.",
+              "text": "A pop-up image gallery.",
               "position": {
-                "desktop": 10,
-                "mobile": 7
-              }
+                "desktop": 13,
+                "mobile": 10
+              },
+              "label": "Module"
             }
           ]
         }
@@ -629,97 +766,11 @@
     },
     {
       "id": 7,
-      "title": "Hop Ma Liste",
-      "year": "2022",
-      "context": "Studit",
-      "description": "Mobile app to help people with suicidal thoughts.",
-      "technologies": [
-        "React Native"
-      ],
-      "link": "https://hopmaliste.fr/",
-      "cover": "/images/HopMaListe/hopMaListe.webp",
-      "color": {
-        "background": "#223336",
-        "text": "#79ADB6"
-      },
-      "contents": [
-        {
-          "images": [
-            {
-              "url": "/images/HopMaListe/home.webp",
-              "span": "3-2",
-              "position": {
-                "desktop": 5,
-                "mobile": 6
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Mobile app to help people with suicidal thoughts.",
-              "position": {
-                "desktop": 13,
-                "mobile": 12
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": {
-                "desktop": "/images/HopMaListe/langue.webp",
-                "mobile": "/images/HopMaListe/langueThemeMobile.webp"
-              },
-              "span": {
-                "desktop": "2-3",
-                "mobile": "3-4"
-              },
-              "position": {
-                "desktop": 0,
-                "mobile": 0
-              }
-            },
-            {
-              "url": {
-                "desktop": "/images/HopMaListe/theme.webp",
-                "mobile": null
-              },
-              "span": {
-                "desktop": "2-3",
-                "mobile": "0-0"
-              },
-              "position": {
-                "desktop": 2,
-                "mobile": 1
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Language settings.",
-              "position": {
-                "desktop": 0,
-                "mobile": 0
-              }
-            },
-            {
-              "text": "Theme settings.",
-              "position": {
-                "desktop": 12,
-                "mobile": 11
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": 8,
       "title": "Wanderlost Whispers",
       "year": "2023",
+      "role": "3D design in Blender, development in Three.js.",
       "context": "School project",
-      "description": "What happens to postcards that don't arrive?",
+      "tagline": "What happens to postcards that never arrive?",
       "technologies": [
         "Three.js"
       ],
@@ -743,11 +794,12 @@
           ],
           "texts": [
             {
-              "text": "Poetic and interactive 3D experience.",
+              "text": "What happens to postcards that never arrive?",
               "position": {
                 "desktop": 13,
                 "mobile": 12
-              }
+              },
+              "lead": true
             }
           ]
         },
@@ -772,18 +824,20 @@
           ],
           "texts": [
             {
-              "text": "Creation of the 3D environment in Blender.",
+              "text": "The 3D environment, built in Blender.",
               "position": {
                 "desktop": 11,
                 "mobile": 11
-              }
+              },
+              "label": "Modeling"
             },
             {
-              "text": "Integration of the 3D scene into Three.js.",
+              "text": "The scene, integrated into Three.js.",
               "position": {
                 "desktop": 3,
                 "mobile": 6
-              }
+              },
+              "label": "Integration"
             }
           ]
         },
@@ -800,10 +854,79 @@
           ],
           "texts": [
             {
-              "text": "Particles creation in three.js.",
+              "text": "Created in Three.js.",
               "position": {
                 "desktop": 12,
                 "mobile": 1
+              },
+              "label": "Particles"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "MARI-E",
+      "year": "2023",
+      "context": "School project",
+      "tagline": "An AR experience made with the Orangerie Museum.",
+      "technologies": [
+        "Three.js",
+        "WebXR"
+      ],
+      "link": "https://www.youtube.com/shorts/yh_1zn_Y2OQ",
+      "linkLabel": "Watch the video",
+      "cover": "/images/Orangerie/orangerie.webp",
+      "color": {
+        "background": "#315F64",
+        "text": "#CFFAFF"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/Orangerie/intro.webp",
+              "span": "1-2",
+              "position": {
+                "desktop": 5,
+                "mobile": 6
+              }
+            },
+            {
+              "url": "/images/Orangerie/i4.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 6,
+                "mobile": 7
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "An AR experience made with the Orangerie Museum.",
+              "position": {
+                "desktop": 13,
+                "mobile": 12
+              },
+              "lead": true
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": {
+                "desktop": "/images/Orangerie/content.webp",
+                "mobile": "/images/Orangerie/contentMobile.webp"
+              },
+              "span": {
+                "desktop": "4-3",
+                "mobile": "3-4"
+              },
+              "position": {
+                "desktop": 0,
+                "mobile": 0
               }
             }
           ]
@@ -812,78 +935,11 @@
     },
     {
       "id": 9,
-      "title": "KFC ORIGINS",
-      "year": "2023",
-      "context": "Havas Factory",
-      "description": "Landing page for KFC Origins collection",
-      "technologies": [
-        "Javascript"
-      ],
-      "link": "https://www.kfc.fr/origins#",
-      "cover": "/images/KFC/KFC.webp",
-      "color": {
-        "background": "#332526",
-        "text": "#D23542"
-      },
-      "contents": [
-        {
-          "images": [
-            {
-              "url": "/images/KFC/intro.webp",
-              "span": "3-2",
-              "position": {
-                "desktop": 5,
-                "mobile": 6
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Landing page for KFC Origins collection.",
-              "position": {
-                "desktop": 13,
-                "mobile": 12
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": "/images/KFC/c1.webp",
-              "span": "2-2",
-              "position": {
-                "desktop": 0,
-                "mobile": 0
-              }
-            },
-            {
-              "url": "/images/KFC/c2.webp",
-              "span": "2-2",
-              "position": {
-                "desktop": 7,
-                "mobile": 7
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Animation with GSAP and CSS sprite.",
-              "position": {
-                "desktop": 11,
-                "mobile": 6
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": 10,
       "title": "Other Side",
       "year": "2025",
+      "role": "Design, fabrication and electronics.",
       "context": "School project",
-      "description": "Current project",
+      "tagline": "Two interactive frames, built by hand and linked over Wi-Fi.",
       "technologies": [
         "Arduino"
       ],
@@ -907,11 +963,12 @@
           ],
           "texts": [
             {
-              "text": "Design of two remotely connected interactive frames.",
+              "text": "Two interactive frames, built by hand and linked over Wi-Fi.",
               "position": {
                 "desktop": 12,
                 "mobile": 8
-              }
+              },
+              "lead": true
             }
           ]
         },
@@ -972,42 +1029,48 @@
               "position": {
                 "desktop": 1,
                 "mobile": 1
-              }
+              },
+              "label": "Build"
             },
             {
               "text": "Drilling.",
               "position": {
                 "desktop": 5,
                 "mobile": 5
-              }
+              },
+              "label": "Build"
             },
             {
-              "text": "Cutting of optical fibers.",
+              "text": "Cutting the optical fibers.",
               "position": {
                 "desktop": 11,
                 "mobile": 11
-              }
+              },
+              "label": "Build"
             },
             {
               "text": "Mounting.",
               "position": {
                 "desktop": 3,
                 "mobile": 3
-              }
+              },
+              "label": "Build"
             },
             {
               "text": "Border mounting.",
               "position": {
                 "desktop": 7,
                 "mobile": 7
-              }
+              },
+              "label": "Build"
             },
             {
               "text": "Wiring.",
               "position": {
                 "desktop": 13,
                 "mobile": 9
-              }
+              },
+              "label": "Build"
             }
           ]
         },
@@ -1032,45 +1095,46 @@
           ],
           "texts": [
             {
-              "text": "Wi-Fi connection between the two frames.",
+              "text": "Wi-Fi link between the two frames.",
               "position": {
                 "desktop": 2,
                 "mobile": 2
-              }
+              },
+              "label": "Connection"
             },
             {
               "text": "Color test.",
               "position": {
                 "desktop": 11,
                 "mobile": 9
-              }
+              },
+              "label": "Test"
             }
           ]
         }
       ]
     },
     {
-      "id": 11,
-      "title": "Sizing",
-      "year": "2024",
-      "context": "Veepee",
-      "description": "Size recommendation project for Veepee",
+      "id": 10,
+      "title": "KFC ORIGINS",
+      "year": "2023",
+      "context": "Havas Factory",
+      "tagline": "A landing page for the KFC Origins collection.",
       "technologies": [
-        "React",
-        "Strapi",
-        ".NET"
+        "Javascript"
       ],
-      "link": "",
-      "cover": "/images/Sizing/Sizing.webp",
+      "link": "https://www.kfc.fr/origins#",
+      "linkLabel": "Visit the site",
+      "cover": "/images/KFC/KFC.webp",
       "color": {
-        "background": "#432D3A",
-        "text": "#DF2695"
+        "background": "#332526",
+        "text": "#D23542"
       },
       "contents": [
         {
           "images": [
             {
-              "url": "/images/Sizing/intro.webp",
+              "url": "/images/KFC/intro.webp",
               "span": "3-2",
               "position": {
                 "desktop": 5,
@@ -1080,557 +1144,42 @@
           ],
           "texts": [
             {
-              "text": "Size recommendation project for the Veepee e-commerce site.",
+              "text": "A landing page for the KFC Origins collection.",
               "position": {
                 "desktop": 13,
                 "mobile": 12
-              }
+              },
+              "lead": true
             }
           ]
         },
         {
           "images": [
             {
-              "url": "/images/Sizing/s1.webp",
-              "span": "2-3",
+              "url": "/images/KFC/c1.webp",
+              "span": "2-2",
               "position": {
                 "desktop": 0,
-                "mobile": 4
+                "mobile": 0
               }
             },
             {
-              "url": "/images/Sizing/s2.webp",
+              "url": "/images/KFC/c2.webp",
               "span": "2-2",
               "position": {
                 "desktop": 7,
-                "mobile": 0
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Recommended size is calculated based on the brands' size charts.",
-              "position": {
-                "desktop": 2,
-                "mobile": 2
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": "/images/Sizing/s3.webp",
-              "span": "2-2",
-              "position": {
-                "desktop": 5,
-                "mobile": 0
-              }
-            },
-            {
-              "url": "/images/Sizing/s4.webp",
-              "span": "2-2",
-              "position": {
-                "desktop": 2,
-                "mobile": 7
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": "/images/Sizing/sr1.webp",
-              "span": "1-2",
-              "position": {
-                "desktop": 0,
-                "mobile": 0
-              }
-            },
-            {
-              "url": "/images/Sizing/sr2.webp",
-              "span": "1-2",
-              "position": {
-                "desktop": 6,
-                "mobile": 4
-              }
-            },
-            {
-              "url": "/images/Sizing/sr3.webp",
-              "span": "1-2",
-              "position": {
-                "desktop": 2,
-                "mobile": 2
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Available on the iOS and Android app.",
-              "position": {
-                "desktop": 13,
-                "mobile": 8
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": 12,
-      "title": "MARI-E",
-      "year": "2023",
-      "context": "School project",
-      "description": "AR experience in partnership with the Orangerie Museum",
-      "technologies": [
-        "Three.js",
-        "WebXR"
-      ],
-      "link": "https://www.youtube.com/shorts/yh_1zn_Y2OQ",
-      "cover": "/images/Orangerie/orangerie.webp",
-      "color": {
-        "background": "#315F64",
-        "text": "#CFFAFF"
-      },
-      "contents": [
-        {
-          "images": [
-            {
-              "url": "/images/Orangerie/intro.webp",
-              "span": "1-2",
-              "position": {
-                "desktop": 5,
-                "mobile": 6
-              }
-            },
-            {
-              "url": "/images/Orangerie/i4.webp",
-              "span": "2-2",
-              "position": {
-                "desktop": 6,
                 "mobile": 7
               }
             }
           ],
           "texts": [
             {
-              "text": "AR experience in partnership with the Orangerie Museum.",
-              "position": {
-                "desktop": 13,
-                "mobile": 12
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": {
-                "desktop": "/images/Orangerie/content.webp",
-                "mobile": "/images/Orangerie/contentMobile.webp"
-              },
-              "span": {
-                "desktop": "4-3",
-                "mobile": "3-4"
-              },
-              "position": {
-                "desktop": 0,
-                "mobile": 0
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": 13,
-      "title": "Presage",
-      "year": "2023",
-      "context": "School project",
-      "description": "Interactive road trip story",
-      "technologies": [
-        "React Three Fiber"
-      ],
-      "link": "https://presage-game.netlify.app/",
-      "cover": "/images/Presage/presage.webp",
-      "color": {
-        "background": "#332F2E",
-        "text": "#B95E4A"
-      },
-      "contents": [
-        {
-          "images": [
-            {
-              "url": "/images/Presage/intro.webp",
-              "span": "3-2",
-              "position": {
-                "desktop": 5,
-                "mobile": 6
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Interactive road trip story.",
-              "position": {
-                "desktop": 13,
-                "mobile": 12
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": "/images/Presage/map1.webp",
-              "span": "3-2",
-              "position": {
-                "desktop": 0,
-                "mobile": 0
-              }
-            },
-            {
-              "url": "/images/Presage/map2.webp",
-              "span": "1-1",
-              "position": {
-                "desktop": 8,
-                "mobile": 6
-              }
-            },
-            {
-              "url": "/images/Presage/map3.webp",
-              "span": "1-1",
-              "position": {
-                "desktop": 12,
-                "mobile": 10
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Map for navigating between scenes.",
+              "text": "Built with GSAP and CSS sprites.",
               "position": {
                 "desktop": 11,
-                "mobile": 8
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": {
-                "desktop": "/images/Presage/content.webp",
-                "mobile": "/images/Presage/contentMobile.webp"
-              },
-              "span": {
-                "desktop": "4-3",
-                "mobile": "3-3"
-              },
-              "position": {
-                "desktop": 0,
-                "mobile": 0
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Puzzle to solve in the various scenes.",
-              "position": {
-                "desktop": 10,
-                "mobile": 10
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": {
-                "desktop": "/images/Presage/end.webp",
-                "mobile": "/images/Presage/endMobile.webp"
-              },
-              "span": {
-                "desktop": "4-2",
-                "mobile": "3-3"
-              },
-              "position": {
-                "desktop": 0,
-                "mobile": 0
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Environment changes based on players' previous actions.",
-              "position": {
-                "desktop": 12,
-                "mobile": 10
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": 14,
-      "title": "Vasava",
-      "year": "2026",
-      "context": "Dallonses",
-      "description": "Website for the Vasava studio",
-      "technologies": [
-        "Next.JS",
-        "TailwindCSS",
-        "Framer"
-      ],
-      "link": "https://www.vasava.es/en",
-      "cover": "/images/Vasava/vasava.webp",
-      "color": {
-        "background": "#181818",
-        "text": "#FFFFFF"
-      },
-      "contents": [
-        {
-          "images": [
-            {
-              "url": "/images/Vasava/intro.webp",
-              "span": "3-2",
-              "position": {
-                "desktop": 5,
                 "mobile": 6
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Custom module development for the Vasava agency website.",
-              "position": {
-                "desktop": 13,
-                "mobile": 1
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": "/images/Vasava/slider.webp",
-              "span": "4-2",
-              "position": {
-                "desktop": 0,
-                "mobile": 0
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Development of a custom Embla slider module.",
-              "position": {
-                "desktop": 12,
-                "mobile": 7
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": "/images/Vasava/popup.webp",
-              "span": "3-3",
-              "position": {
-                "desktop": 0,
-                "mobile": 0
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Development of a pop-up image gallery.",
-              "position": {
-                "desktop": 13,
-                "mobile": 10
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": 15,
-      "title": "Vraiment",
-      "year": "2024",
-      "context": "School project",
-      "description": "A board game that blends physical and digital.",
-      "technologies": [
-        "Next.JS",
-        "Three.js",
-        "GSAP",
-        "Socket.io",
-        "Express.js"
-      ],
-      "link": "https://vraiment.netlify.app/",
-      "cover": "/images/Vraiment/vraiment.webp",
-      "color": {
-        "background": "#131651",
-        "text": "#EDEAE1"
-      },
-      "contents": [
-        {
-          "images": [
-            {
-              "url": "/images/Vraiment/intro.webp",
-              "span": "3-2",
-              "position": {
-                "desktop": 5,
-                "mobile": 6
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "A board game that blends physical and digital.",
-              "position": {
-                "desktop": 13,
-                "mobile": 12
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": "/images/Vraiment/p1.webp",
-              "span": "4-3",
-              "position": {
-                "desktop": 0,
-                "mobile": 0
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Player selection.",
-              "position": {
-                "desktop": 3,
-                "mobile": 6
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": "/images/Vraiment/i1.webp",
-              "span": "1-2",
-              "position": {
-                "desktop": 0,
-                "mobile": 0
-              }
-            },
-            {
-              "url": "/images/Vraiment/i2.webp",
-              "span": "1-2",
-              "position": {
-                "desktop": 6,
-                "mobile": 1
-              }
-            },
-            {
-              "url": "/images/Vraiment/i3.webp",
-              "span": "1-2",
-              "position": {
-                "desktop": 1,
-                "mobile": 7
-              }
-            },
-            {
-              "url": "/images/Vraiment/i4.webp",
-              "span": "1-2",
-              "position": {
-                "desktop": 8,
-                "mobile": 8
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "A player isolates themselves and describes a memory.",
-              "position": {
-                "desktop": 10,
-                "mobile": 9
-              }
-            },
-            {
-              "text": "AI generates 2 images of the memory, one true and one false based on the true one.",
-              "position": {
-                "desktop": 3,
-                "mobile": 2
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": "/images/Vraiment/v1.webp",
-              "span": "2-2",
-              "position": {
-                "desktop": 0,
-                "mobile": 7
-              }
-            },
-            {
-              "url": "/images/Vraiment/v2.webp",
-              "span": "2-2",
-              "position": {
-                "desktop": 7,
-                "mobile": 0
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Players ask questions to find the true memory.",
-              "position": {
-                "desktop": 3,
-                "mobile": 9
-              }
-            },
-            {
-              "text": "At the end of the allotted time, players vote for the true memory.",
-              "position": {
-                "desktop": 11,
-                "mobile": 2
-              }
-            }
-          ]
-        },
-        {
-          "images": [
-            {
-              "url": "/images/Vraiment/score.webp",
-              "span": "2-2",
-              "position": {
-                "desktop": 0,
-                "mobile": 7
-              }
-            },
-            {
-              "url": "/images/Vraiment/game.webp",
-              "span": "2-2",
-              "position": {
-                "desktop": 7,
-                "mobile": 0
-              }
-            }
-          ],
-          "texts": [
-            {
-              "text": "Scoreboard at the end of each turn.",
-              "position": {
-                "desktop": 10,
-                "mobile": 9
-              }
+              },
+              "label": "Animation"
             }
           ]
         }

@@ -1,5 +1,6 @@
 import { useMemo, useSyncExternalStore } from 'react'
 import { isMobile } from '@/utils/deviceUtils'
+import projectsData from '@/data/projects.json'
 
 let isMobileDevice = typeof window !== 'undefined' ? isMobile() : false
 let isListening = false
@@ -70,6 +71,9 @@ export const useGridConfig = () => {
       isMobile: currentIsMobile,
       cols,
       rows,
+      // Nombre de tuiles de la page projet : une tuile par projet, complétée par des tuiles vides
+      // (invisibles sur l'accueil) pour que la grille et ses flèches de navigation existent toujours.
+      tileCount: Math.max(cols * rows, projectsData.projects.length),
 
       // Configuration des bordures
       borderColsLeft: currentIsMobile ? 4 : 3,
