@@ -357,6 +357,9 @@ const Project = forwardRef(function Project(
     },
     onRest: () => {
       isPageFlipAnimatingRef.current = false
+      if (isFiller && hasFillerRevealedRef.current) {
+        setIsFillerDoubleSided(true)
+      }
       // Resynchroniser sur l'angle réel (et non sur la page cible, qui peut déjà avoir changé si on a
       // cliqué pendant que cette animation finissait de se stabiliser).
       syncOverlayPageWithCamera()
@@ -475,19 +478,15 @@ const Project = forwardRef(function Project(
     rippleUniforms,
   })
 
-  // Face avant des tuiles vides : démasquée une fois qu'elles se sont retournées (comme les bordures)
+  // Face avant des tuiles vides : démasquée quand elles ont fini de se retourner (voir onRest du ressort de page),
+  // et remasquée quand le projet se ferme.
   useEffect(() => {
-    if (!isFiller) return undefined
-
+    if (!isFiller) return
     if (!isProjectsArranged || !isArrangementAnimationComplete) {
       setIsFillerDoubleSided(false)
       hasFillerRevealedRef.current = false
-      return undefined
     }
-
-    const timeoutId = setTimeout(() => setIsFillerDoubleSided(true), fillerRevealDelay + 1300)
-    return () => clearTimeout(timeoutId)
-  }, [isFiller, isProjectsArranged, isArrangementAnimationComplete, fillerRevealDelay])
+  }, [isFiller, isProjectsArranged, isArrangementAnimationComplete])
 
   useEffect(() => {
     if (pageMaterialRef.current) {
@@ -720,7 +719,7 @@ const Project = forwardRef(function Project(
             />
           </mesh>
           <group>
-            {isArrangementAnimationComplete && (
+            {isArrangementAnimationComplete && (!isFiller || isFillerDoubleSided) && (
               <>
                 {overlayPage === 1 && selectedProject && (
                   <>
