@@ -519,8 +519,10 @@ const Project = forwardRef(function Project(
     )
     const fallbackContentMap = backgroundFallbackTexture || emptyTexture
     const nextColor = 'white'
-    const baseMap = texture || emptyTexture
-    const coverOrFallbackMap = texture || fallbackContentMap
+    // Une tuile vide n'a pas de couverture : elle prend la couleur du projet ouvert dès son arrivée,
+    // sinon sa face blanche reste visible jusqu'à son retournement (les dernières tuiles sont les plus tardives).
+    const baseMap = isFiller ? fallbackContentMap : (texture || emptyTexture)
+    const coverOrFallbackMap = isFiller ? fallbackContentMap : (texture || fallbackContentMap)
     const previousPageValue = previousCurrentPageRef.current
     const pageChanged = currentPage !== previousPageValue
     let nextFrontMap = baseMap
@@ -631,7 +633,7 @@ const Project = forwardRef(function Project(
     material.color.set(nextColor)
 
     if (!shouldUseContentMaps && !shouldUseNavigationMap) {
-      lastVisiblePageMapRef.current = texture || coverOrFallbackMap
+      lastVisiblePageMapRef.current = coverOrFallbackMap
     }
   }, [
     isArrangementAnimationComplete,
@@ -649,6 +651,7 @@ const Project = forwardRef(function Project(
     gridPosition,
     gridConfig,
     rippleUniforms,
+    isFiller,
   ])
 
   useEffect(() => {
