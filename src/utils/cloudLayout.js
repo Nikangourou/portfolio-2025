@@ -15,10 +15,6 @@ const DEPTH_RANGE = 1.5
 const DEPTH_WEIGHT = 0.5
 const CANDIDATES_PER_POINT = 24
 
-// Angle (autour de z) à donner au groupe pour que son axe Y se couche le long de la diagonale de l'écran :
-// la molette fait tourner le nuage autour de cet axe, comme un cylindre posé en diagonale.
-export const getDiagonalAxisAngle = (aspect) => -Math.atan(aspect)
-
 export const generateCloudPositions = (count, camera, distance, orderedCount = 0) => {
   const fov = camera.fov * (Math.PI / 180)
   const aspect = camera.aspect
@@ -40,16 +36,11 @@ export const generateCloudPositions = (count, camera, distance, orderedCount = 0
     w,
   ]
 
-  // Le groupe démarre tourné d'un demi-tour autour de la diagonale (cf. useRotationControl) : à l'écran,
-  // chaque point est le reflet de sa position dans le groupe par rapport à la diagonale, et sa profondeur est
-  // inversée. On renvoie donc la position dans le groupe qui donne, une fois le demi-tour fait, le point voulu.
+  // Position dans le groupe : la profondeur change la taille apparente, donc l'étendue visible
   const toWorld = ([mx, my, w]) => {
     const z = w * DEPTH_RANGE
     const halfHeight = (groupDepth - z) * Math.tan(fov / 2)
-    const x = mx * halfHeight
-    const y = my * halfHeight
-    const along = x * direction[0] + y * direction[1]
-    return [2 * along * direction[0] - x, 2 * along * direction[1] - y, -z]
+    return [mx * halfHeight, my * halfHeight, z]
   }
 
   const squaredDistance = (a, b) => {

@@ -13,6 +13,9 @@ import { applyBorderRippleShader as applySharedBorderRippleShader } from '@/util
 // Délai d'arrivée maximal : les projets arrivent avec 50 ms d'écart, soit ~700 ms pour 15 tuiles
 const MAX_ARRIVAL_DELAY_MS = 700
 // Contour d'une bordure sur l'accueil : un trait fin et discret, sans remplissage
+// Facteur appliqué à la rotation de la molette, tiré par tuile
+const SPIN_FACTOR_MIN = 0.7
+const SPIN_FACTOR_MAX = 1.4
 const OUTLINE_COLOR = '#000000'
 const OUTLINE_OPACITY = 0.2
 
@@ -35,7 +38,11 @@ const BorderTile = ({
   isProjectsArranged,
   outlineGeometry,
   outlineMaterial,
+  spin,
 }) => {
+  const spinFactor = useMemo(() => SPIN_FACTOR_MIN + Math.random() * (SPIN_FACTOR_MAX - SPIN_FACTOR_MIN), [])
+  const spinAngle = useMemo(() => spin.to((angle) => angle * spinFactor), [spin, spinFactor])
+
   const meshRef = useRef(null)
   const materialRef = useRef(null)
 
@@ -93,8 +100,9 @@ const BorderTile = ({
     <animated.group
       key={`border-${index}`}
       position={position}
-      rotation={rotation}
+      rotation-y={spinAngle}
     >
+    <animated.group rotation={rotation}>
       {/* Sur l'accueil : un simple contour (une tuile pleine masquerait les cartes derrière) */}
       {!isTileShown && (
         <lineLoop geometry={outlineGeometry} material={outlineMaterial} />
@@ -117,11 +125,12 @@ const BorderTile = ({
         </mesh>
       </AnimatedMesh>
     </animated.group>
+    </animated.group>
   )
 }
 
 // Rendu dans le groupe des projets (ProjectList), pour tourner avec le nuage de l'accueil
-const ProjectBorders = () => {
+const ProjectBorders = ({ spin }) => {
   const isProjectsArranged = useStore((state) => state.isProjectsArranged)
   const currentTheme = useThemeStore((state) => state.currentTheme)
 
@@ -173,6 +182,7 @@ const ProjectBorders = () => {
           isProjectsArranged={isProjectsArranged}
           outlineGeometry={outlineGeometry}
           outlineMaterial={outlineMaterial}
+          spin={spin}
         />
       ))}
     </group>

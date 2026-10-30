@@ -7,7 +7,6 @@ import { useShallow } from 'zustand/react/shallow'
 import ProjectInfoFloating from '../Interface/ProjectInfoFloating'
 import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
 import { useGridConfig } from '@/hooks/useGridConfig'
-import { getDiagonalAxisAngle } from '@/utils/cloudLayout'
 import { useProjectInteraction } from '@/hooks/useProjectInteraction'
 import { useSceneRippleField } from '@/hooks/useGlobalRipple'
 import { preloadFirstPages, preloadProjectContents, releaseProjectContents } from '@/utils/contentLoader'
@@ -89,14 +88,10 @@ export default function Projects() {
     return Array.from({ length: gridConfig.tileCount }, (_, index) => {
       const project = projectsData.projects[index] || null
 
-      // Le demi-tour initial du groupe se fait autour de la diagonale : il fait aussi tourner chaque carte dans
-      // son plan de deux fois l'angle de la diagonale. On la remet à l'endroit (l'ordre de rotation ZYX de
-      // Project applique cette correction en dernier, quelle que soit la rotation aléatoire de la carte).
-      const upright = 2 * getDiagonalAxisAngle(camera.aspect)
       const randomRotation = [
         (Math.random() - 0.5) * Math.PI * 0.4,
         Math.random() * Math.PI * 2,
-        (Math.random() - 0.5) * Math.PI * 0.40 + upright
+        (Math.random() - 0.5) * Math.PI * 0.40
       ]
 
       return {

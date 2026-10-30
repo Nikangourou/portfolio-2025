@@ -2,11 +2,11 @@ import { useState, useEffect, useRef } from 'react'
 import { useStore } from '@/stores/store'
 
 export function useRotationControl() {
-  const [rotationY, setRotationY] = useState(Math.PI)
-  const [targetRotationY, setTargetRotationY] = useState(Math.PI)
+  const [rotationY, setRotationY] = useState(0)
+  const [targetRotationY, setTargetRotationY] = useState(0)
   const isProjectsArranged = useStore((state) => state.isProjectsArranged)
   const isProjectsArrangedRef = useRef(isProjectsArranged)
-  const lastFreeRotationRef = useRef(Math.PI)
+  const lastFreeRotationRef = useRef(0)
   const wasArrangedRef = useRef(false)
 
   useEffect(() => {
@@ -21,21 +21,9 @@ export function useRotationControl() {
 
       wasArrangedRef.current = true
 
-      const currentRotation = lastFreeRotationRef.current
-      const targetRotation = 0
-
-      // Normaliser les rotations entre -π et π pour prendre le chemin le plus court.
-      const normalizedCurrent = ((currentRotation + Math.PI) % (2 * Math.PI)) - Math.PI
-      const normalizedTarget = ((targetRotation + Math.PI) % (2 * Math.PI)) - Math.PI
-
-      let shortestPath = normalizedTarget - normalizedCurrent
-      if (Math.abs(shortestPath) > Math.PI) {
-        shortestPath = shortestPath > 0
-          ? shortestPath - 2 * Math.PI
-          : shortestPath + 2 * Math.PI
-      }
-
-      setTargetRotationY(currentRotation + shortestPath)
+      // Chaque tuile applique son propre facteur à cet angle : seul zéro exact les remet toutes à plat
+      // (un multiple de 2π, équivalent pour un groupe entier, ne l'est plus tuile par tuile).
+      setTargetRotationY(0)
       return
     }
 

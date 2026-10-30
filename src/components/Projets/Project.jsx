@@ -34,6 +34,10 @@ const getTransparentTexture = () => {
   return transparentTexture
 }
 
+// Facteur appliqué à la rotation de la molette, tiré par tuile
+const SPIN_FACTOR_MIN = 0.7
+const SPIN_FACTOR_MAX = 1.4
+
 // Contour d'une tuile vide sur l'accueil : un simple trait fin et discret, sans remplissage
 // (une tuile pleine masquerait les cartes qui sont derrière).
 const FILLER_OUTLINE_COLOR = '#000000'
@@ -190,7 +194,7 @@ const getNavigationIconTypeForPage = ({
 }
 
 const Project = forwardRef(function Project(
-  { gridPosition, image, initialPosition, initialRotation, isFiller = false },
+  { gridPosition, image, initialPosition, initialRotation, isFiller = false, spin },
   ref,
 ) {
   const pageMaterialRef = useRef(null)
@@ -315,6 +319,10 @@ const Project = forwardRef(function Project(
   // Obtenir les positions d'arrangement directement depuis le store
   const { predefinedPositions, projectSize } = useProjectPositionsStore()
 
+  // Vitesse de rotation propre à la tuile : toutes ne tournent pas exactement à la même vitesse
+  const spinFactor = useMemo(() => SPIN_FACTOR_MIN + Math.random() * (SPIN_FACTOR_MAX - SPIN_FACTOR_MIN), [])
+  const spinAngle = useMemo(() => spin.to((angle) => angle * spinFactor), [spin, spinFactor])
+
   // Position cible pour l'arrangement (memoized)
   const targetArrangedPosition = useMemo(() => {
     return predefinedPositions[gridPosition] || [0, 0, 0]
@@ -342,7 +350,7 @@ const Project = forwardRef(function Project(
 
   // Gestion des positions et rotations avec springs - OPTIMISÉE
   const { position, rotation } = useSpring({
-    from: { position: [0, 0, 20], rotation: [0, 0, 0] }, // Commencer à l'origine pour tous les projets
+    from: { position: [0, 0, -20], rotation: [0, 0, 0] }, // Arriver du fond de la scène
     to: {
       position: isProjectsArranged ? targetArrangedPosition : (initialPosition || [0, 0, 0]),
       rotation: isProjectsArranged ? [0, 0, 0] : (initialRotation || [0, 0, 0])
@@ -746,12 +754,14 @@ const Project = forwardRef(function Project(
 
 
   return (
+    // Le groupe extérieur porte la position et la rotation de la molette (la tuile tourne sur elle-même, plus
+    // ou moins vite selon la tuile) ; l'intérieur porte la rotation propre de la tuile.
     <animated.group
       ref={projectRef}
       position={position}
-      rotation={rotation}
-      rotation-order="ZYX"
+      rotation-y={spinAngle}
     >
+    <animated.group rotation={rotation}>
       {isFiller && !isFillerFilled && (
         <lineLoop geometry={fillerOutlineGeometry}>
           <lineBasicMaterial
@@ -900,6 +910,7 @@ const Project = forwardRef(function Project(
           </group>
         </AnimatedMesh>
       </animated.group>
+    </animated.group>
     </animated.group>
   )
 })
