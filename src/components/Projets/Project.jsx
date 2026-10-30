@@ -750,6 +750,7 @@ const Project = forwardRef(function Project(
       ref={projectRef}
       position={position}
       rotation={rotation}
+      rotation-order="ZYX"
     >
       {isFiller && !isFillerFilled && (
         <lineLoop geometry={fillerOutlineGeometry}>
