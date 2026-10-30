@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { generateCloudPositions } from '../utils/cloudLayout'
+import projectsData from '../data/projects.json'
 
 export const useProjectPositionsStore = create((set, get) => ({
   // État calculé
@@ -136,6 +137,6 @@ export const useProjectPositionsStore = create((set, get) => ({
     calculateBorderPositions(camera, gridConfig)
 
     const total = gridConfig.tileCount + get().borderPositions.length
-    set({ cloudPositions: generateCloudPositions(total, camera, gridConfig.distance) })
+    set({ cloudPositions: generateCloudPositions(total, camera, gridConfig.distance, projectsData.projects.length) })
   }
 }))
