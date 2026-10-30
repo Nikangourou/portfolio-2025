@@ -5,12 +5,16 @@
 // - Les tuiles vides et les bordures se répartissent ensuite dans la bande autour de la diagonale, chacune
 //   au point le plus éloigné de celles déjà posées (« best candidate »).
 
-// Dispositions disponibles. On en change avec le paramètre d'URL `?layout=diagonal|horizontal|uniform`.
+// Dispositions disponibles. On en change avec le paramètre d'URL `?layout=...`.
 //  - diagonal   : bande du bas à gauche vers le haut à droite
 //  - horizontal : bande au milieu de l'écran, de gauche à droite
 //  - uniform    : répartition régulière sur toute la zone visible
+//  - grid       : grille régulière (rangées et colonnes) avec un peu de profondeur
+//  - spiral     : spirale du centre vers l'extérieur, les projets d'abord (donc au centre)
+//  - original   : celle de main : tirage aléatoire dans un cube fixe de ±2, sans lien avec l'écran
+//  - arranged   : les tuiles partent de leur place finale (celle de la page projet) : voir projectPositionsStore
 // Les deux bandes posent les projets dans l'ordre de la liste, en alternant de part et d'autre de la ligne.
-export const CLOUD_LAYOUTS = ['diagonal', 'horizontal', 'uniform']
+export const CLOUD_LAYOUTS = ['diagonal', 'horizontal', 'uniform', 'grid', 'spiral', 'original', 'arranged']
 const DEFAULT_LAYOUT = 'diagonal'
 
 export const getCloudLayout = () => {
@@ -30,7 +34,36 @@ const DEPTH_RANGE = 1.5
 const DEPTH_WEIGHT = 0.5
 const CANDIDATES_PER_POINT = 24
 
+// Disposition de main : chaque point est tiré dans un cube de ±2, en gardant une distance minimale avec les
+// points déjà posés (qui diminue de 10 % chaque fois que 100 tirages de suite échouent).
+const generateOriginalPositions = (count) => {
+  const positions = []
+  let minDistance = 2.0
+
+  for (let i = 0; i < count; i++) {
+    let attempts = 0
+    let position
+    do {
+      position = [Math.random() * 4 - 2, Math.random() * 4 - 2, Math.random() * 4 - 2]
+      attempts++
+      if (attempts > 100) {
+        minDistance *= 0.9
+        attempts = 0
+      }
+    } while (positions.some((other) => Math.hypot(
+      position[0] - other[0], position[1] - other[1], position[2] - other[2],
+    ) < minDistance))
+    positions.push(position)
+  }
+
+  return positions
+}
+
 export const generateCloudPositions = (count, camera, distance, orderedCount = 0, layout = getCloudLayout()) => {
+  if (layout === 'original') {
+    return generateOriginalPositions(count)
+  }
+
   const fov = camera.fov * (Math.PI / 180)
   const aspect = camera.aspect
   const groupDepth = Math.abs(distance)
@@ -39,7 +72,7 @@ export const generateCloudPositions = (count, camera, distance, orderedCount = 0
   // en x et en y. L'écran va de (-aspect, -1) à (aspect, 1).
   // bandPoint(t, s, w) : t le long de la forme (0 à 1), s en travers (-1 à 1), w en profondeur (-1 à 1).
   let bandPoint
-  if (layout === 'uniform') {
+  if (layout === 'uniform' || layout === 'grid' || layout === 'spiral') {
     bandPoint = (t, s, w) => [
       (t * 2 - 1) * aspect * UNIFORM_COVERAGE,
       s * UNIFORM_COVERAGE,
@@ -75,6 +108,40 @@ export const generateCloudPositions = (count, camera, distance, orderedCount = 0
   }
 
   const points = []
+
+  if (layout === 'grid') {
+    // Grille régulière : autant de colonnes qu'il faut pour que les cases soient à peu près carrées à l'écran.
+    // Les cases sont attribuées dans le désordre, pour que les projets ne soient pas tous groupés.
+    const cols = Math.max(1, Math.round(Math.sqrt(count * aspect)))
+    const rows = Math.ceil(count / cols)
+    const cells = Array.from({ length: cols * rows }, (_, index) => index)
+    for (let i = cells.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[cells[i], cells[j]] = [cells[j], cells[i]]
+    }
+    for (let i = 0; i < count; i++) {
+      const col = cells[i] % cols
+      const row = Math.floor(cells[i] / cols)
+      const t = cols === 1 ? 0.5 : col / (cols - 1)
+      const s = rows === 1 ? 0 : (row / (rows - 1)) * 2 - 1
+      points.push(bandPoint(t, s, (Math.random() * 2 - 1) * 0.5))
+    }
+    return points.map(toWorld)
+  }
+
+  if (layout === 'spiral') {
+    // Spirale de tournesol : angle d'or entre deux points, rayon en racine du rang. Le premier point (premier
+    // projet) est au centre, les bordures sont à l'extérieur.
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5))
+    for (let i = 0; i < count; i++) {
+      const radius = Math.sqrt((i + 0.5) / count)
+      const angle = i * goldenAngle
+      const x = Math.cos(angle) * radius
+      const y = Math.sin(angle) * radius
+      points.push([x * aspect * UNIFORM_COVERAGE, y * UNIFORM_COVERAGE, (Math.random() * 2 - 1) * 0.5])
+    }
+    return points.map(toWorld)
+  }
 
   // Les premiers points (projets) : régulièrement espacés le long de la diagonale, de part et d'autre
   const ordered = layout === 'uniform' ? 0 : Math.min(orderedCount, count)
