@@ -23,6 +23,11 @@ const TILE_POSITION = new THREE.Vector3()
 // Décalage (ms) entre le flip de deux tuiles voisines
 const PAGE_FLIP_STAGGER_MS = 100
 
+// Contour d'une tuile vide sur l'accueil : un simple trait fin et discret, sans remplissage
+// (une tuile pleine masquerait les cartes qui sont derrière).
+const FILLER_OUTLINE_COLOR = '#000000'
+const FILLER_OUTLINE_OPACITY = 0.2
+
 const ARRANGED_BACK_FACE_FLIP = { x: 0.0, y: 0.0 }
 const FREE_BACK_FACE_FLIP = { x: 1.0, y: 1.0 }
 
@@ -60,6 +65,13 @@ const getTitleFontSize = (title = '') => {
 
   const fittingSize = Math.floor((TITLE_MAX_WIDTH / longestWordWidth) * 100)
   return Math.max(TITLE_MIN_SIZE, Math.min(TITLE_MAX_SIZE, fittingSize))
+}
+
+// L'accroche de la page 1 tient dans une seule tuile : plus elle est longue, plus on réduit la taille
+const getLeadFontSize = (text = '') => {
+  if (text.length <= 50) return 17
+  if (text.length <= 60) return 15
+  return 14
 }
 
 const drawNavigationIcon = (context, size, type) => {
@@ -672,17 +684,47 @@ const Project = forwardRef(function Project(
     }
   }, [backgroundFallbackTexture])
 
+  // Tuile vide : contour sur l'accueil, tuile pleine (couleur du projet) une fois le projet ouvert
+  const isFillerTileShown = isFiller && isProjectsArranged && isFillerReady
+  const fillerOutlineGeometry = useMemo(() => {
+    if (!isFiller) return null
+    const halfWidth = projectSize.width / 2
+    const halfHeight = projectSize.height / 2
+    return new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-halfWidth, -halfHeight, 0),
+      new THREE.Vector3(halfWidth, -halfHeight, 0),
+      new THREE.Vector3(halfWidth, halfHeight, 0),
+      new THREE.Vector3(-halfWidth, halfHeight, 0),
+    ])
+  }, [isFiller, projectSize.width, projectSize.height])
+
+  useEffect(() => {
+    return () => {
+      fillerOutlineGeometry?.dispose()
+    }
+  }, [fillerOutlineGeometry])
+
 
   return (
     <animated.group
       ref={projectRef}
       position={position}
       rotation={rotation}
-      visible={!isFiller || (isProjectsArranged && isFillerReady)}
     >
+      {isFiller && !isFillerTileShown && (
+        <lineLoop geometry={fillerOutlineGeometry}>
+          <lineBasicMaterial
+            color={FILLER_OUTLINE_COLOR}
+            transparent
+            opacity={FILLER_OUTLINE_OPACITY}
+            depthWrite={false}
+          />
+        </lineLoop>
+      )}
       <animated.group
         ref={pageGroupRef}
         rotation-x={pageRotationX}
+        visible={isFillerTileShown || !isFiller}
       >
         <AnimatedMesh
           projectId={gridPosition}
@@ -804,7 +846,10 @@ const Project = forwardRef(function Project(
                     projectSize={projectSize}
                     page={overlayPage}
                   >
-                    <div className={`${styles.contentText} ${contentText.lead ? styles.contentTextLead : ''}`}>
+                    <div
+                      className={`${styles.contentText} ${contentText.lead ? styles.contentTextLead : ''}`}
+                      style={contentText.lead ? { fontSize: `${getLeadFontSize(contentText.text)}px` } : undefined}
+                    >
                       {contentText.label && <p className={styles.cellLabel}>{contentText.label}</p>}
                       <p className={styles.contentTextValue} data-overlay-interactive="true">{contentText.text}</p>
                     </div>

@@ -939,7 +939,7 @@
       "year": "2025",
       "role": "Design, fabrication and electronics.",
       "context": "School project",
-      "tagline": "Two interactive frames, built by hand and linked over Wi-Fi.",
+      "tagline": "Two handmade interactive frames linked over Wi-Fi.",
       "technologies": [
         "Arduino"
       ],
@@ -963,7 +963,7 @@
           ],
           "texts": [
             {
-              "text": "Two interactive frames, built by hand and linked over Wi-Fi.",
+              "text": "Two handmade interactive frames linked over Wi-Fi.",
               "position": {
                 "desktop": 12,
                 "mobile": 8
