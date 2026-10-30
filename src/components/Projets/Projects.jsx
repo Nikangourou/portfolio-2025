@@ -4,7 +4,6 @@ import projectsData from '../../data/projects.json'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useStore } from '@/stores/store'
 import { useShallow } from 'zustand/react/shallow'
-import useThemeStore from '@/stores/themeStore'
 import ProjectInfoFloating from '../Interface/ProjectInfoFloating'
 import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
 import { useGridConfig } from '@/hooks/useGridConfig'
@@ -39,10 +38,9 @@ export default function Projects() {
 
   // Garder quelques states pour les interactions et l'interface
   const [minDistance, setMinDistance] = useState(2.0)
-  const currentTheme = useThemeStore((state) => state.currentTheme)
 
   // Utiliser directement le store pour les positions
-  const { projectSize, recalculateAll } = useProjectPositionsStore()
+  const { recalculateAll } = useProjectPositionsStore()
 
   // Calculer les positions une seule fois au niveau parent
   useEffect(() => {
@@ -56,10 +54,6 @@ export default function Projects() {
     gridConfig.gap,
     gridConfig.margin,
     gridConfig.distance,
-    gridConfig.borderColsLeft,
-    gridConfig.borderColsRight,
-    gridConfig.borderRowsTop,
-    gridConfig.borderRowsBottom,
     recalculateAll
   ])
 

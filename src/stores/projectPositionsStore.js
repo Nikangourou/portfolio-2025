@@ -55,11 +55,12 @@ export const useProjectPositionsStore = create((set, get) => ({
     })
   },
 
-  // Fonction pour calculer les positions des bordures
+  // Fonction pour calculer les positions des bordures :
+  // on ajoute juste assez de tuiles autour de la grille pour couvrir tout l'écran, quel que soit son ratio
   calculateBorderPositions: (camera, gridConfig) => {
     const state = get()
     const { arrangedDistance } = state
-    
+
     if (!arrangedDistance) return
 
     const {
@@ -68,47 +69,32 @@ export const useProjectPositionsStore = create((set, get) => ({
       rows,
       gap,
       distance,
-      borderColsLeft,
-      borderColsRight,
-      borderRowsTop,
-      borderRowsBottom
     } = gridConfig
 
     const width = projectSize
     const height = projectSize
-    const positions = []
+    const pitchX = width + gap
+    const pitchY = height + gap
 
-    // Calculer l'espace visible de l'écran
+    // Les tuiles sont rangées dans un plan perpendiculaire à la caméra (placée à l'origine),
+    // à la distance de la grille rangée : on en déduit la zone visible dans ce plan.
+    const planeDistance = Math.abs(distance + arrangedDistance)
     const fov = camera.fov * (Math.PI / 180)
-    const aspect = camera.aspect
-    const cameraDistance = Math.abs(distance)
-    
-    // Calculer la largeur et hauteur visibles à la distance de la caméra
-    const visibleWidth = 2 * cameraDistance * Math.tan(fov / 2) * aspect
-    const visibleHeight = 2 * cameraDistance * Math.tan(fov / 2)
-    
-    // Déterminer la taille des bordures selon le type d'appareil
-    let finalBorderColsLeft = borderColsLeft
-    let finalBorderColsRight = borderColsRight
-    let finalBorderRowsTop = borderRowsTop
-    let finalBorderRowsBottom = borderRowsBottom
-    
-    // Ajuster selon l'aspect ratio pour éviter les bordures excessives
-    const aspectRatio = visibleWidth / visibleHeight
-    if (aspectRatio > 1.5) {
-      // Écran très large, réduire les bordures verticales
-      finalBorderRowsTop = Math.min(finalBorderRowsTop, 2)
-      finalBorderRowsBottom = finalBorderRowsTop
-    } else if (aspectRatio < 0.7) {
-      // Écran très haut, réduire les bordures horizontales
-      finalBorderColsLeft = Math.min(finalBorderColsLeft, 2)
-      finalBorderColsRight = finalBorderColsLeft
-    }
-    
-    // Calculer les dimensions de la grille totale (projets + bordures)
-    const totalCols = cols + finalBorderColsLeft + finalBorderColsRight
-    const totalRows = rows + finalBorderRowsTop + finalBorderRowsBottom
-    
+    const visibleHeight = 2 * planeDistance * Math.tan(fov / 2)
+    const visibleWidth = visibleHeight * camera.aspect
+
+    const gridWidth = cols * pitchX - gap
+    const gridHeight = rows * pitchY - gap
+
+    // Nombre de tuiles à ajouter de chaque côté (la grille est centrée). La petite marge évite
+    // qu'une bordure qui se penche au survol, ou l'ondulation, laisse apparaître le fond sur le bord de l'écran.
+    const EDGE_SAFETY = 0.1
+    const extraCols = Math.max(0, Math.ceil((visibleWidth - gridWidth) / 2 / pitchX + EDGE_SAFETY))
+    const extraRows = Math.max(0, Math.ceil((visibleHeight - gridHeight) / 2 / pitchY + EDGE_SAFETY))
+
+    const totalCols = cols + extraCols * 2
+    const totalRows = rows + extraRows * 2
+
     const totalWidth = totalCols * width + (totalCols - 1) * gap
     const totalHeight = totalRows * height + (totalRows - 1) * gap
 
@@ -116,21 +102,23 @@ export const useProjectPositionsStore = create((set, get) => ({
     const startX = -totalWidth / 2 + width / 2
     const startY = totalHeight / 2 - height / 2
 
-    // Créer la grille de carrés
+    const positions = []
+
     for (let row = 0; row < totalRows; row++) {
       for (let col = 0; col < totalCols; col++) {
-        const x = startX + col * (width + gap)
-        const y = startY - row * (height + gap)
-
-        // Vérifier si la position est dans la zone des projets
+        // La zone des projets est occupée par les tuiles des projets
         const isInProjectArea =
-          col >= finalBorderColsLeft &&
-          col < finalBorderColsLeft + cols &&
-          row >= finalBorderRowsTop &&
-          row < finalBorderRowsTop + rows
+          col >= extraCols &&
+          col < extraCols + cols &&
+          row >= extraRows &&
+          row < extraRows + rows
 
         if (!isInProjectArea) {
-          positions.push([x, y, arrangedDistance])
+          positions.push([
+            startX + col * pitchX,
+            startY - row * pitchY,
+            arrangedDistance,
+          ])
         }
       }
     }

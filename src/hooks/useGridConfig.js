@@ -75,12 +75,6 @@ export const useGridConfig = () => {
       // (invisibles sur l'accueil) pour que la grille et ses flèches de navigation existent toujours.
       tileCount: Math.max(cols * rows, projectsData.projects.length),
 
-      // Configuration des bordures
-      borderColsLeft: currentIsMobile ? 4 : 3,
-      borderColsRight: currentIsMobile ? 4 : 3,
-      borderRowsTop: currentIsMobile ? 6 : 4,
-      borderRowsBottom: currentIsMobile ? 6 : 4,
-
       // Positions adaptatives pour la navigation
       arrowUpPosition: currentIsMobile ? 12 : 4,
       arrowDownPosition: (cols * rows) - 1,
