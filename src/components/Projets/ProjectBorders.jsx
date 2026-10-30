@@ -1,6 +1,8 @@
 import { useSpring, animated } from '@react-spring/three'
 import * as THREE from 'three'
 import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
+import { useStore } from '@/stores/store'
+import useThemeStore from '@/stores/themeStore'
 import { useMemo, useRef, useCallback, useEffect } from 'react'
 import { getSpringConfig } from '@/utils/springConfig'
 import { getCachedGeometry, AnimatedMesh } from './OptimizedGeometry'
@@ -11,6 +13,9 @@ import { applyBorderRippleShader as applySharedBorderRippleShader } from '@/util
 const CLOUD_RANGE = 2
 // Délai d'arrivée maximal : les projets arrivent avec 50 ms d'écart, soit ~700 ms pour 15 tuiles
 const MAX_ARRIVAL_DELAY_MS = 700
+// Contour d'une bordure sur l'accueil : un trait fin et discret, sans remplissage
+const OUTLINE_COLOR = '#000000'
+const OUTLINE_OPACITY = 0.2
 
 const randomCloudPosition = () => [
   (Math.random() * 2 - 1) * CLOUD_RANGE,
@@ -24,7 +29,15 @@ const randomCloudRotation = () => [
   (Math.random() - 0.5) * Math.PI * 0.4,
 ]
 
-const BorderTile = ({ state, index, currentTheme, projectSize }) => {
+const BorderTile = ({
+  state,
+  index,
+  currentTheme,
+  projectSize,
+  isProjectsArranged,
+  outlineGeometry,
+  outlineMaterial,
+}) => {
   const meshRef = useRef(null)
   const materialRef = useRef(null)
 
@@ -39,19 +52,23 @@ const BorderTile = ({ state, index, currentTheme, projectSize }) => {
     applySharedBorderRippleShader(material, rippleUniforms)
   }, [rippleUniforms])
 
-  // Comme un projet : la bordure part d'une position et d'une rotation aléatoires du nuage
-  // et rejoint sa place avec le même ressort.
-  const [{ position, rotation }] = useSpring(() => ({
+  // Comme un projet : la bordure vit dans le nuage de l'accueil, rejoint sa place à l'ouverture
+  // d'un projet avec le même ressort, et retourne dans le nuage à la fermeture.
+  const { position, rotation } = useSpring({
     from: { position: state.initialPosition, rotation: state.initialRotation },
-    to: { position: state.position, rotation: [0, 0, 0] },
-    delay: state.arrivalDelay,
-    config: getSpringConfig('arrangement'),
-  }))
+    to: {
+      position: isProjectsArranged ? state.position : state.initialPosition,
+      rotation: isProjectsArranged ? [0, 0, 0] : state.initialRotation,
+    },
+    delay: isProjectsArranged ? state.arrivalDelay : 0,
+    config: isProjectsArranged ? getSpringConfig('arrangement') : getSpringConfig('smooth'),
+  })
 
   useGlobalRipple({
     targetRef: meshRef,
     projectSize,
     rippleUniforms,
+    enabled: isProjectsArranged,
   })
 
   useEffect(() => {
@@ -66,10 +83,14 @@ const BorderTile = ({ state, index, currentTheme, projectSize }) => {
       position={position}
       rotation={rotation}
     >
+      {/* Sur l'accueil : un simple contour (une tuile pleine masquerait les cartes derrière) */}
+      {!isProjectsArranged && (
+        <lineLoop geometry={outlineGeometry} material={outlineMaterial} />
+      )}
       <AnimatedMesh
         projectId={`border-${index}`}
       >
-        <mesh ref={meshRef} geometry={getCachedGeometry()} dispose={null}>
+        <mesh ref={meshRef} geometry={getCachedGeometry()} dispose={null} visible={isProjectsArranged}>
           <meshBasicMaterial
             ref={materialRef}
             side={THREE.DoubleSide}
@@ -87,15 +108,15 @@ const BorderTile = ({ state, index, currentTheme, projectSize }) => {
   )
 }
 
-const ProjectBorders = ({
-  isProjectsArranged,
-  currentTheme,
-  distance
-}) => {
+// Rendu dans le groupe des projets (ProjectList), pour tourner avec le nuage de l'accueil
+const ProjectBorders = () => {
+  const isProjectsArranged = useStore((state) => state.isProjectsArranged)
+  const currentTheme = useThemeStore((state) => state.currentTheme)
+
   // Récupérer les positions des bordures depuis le store
   const { borderPositions, projectSize } = useProjectPositionsStore()
 
-  // Positions de départ tirées à chaque ouverture d'un projet (le nuage change, comme celui de l'accueil)
+  // Positions de départ dans le nuage : tirées une fois, comme celles des projets
   const borderStates = useMemo(() => {
     return borderPositions.map((pos) => ({
       position: pos,
@@ -103,14 +124,32 @@ const ProjectBorders = ({
       initialRotation: randomCloudRotation(),
       arrivalDelay: Math.random() * MAX_ARRIVAL_DELAY_MS,
     }))
-    // isProjectsArranged : nouveau tirage à chaque ouverture
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [borderPositions, isProjectsArranged])
+  }, [borderPositions])
 
-  if (!isProjectsArranged || borderStates.length === 0) return null
+  // Contour et matériau partagés par toutes les bordures
+  const outlineGeometry = useMemo(() => {
+    const halfWidth = projectSize.width / 2
+    const halfHeight = projectSize.height / 2
+    return new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-halfWidth, -halfHeight, 0),
+      new THREE.Vector3(halfWidth, -halfHeight, 0),
+      new THREE.Vector3(halfWidth, halfHeight, 0),
+      new THREE.Vector3(-halfWidth, halfHeight, 0),
+    ])
+  }, [projectSize.width, projectSize.height])
+
+  const outlineMaterial = useMemo(() => new THREE.LineBasicMaterial({
+    color: OUTLINE_COLOR,
+    transparent: true,
+    opacity: OUTLINE_OPACITY,
+    depthWrite: false,
+  }), [])
+
+  useEffect(() => () => outlineGeometry.dispose(), [outlineGeometry])
+  useEffect(() => () => outlineMaterial.dispose(), [outlineMaterial])
 
   return (
-    <group position={[0, 0, distance]}>
+    <group>
       {borderStates.map((state, index) => (
         <BorderTile
           key={`border-${index}`}
@@ -118,6 +157,9 @@ const ProjectBorders = ({
           state={state}
           currentTheme={currentTheme}
           projectSize={projectSize}
+          isProjectsArranged={isProjectsArranged}
+          outlineGeometry={outlineGeometry}
+          outlineMaterial={outlineMaterial}
         />
       ))}
     </group>

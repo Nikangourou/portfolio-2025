@@ -1,6 +1,5 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react'
 import ProjectList from './ProjectList'
-import ProjectBorders from './ProjectBorders'
 import projectsData from '../../data/projects.json'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useStore } from '@/stores/store'
@@ -264,13 +263,6 @@ export default function Projects() {
 
   return (
     <>
-      <ProjectBorders
-        isProjectsArranged={isProjectsArranged}
-        projectSize={projectSize}
-        currentTheme={currentTheme}
-        distance={gridConfig.distance}
-      />
-
       {!isProjectsArranged && displayedProject && (
         <ProjectInfoFloating
           project={displayedProject}

@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import Project from './Project'
+import ProjectBorders from './ProjectBorders'
 import { animated, useSpring } from '@react-spring/three'
 import { useRotationControl } from '@/hooks/useRotationControl'
 import { getSpringConfig } from '@/utils/springConfig'
@@ -34,6 +35,7 @@ const ProjectList = memo(({
       position={[0, 0, distance]}
       rotation-y={animatedRotationY}
     >
+      <ProjectBorders />
       {projectStates.map((state, i) => {
         return (
           <Project
