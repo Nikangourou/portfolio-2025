@@ -23,10 +23,6 @@ const TILE_POSITION = new THREE.Vector3()
 // Décalage (ms) entre le flip de deux tuiles voisines
 const PAGE_FLIP_STAGGER_MS = 100
 
-// Une tuile vide ne vole pas : elle est posée directement à sa position finale, à plat
-const FILLER_ROTATION = [0, 0, 0]
-const FILLER_REVEAL_STAGGER_MS = 40
-
 const ARRANGED_BACK_FACE_FLIP = { x: 0.0, y: 0.0 }
 const FREE_BACK_FACE_FLIP = { x: 1.0, y: 1.0 }
 
@@ -183,18 +179,10 @@ const Project = forwardRef(function Project(
   const lockedOppositeMapRef = useRef(null)
   const [overlayPage, setOverlayPage] = useState(0)
   const gridConfig = useGridConfig()
-  // Tuile vide : comme une bordure, elle apparaît sur place (sans voler depuis le nuage) et ne se retourne
-  // qu'une fois les projets rangés. Sa face avant reste masquée (BackSide) jusqu'à ce que la tuile ait fini de se retourner.
-  const [isFillerDoubleSided, setIsFillerDoubleSided] = useState(false)
-  const hasFillerRevealedRef = useRef(false)
-  // Vrai quand la couleur du projet et la position finale sont en place : avant, la tuile resterait blanche ou mal placée
+  // Tuile vide (pas de projet derrière) : invisible sur l'accueil, elle rejoint les projets au clic et suit
+  // exactement la même animation. Elle ne s'affiche qu'une fois la couleur du projet appliquée à ses deux faces,
+  // sinon on verrait une frame blanche.
   const [isFillerReady, setIsFillerReady] = useState(false)
-  // Elles portent parfois une partie de l'image d'intro : on les retourne tout de suite après le rangement,
-  // les unes après les autres (un délai aléatoire laissait la moitié de l'image manquer pendant près d'une seconde).
-  const fillerRevealDelay = useMemo(
-    () => Math.max(0, gridPosition - projectsData.projects.length) * FILLER_REVEAL_STAGGER_MS,
-    [gridPosition],
-  )
 
   const emptyTexture = useMemo(() => {
     const data = new Uint8Array([255, 255, 255, 255])
@@ -314,15 +302,15 @@ const Project = forwardRef(function Project(
     applyProjectRippleShader(material, rippleUniforms)
   }, [rippleUniforms])
 
-  // Tuile dont l'arrivée signale la fin du rangement : le dernier projet, hors colonne centrale
+  // Tuile dont l'arrivée signale la fin du rangement : la dernière, hors colonne centrale
   // (sa position x vaut 0, ce qui empêcherait de mesurer la progression)
   const completionTileIndex = useMemo(() => {
     const centerCol = gridConfig.cols % 2 === 1 ? (gridConfig.cols - 1) / 2 : -1
-    for (let i = projectsData.projects.length - 1; i >= 0; i--) {
+    for (let i = gridConfig.tileCount - 1; i >= 0; i--) {
       if (i % gridConfig.cols !== centerCol) return i
     }
     return 0
-  }, [gridConfig.cols])
+  }, [gridConfig.cols, gridConfig.tileCount])
 
   // Delays précalculés pour éviter les recalculs
   const animationDelays = useMemo(() => ({
@@ -338,7 +326,6 @@ const Project = forwardRef(function Project(
       rotation: isProjectsArranged ? [0, 0, 0] : (initialRotation || [0, 0, 0])
     },
     delay: animationDelays.arrangement,
-    immediate: isFiller,
     config: isProjectsArranged ? getSpringConfig('arrangement') : getSpringConfig('smooth'),
     onChange: (values) => {
       // Marquer l'animation comme terminée à la moitié pour le dernier projet - OPTIMISÉ
@@ -352,25 +339,16 @@ const Project = forwardRef(function Project(
   })
 
   // Spring pour la rotation de page individuelle - OPTIMISÉE
-  const isPageFlipEnabled = isProjectsArranged && (!isFiller || isArrangementAnimationComplete)
   const { pageRotationX } = useSpring({
-    pageRotationX: isPageFlipEnabled ? currentPage * Math.PI : 0,
-    delay: isPageFlipEnabled
-      ? (isFiller && !hasFillerRevealedRef.current ? fillerRevealDelay : animationDelays.pageRotation)
-      : 0,
+    pageRotationX: isProjectsArranged ? currentPage * Math.PI : 0,
+    delay: isProjectsArranged ? animationDelays.pageRotation : 0,
     immediate: !isProjectsArranged,
     config: getSpringConfig('projectRotation'),
     onStart: () => {
       isPageFlipAnimatingRef.current = true
-      if (isPageFlipEnabled) {
-        hasFillerRevealedRef.current = true
-      }
     },
     onRest: () => {
       isPageFlipAnimatingRef.current = false
-      if (isFiller && hasFillerRevealedRef.current) {
-        setIsFillerDoubleSided(true)
-      }
       // Resynchroniser sur l'angle réel (et non sur la page cible, qui peut déjà avoir changé si on a
       // cliqué pendant que cette animation finissait de se stabiliser).
       syncOverlayPageWithCamera()
@@ -489,24 +467,12 @@ const Project = forwardRef(function Project(
     rippleUniforms,
   })
 
-  // Face avant des tuiles vides : démasquée quand elles ont fini de se retourner (voir onRest du ressort de page),
-  // et remasquée quand le projet se ferme.
+  // Quand le projet se ferme, la tuile vide redevient invisible
   useEffect(() => {
-    if (!isFiller) return
-    if (!isProjectsArranged) {
+    if (isFiller && !isProjectsArranged) {
       setIsFillerReady(false)
     }
-    if (!isProjectsArranged || !isArrangementAnimationComplete) {
-      setIsFillerDoubleSided(false)
-      hasFillerRevealedRef.current = false
-    }
-  }, [isFiller, isProjectsArranged, isArrangementAnimationComplete])
-
-  useEffect(() => {
-    if (pageMaterialRef.current) {
-      pageMaterialRef.current.needsUpdate = true
-    }
-  }, [isFillerDoubleSided])
+  }, [isFiller, isProjectsArranged])
 
   const handleMeshClick = () => {
 
@@ -710,10 +676,9 @@ const Project = forwardRef(function Project(
   return (
     <animated.group
       ref={projectRef}
-      position={isFiller ? targetArrangedPosition : position}
-      rotation={isFiller ? FILLER_ROTATION : rotation}
-      // Le groupe des projets tourne encore pendant le rangement : avant la fin, on verrait leur face arrière de biais
-      visible={!isFiller || (isProjectsArranged && isArrangementAnimationComplete && isFillerReady)}
+      position={position}
+      rotation={rotation}
+      visible={!isFiller || (isProjectsArranged && isFillerReady)}
     >
       <animated.group
         ref={pageGroupRef}
@@ -728,7 +693,7 @@ const Project = forwardRef(function Project(
             <meshBasicMaterial
               ref={pageMaterialRef}
               map={emptyTexture}
-              side={isFiller && !isFillerDoubleSided ? THREE.BackSide : THREE.DoubleSide}
+              side={THREE.DoubleSide}
               toneMapped={true}
               onUpdate={(material) => {
                 if (!material.userData.shaderSetup) {
@@ -739,7 +704,7 @@ const Project = forwardRef(function Project(
             />
           </mesh>
           <group>
-            {isArrangementAnimationComplete && (!isFiller || isFillerDoubleSided) && (
+            {isArrangementAnimationComplete && (
               <>
                 {overlayPage === 1 && selectedProject && (
                   <>
