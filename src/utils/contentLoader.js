@@ -309,6 +309,7 @@ export const useContentTexture = (gridPosition, pageNumber = undefined, forcedFa
       const contentImage = {
         url: getAdaptiveUrl(foundImage.url, gridConfig.isMobile),
         span: getAdaptiveSpan(foundImage.span, gridConfig.isMobile),
+        fit: foundImage.fit,
         position: foundImage.position
       }
       return { contentImage, validPositions }
@@ -342,7 +343,7 @@ export const useContentTexture = (gridPosition, pageNumber = undefined, forcedFa
           return
         }
 
-        configureTexture(texture, contentImage.span, validPositions, targetFace)
+        configureTexture(texture, contentImage.span, validPositions, targetFace, contentImage.fit)
 
         const previousTexture = activeTextureRef.current
         activeTextureRef.current = texture

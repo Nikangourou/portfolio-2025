@@ -15,7 +15,7 @@
 //  - arranged   : les tuiles partent de leur place finale (celle de la page projet) : voir projectPositionsStore
 // Les deux bandes posent les projets dans l'ordre de la liste, en alternant de part et d'autre de la ligne.
 export const CLOUD_LAYOUTS = ['diagonal', 'horizontal', 'uniform', 'grid', 'spiral', 'original', 'arranged']
-const DEFAULT_LAYOUT = 'diagonal'
+const DEFAULT_LAYOUT = 'original'
 
 export const getCloudLayout = () => {
   if (typeof window === 'undefined') return DEFAULT_LAYOUT
