@@ -202,6 +202,9 @@ const Project = forwardRef(function Project(
   const lockedOppositeMapRef = useRef(null)
   const [overlayPage, setOverlayPage] = useState(0)
   const gridConfig = useGridConfig()
+  // Tuile vide transparente : rien ne cache le texte posé sur sa face arrière tant qu'elle n'est pas retournée,
+  // on ne l'affiche donc que quand la face de la page courante est tournée vers la caméra.
+  const [isFillerFaceUp, setIsFillerFaceUp] = useState(false)
   const emptyTexture = useMemo(() => {
     const data = new Uint8Array([255, 255, 255, 255])
     const placeholder = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat)
@@ -363,6 +366,11 @@ const Project = forwardRef(function Project(
     delay: isProjectsArranged ? animationDelays.pageRotation : 0,
     immediate: !isProjectsArranged,
     config: getSpringConfig('projectRotation'),
+    onChange: (result) => {
+      if (!isFiller) return
+      const isFaceUp = Math.abs(result.value.pageRotationX - overlayPage * Math.PI) < Math.PI / 2
+      setIsFillerFaceUp((previous) => (previous === isFaceUp ? previous : isFaceUp))
+    },
     onStart: () => {
       isPageFlipAnimatingRef.current = true
     },
@@ -506,6 +514,13 @@ const Project = forwardRef(function Project(
     projectSize,
     rippleUniforms,
   })
+
+  // À la fermeture, la tuile revient à plat : son texte ne doit pas rester marqué comme visible
+  useEffect(() => {
+    if (isFiller && !isProjectsArranged) {
+      setIsFillerFaceUp(false)
+    }
+  }, [isFiller, isProjectsArranged])
 
   const handleMeshClick = () => {
 
@@ -770,7 +785,7 @@ const Project = forwardRef(function Project(
             />
           </mesh>
           <group>
-            {isArrangementAnimationComplete && (
+            {isArrangementAnimationComplete && (!isFiller || isFillerFaceUp) && (
               <>
                 {overlayPage === 1 && selectedProject && (
                   <>

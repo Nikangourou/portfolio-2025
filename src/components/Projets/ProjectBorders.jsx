@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
 import { useStore } from '@/stores/store'
 import useThemeStore from '@/stores/themeStore'
-import { useMemo, useRef, useCallback, useEffect } from 'react'
+import { useMemo, useRef, useCallback, useEffect, useState } from 'react'
 import { getSpringConfig } from '@/utils/springConfig'
 import { getCachedGeometry, AnimatedMesh } from './OptimizedGeometry'
 import { useGlobalRipple } from '@/hooks/useGlobalRipple'
@@ -23,11 +23,16 @@ const randomCloudPosition = () => [
   (Math.random() * 2 - 1) * CLOUD_RANGE,
 ]
 
+// Départ côté transparent (x proche de 0) : la tuile se retourne en x jusqu'à π pour montrer sa face pleine.
+// Les autres axes restent modérés pour que le retournement se lise bien.
 const randomCloudRotation = () => [
-  (Math.random() - 0.5) * Math.PI * 0.4,
-  Math.random() * Math.PI * 2,
-  (Math.random() - 0.5) * Math.PI * 0.4,
+  (Math.random() - 0.5) * 0.6,
+  (Math.random() - 0.5) * 1.6,
+  (Math.random() - 0.5) * 0.6,
 ]
+
+// Rotation d'arrivée : retournée, la face pleine est face à la caméra
+const FLIPPED_ROTATION = [Math.PI, 0, 0]
 
 const BorderTile = ({
   state,
@@ -52,17 +57,31 @@ const BorderTile = ({
     applySharedBorderRippleShader(material, rippleUniforms)
   }, [rippleUniforms])
 
+  // La tuile a deux côtés : transparent (on ne voit que son contour) et plein. Elle part côté transparent,
+  // se retourne en rejoignant sa place, et le côté plein apparaît quand le retournement passe la moitié.
+  const [isFlipped, setIsFlipped] = useState(false)
+
   // Comme un projet : la bordure vit dans le nuage de l'accueil, rejoint sa place à l'ouverture
   // d'un projet avec le même ressort, et retourne dans le nuage à la fermeture.
   const { position, rotation } = useSpring({
     from: { position: state.initialPosition, rotation: state.initialRotation },
     to: {
       position: isProjectsArranged ? state.position : state.initialPosition,
-      rotation: isProjectsArranged ? [0, 0, 0] : state.initialRotation,
+      rotation: isProjectsArranged ? FLIPPED_ROTATION : state.initialRotation,
     },
     delay: isProjectsArranged ? state.arrivalDelay : 0,
-    config: isProjectsArranged ? getSpringConfig('arrangement') : getSpringConfig('smooth'),
+    config: (key) => {
+      // Le retournement a le même ressort que celui des pages des projets
+      if (key === 'rotation') return getSpringConfig('projectRotation')
+      return isProjectsArranged ? getSpringConfig('arrangement') : getSpringConfig('smooth')
+    },
+    onChange: (values) => {
+      const flipped = values.value.rotation[0] > Math.PI / 2
+      setIsFlipped((previous) => (previous === flipped ? previous : flipped))
+    },
   })
+
+  const isTileShown = isProjectsArranged && isFlipped
 
   useGlobalRipple({
     targetRef: meshRef,
@@ -84,13 +103,13 @@ const BorderTile = ({
       rotation={rotation}
     >
       {/* Sur l'accueil : un simple contour (une tuile pleine masquerait les cartes derrière) */}
-      {!isProjectsArranged && (
+      {!isTileShown && (
         <lineLoop geometry={outlineGeometry} material={outlineMaterial} />
       )}
       <AnimatedMesh
         projectId={`border-${index}`}
       >
-        <mesh ref={meshRef} geometry={getCachedGeometry()} dispose={null} visible={isProjectsArranged}>
+        <mesh ref={meshRef} geometry={getCachedGeometry()} dispose={null} visible={isTileShown}>
           <meshBasicMaterial
             ref={materialRef}
             side={THREE.DoubleSide}
