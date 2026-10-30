@@ -7,21 +7,14 @@ import { useMemo, useRef, useCallback, useEffect, useState } from 'react'
 import { getSpringConfig } from '@/utils/springConfig'
 import { getCachedGeometry, AnimatedMesh } from './OptimizedGeometry'
 import { useGlobalRipple } from '@/hooks/useGlobalRipple'
+import { useGridConfig } from '@/hooks/useGridConfig'
 import { applyBorderRippleShader as applySharedBorderRippleShader } from '@/utils/rippleShader'
 
-// Même nuage que celui des projets sur l'accueil (cf. Projects.jsx)
-const CLOUD_RANGE = 2
 // Délai d'arrivée maximal : les projets arrivent avec 50 ms d'écart, soit ~700 ms pour 15 tuiles
 const MAX_ARRIVAL_DELAY_MS = 700
 // Contour d'une bordure sur l'accueil : un trait fin et discret, sans remplissage
 const OUTLINE_COLOR = '#000000'
 const OUTLINE_OPACITY = 0.2
-
-const randomCloudPosition = () => [
-  (Math.random() * 2 - 1) * CLOUD_RANGE,
-  (Math.random() * 2 - 1) * CLOUD_RANGE,
-  (Math.random() * 2 - 1) * CLOUD_RANGE,
-]
 
 // Départ côté transparent (x proche de 0) : la tuile se retourne en x jusqu'à π pour montrer sa face pleine.
 // Les autres axes restent modérés pour que le retournement se lise bien.
@@ -133,17 +126,18 @@ const ProjectBorders = () => {
   const currentTheme = useThemeStore((state) => state.currentTheme)
 
   // Récupérer les positions des bordures depuis le store
-  const { borderPositions, projectSize } = useProjectPositionsStore()
+  const { borderPositions, projectSize, cloudPositions } = useProjectPositionsStore()
+  const { tileCount } = useGridConfig()
 
-  // Positions de départ dans le nuage : tirées une fois, comme celles des projets
+  // Positions de départ dans le nuage : après celles des tuiles des projets, dans la même répartition
   const borderStates = useMemo(() => {
-    return borderPositions.map((pos) => ({
+    return borderPositions.map((pos, index) => ({
       position: pos,
-      initialPosition: randomCloudPosition(),
+      initialPosition: cloudPositions[tileCount + index] || [0, 0, 0],
       initialRotation: randomCloudRotation(),
       arrivalDelay: Math.random() * MAX_ARRIVAL_DELAY_MS,
     }))
-  }, [borderPositions])
+  }, [borderPositions, cloudPositions, tileCount])
 
   // Contour et matériau partagés par toutes les bordures
   const outlineGeometry = useMemo(() => {

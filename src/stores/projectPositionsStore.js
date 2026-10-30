@@ -1,10 +1,13 @@
 import { create } from 'zustand'
+import { generateCloudPositions } from '../utils/cloudLayout'
 
 export const useProjectPositionsStore = create((set, get) => ({
   // État calculé
   arrangedDistance: null,
   predefinedPositions: [],
   borderPositions: [],
+  // Positions de départ dans le nuage de l'accueil : d'abord les tuiles des projets, puis celles des bordures
+  cloudPositions: [],
   projectSize: { width: 1, height: 1 },
   gridConfig: null,
   
@@ -131,5 +134,8 @@ export const useProjectPositionsStore = create((set, get) => ({
     const { calculateProjectPositions, calculateBorderPositions } = get()
     calculateProjectPositions(camera, gridConfig)
     calculateBorderPositions(camera, gridConfig)
+
+    const total = gridConfig.tileCount + get().borderPositions.length
+    set({ cloudPositions: generateCloudPositions(total, camera, gridConfig.distance) })
   }
 }))

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useEffect } from 'react'
+import React, { useMemo, useRef, useEffect } from 'react'
 import ProjectList from './ProjectList'
 import projectsData from '../../data/projects.json'
 import { useFrame, useThree } from '@react-three/fiber'
@@ -37,10 +37,9 @@ export default function Projects() {
   const projectDataRef = useRef([])
 
   // Garder quelques states pour les interactions et l'interface
-  const [minDistance, setMinDistance] = useState(2.0)
 
   // Utiliser directement le store pour les positions
-  const { recalculateAll } = useProjectPositionsStore()
+  const { recalculateAll, cloudPositions } = useProjectPositionsStore()
 
   // Calculer les positions une seule fois au niveau parent
   useEffect(() => {
@@ -84,48 +83,10 @@ export default function Projects() {
 
   useSceneRippleField()
 
-  const findValidPosition = (positions = [], maxAttempts = 100) => {
-    const xRange = [-2, 2]
-    const yRange = [-2, 2]
-    const zRange = [-2, 2]
-
-    let attempts = 0
-    let position
-    let currentMinDistance = minDistance
-
-    do {
-      position = [
-        Math.random() * (xRange[1] - xRange[0]) + xRange[0],
-        Math.random() * (yRange[1] - yRange[0]) + yRange[0],
-        Math.random() * (zRange[1] - zRange[0]) + zRange[0],
-      ]
-      attempts++
-
-      if (attempts > maxAttempts) {
-        currentMinDistance *= 0.9
-        setMinDistance(currentMinDistance)
-        attempts = 0
-      }
-    } while (
-      positions.length > 0 && positions.some((existingPos) => {
-        const dx = position[0] - existingPos[0]
-        const dy = position[1] - existingPos[1]
-        const dz = position[2] - existingPos[2]
-        return Math.sqrt(dx * dx + dy * dy + dz * dz) < currentMinDistance
-      })
-    )
-
-    return position
-  }
-
-  // Créer les données des projets avec positions initiales aléatoires
+  // Créer les données des projets : position de départ dans le nuage (répartie sur l'écran) et rotation aléatoire
   const projectData = useMemo(() => {
-    const usedPositions = []
-
     return Array.from({ length: gridConfig.tileCount }, (_, index) => {
       const project = projectsData.projects[index] || null
-      const randomPosition = findValidPosition(usedPositions)
-      usedPositions.push(randomPosition)
 
       const randomRotation = [
         (Math.random() - 0.5) * Math.PI * 0.4,
@@ -135,12 +96,12 @@ export default function Projects() {
 
       return {
         project,
-        initialPosition: randomPosition,
+        initialPosition: cloudPositions[index] || [0, 0, 0],
         initialRotation: randomRotation,
         pageRotationDelay: Math.random() * 0.5,
       }
     })
-  }, [gridConfig.tileCount])
+  }, [gridConfig.tileCount, cloudPositions])
 
   // Mettre à jour la ref pour le raycasting
   useEffect(() => {
