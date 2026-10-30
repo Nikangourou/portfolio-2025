@@ -1,14 +1,30 @@
-import { useSprings, animated } from '@react-spring/three'
+import { useSpring, animated } from '@react-spring/three'
 import * as THREE from 'three'
 import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
-import { useStore } from '@/stores/store'
-import { useMemo, useRef, useCallback, useEffect, useState } from 'react'
+import { useMemo, useRef, useCallback, useEffect } from 'react'
 import { getSpringConfig } from '@/utils/springConfig'
 import { getCachedGeometry, AnimatedMesh } from './OptimizedGeometry'
 import { useGlobalRipple } from '@/hooks/useGlobalRipple'
 import { applyBorderRippleShader as applySharedBorderRippleShader } from '@/utils/rippleShader'
 
-const BorderTile = ({ spring, state, index, currentTheme, projectSize, isDoubleSided }) => {
+// Même nuage que celui des projets sur l'accueil (cf. Projects.jsx)
+const CLOUD_RANGE = 2
+// Délai d'arrivée maximal : les projets arrivent avec 50 ms d'écart, soit ~700 ms pour 15 tuiles
+const MAX_ARRIVAL_DELAY_MS = 700
+
+const randomCloudPosition = () => [
+  (Math.random() * 2 - 1) * CLOUD_RANGE,
+  (Math.random() * 2 - 1) * CLOUD_RANGE,
+  (Math.random() * 2 - 1) * CLOUD_RANGE,
+]
+
+const randomCloudRotation = () => [
+  (Math.random() - 0.5) * Math.PI * 0.4,
+  Math.random() * Math.PI * 2,
+  (Math.random() - 0.5) * Math.PI * 0.4,
+]
+
+const BorderTile = ({ state, index, currentTheme, projectSize }) => {
   const meshRef = useRef(null)
   const materialRef = useRef(null)
 
@@ -22,6 +38,15 @@ const BorderTile = ({ spring, state, index, currentTheme, projectSize, isDoubleS
   const applyBorderRippleShader = useCallback((material) => {
     applySharedBorderRippleShader(material, rippleUniforms)
   }, [rippleUniforms])
+
+  // Comme un projet : la bordure part d'une position et d'une rotation aléatoires du nuage
+  // et rejoint sa place avec le même ressort.
+  const [{ position, rotation }] = useSpring(() => ({
+    from: { position: state.initialPosition, rotation: state.initialRotation },
+    to: { position: state.position, rotation: [0, 0, 0] },
+    delay: state.arrivalDelay,
+    config: getSpringConfig('arrangement'),
+  }))
 
   useGlobalRipple({
     targetRef: meshRef,
@@ -38,8 +63,8 @@ const BorderTile = ({ spring, state, index, currentTheme, projectSize, isDoubleS
   return (
     <animated.group
       key={`border-${index}`}
-      position={state.position}
-      rotation={spring.rotation}
+      position={position}
+      rotation={rotation}
     >
       <AnimatedMesh
         projectId={`border-${index}`}
@@ -47,7 +72,7 @@ const BorderTile = ({ spring, state, index, currentTheme, projectSize, isDoubleS
         <mesh ref={meshRef} geometry={getCachedGeometry()} dispose={null}>
           <meshBasicMaterial
             ref={materialRef}
-            side={isDoubleSided ? THREE.DoubleSide : THREE.BackSide}
+            side={THREE.DoubleSide}
             color={currentTheme.background}
             onUpdate={(material) => {
               if (!material.userData.shaderSetup) {
@@ -67,70 +92,36 @@ const ProjectBorders = ({
   currentTheme,
   distance
 }) => {
-  const [areBordersDoubleSided, setAreBordersDoubleSided] = useState(false)
-
   // Récupérer les positions des bordures depuis le store
   const { borderPositions, projectSize } = useProjectPositionsStore()
 
-  // Créer les borderStates avec rotation à partir des positions
+  // Positions de départ tirées à chaque ouverture d'un projet (le nuage change, comme celui de l'accueil)
   const borderStates = useMemo(() => {
     return borderPositions.map((pos) => ({
       position: pos,
-      rotation: [0, 0, 0],
+      initialPosition: randomCloudPosition(),
+      initialRotation: randomCloudRotation(),
+      arrivalDelay: Math.random() * MAX_ARRIVAL_DELAY_MS,
     }))
-  }, [borderPositions])
+    // isProjectsArranged : nouveau tirage à chaque ouverture
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [borderPositions, isProjectsArranged])
 
-  // États du store
-  const isArrangementAnimationComplete = useStore(
-    (state) => state.isArrangementAnimationComplete
-  )
-
-  useEffect(() => {
-    if (!isProjectsArranged || !isArrangementAnimationComplete) {
-      setAreBordersDoubleSided(false)
-      return
-    }
-
-    // Delai global: max delay (~1000ms) + marge d'animation.
-    const timer = setTimeout(() => {
-      setAreBordersDoubleSided(true)
-    }, 1300)
-
-    return () => clearTimeout(timer)
-  }, [isProjectsArranged, isArrangementAnimationComplete])
-
-
-  // Utiliser useSprings avec des délais individuels pour chaque bordure
-  const springs = useSprings(
-    borderStates?.length || 0,
-    borderStates?.map((_, index) => ({
-      rotation: isArrangementAnimationComplete ? [Math.PI, 0, 0] : [0, 0, 0],
-      delay: isArrangementAnimationComplete ? Math.random() * 1000 : 0, // Délai aléatoire jusqu'à 1s
-      config: getSpringConfig('projectRotation'),
-    })) || []
-  )
-
-  if (!isProjectsArranged || !borderStates || borderStates.length === 0) return null
+  if (!isProjectsArranged || borderStates.length === 0) return null
 
   return (
     <group position={[0, 0, distance]}>
-      {springs.map((spring, index) => {
-        const state = borderStates[index]
-
-        return (
-          <BorderTile
-            key={`border-${index}`}
-            index={index}
-            spring={spring}
-            state={state}
-            currentTheme={currentTheme}
-            projectSize={projectSize}
-            isDoubleSided={areBordersDoubleSided}
-          />
-        )
-      })}
+      {borderStates.map((state, index) => (
+        <BorderTile
+          key={`border-${index}`}
+          index={index}
+          state={state}
+          currentTheme={currentTheme}
+          projectSize={projectSize}
+        />
+      ))}
     </group>
   )
 }
 
-export default ProjectBorders 
+export default ProjectBorders
