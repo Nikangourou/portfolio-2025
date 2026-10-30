@@ -34,6 +34,10 @@ const getTransparentTexture = () => {
   return transparentTexture
 }
 
+// Les cartes de projet sont affichées plus grandes sur l'accueil (moins de projets, donc plus de poids chacun) ;
+// elles reprennent leur taille normale en rejoignant la grille.
+const HOME_CARD_SCALE = 1.4
+
 // Facteur appliqué à la rotation de la molette, tiré par tuile
 const SPIN_FACTOR_MIN = 0.7
 const SPIN_FACTOR_MAX = 1.4
@@ -349,11 +353,13 @@ const Project = forwardRef(function Project(
   }), [gridPosition, isProjectsArranged])
 
   // Gestion des positions et rotations avec springs - OPTIMISÉE
-  const { position, rotation } = useSpring({
-    from: { position: [0, 0, -20], rotation: [0, 0, 0] }, // Arriver du fond de la scène
+  const homeScale = isFiller ? 1 : HOME_CARD_SCALE
+  const { position, rotation, scale } = useSpring({
+    from: { position: [0, 0, -20], rotation: [0, 0, 0], scale: homeScale }, // Arriver du fond de la scène
     to: {
       position: isProjectsArranged ? targetArrangedPosition : (initialPosition || [0, 0, 0]),
-      rotation: isProjectsArranged ? [0, 0, 0] : (initialRotation || [0, 0, 0])
+      rotation: isProjectsArranged ? [0, 0, 0] : (initialRotation || [0, 0, 0]),
+      scale: isProjectsArranged ? 1 : homeScale,
     },
     delay: animationDelays.arrangement,
     config: isProjectsArranged ? getSpringConfig('arrangement') : getSpringConfig('smooth'),
@@ -760,6 +766,7 @@ const Project = forwardRef(function Project(
       ref={projectRef}
       position={position}
       rotation-y={spinAngle}
+      scale={scale}
     >
     <animated.group rotation={rotation}>
       {isFiller && !isFillerFilled && (
