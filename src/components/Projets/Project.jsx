@@ -23,6 +23,10 @@ const TILE_POSITION = new THREE.Vector3()
 // Décalage (ms) entre le flip de deux tuiles voisines
 const PAGE_FLIP_STAGGER_MS = 100
 
+// Une tuile vide ne vole pas : elle est posée directement à sa position finale, à plat
+const FILLER_ROTATION = [0, 0, 0]
+const FILLER_REVEAL_STAGGER_MS = 40
+
 const ARRANGED_BACK_FACE_FLIP = { x: 0.0, y: 0.0 }
 const FREE_BACK_FACE_FLIP = { x: 1.0, y: 1.0 }
 
@@ -183,7 +187,14 @@ const Project = forwardRef(function Project(
   // qu'une fois les projets rangés. Sa face avant reste masquée (BackSide) jusqu'à ce que la tuile ait fini de se retourner.
   const [isFillerDoubleSided, setIsFillerDoubleSided] = useState(false)
   const hasFillerRevealedRef = useRef(false)
-  const fillerRevealDelay = useMemo(() => Math.random() * 1000, [])
+  // Vrai quand la couleur du projet et la position finale sont en place : avant, la tuile resterait blanche ou mal placée
+  const [isFillerReady, setIsFillerReady] = useState(false)
+  // Elles portent parfois une partie de l'image d'intro : on les retourne tout de suite après le rangement,
+  // les unes après les autres (un délai aléatoire laissait la moitié de l'image manquer pendant près d'une seconde).
+  const fillerRevealDelay = useMemo(
+    () => Math.max(0, gridPosition - projectsData.projects.length) * FILLER_REVEAL_STAGGER_MS,
+    [gridPosition],
+  )
 
   const emptyTexture = useMemo(() => {
     const data = new Uint8Array([255, 255, 255, 255])
@@ -482,6 +493,9 @@ const Project = forwardRef(function Project(
   // et remasquée quand le projet se ferme.
   useEffect(() => {
     if (!isFiller) return
+    if (!isProjectsArranged) {
+      setIsFillerReady(false)
+    }
     if (!isProjectsArranged || !isArrangementAnimationComplete) {
       setIsFillerDoubleSided(false)
       hasFillerRevealedRef.current = false
@@ -659,6 +673,11 @@ const Project = forwardRef(function Project(
 
     material.color.set(nextColor)
 
+    // Les textures sont affectées : la tuile vide peut maintenant s'afficher sans flash blanc
+    if (isFiller && isProjectsArranged) {
+      setIsFillerReady(true)
+    }
+
     if (!shouldUseContentMaps && !shouldUseNavigationMap) {
       lastVisiblePageMapRef.current = coverOrFallbackMap
     }
@@ -691,9 +710,10 @@ const Project = forwardRef(function Project(
   return (
     <animated.group
       ref={projectRef}
-      position={position}
-      rotation={rotation}
-      visible={!isFiller || isProjectsArranged}
+      position={isFiller ? targetArrangedPosition : position}
+      rotation={isFiller ? FILLER_ROTATION : rotation}
+      // Le groupe des projets tourne encore pendant le rangement : avant la fin, on verrait leur face arrière de biais
+      visible={!isFiller || (isProjectsArranged && isArrangementAnimationComplete && isFillerReady)}
     >
       <animated.group
         ref={pageGroupRef}
