@@ -23,17 +23,6 @@ const TILE_POSITION = new THREE.Vector3()
 // Décalage (ms) entre le flip de deux tuiles voisines
 const PAGE_FLIP_STAGGER_MS = 100
 
-// Texture entièrement transparente : face sans contenu d'une tuile vide (le shader la rejette)
-let transparentTexture = null
-const getTransparentTexture = () => {
-  if (!transparentTexture) {
-    transparentTexture = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1, THREE.RGBAFormat)
-    transparentTexture.colorSpace = THREE.SRGBColorSpace
-    transparentTexture.needsUpdate = true
-  }
-  return transparentTexture
-}
-
 // Les cartes de projet sont affichées plus grandes sur l'accueil (moins de projets, donc plus de poids chacun) ;
 // elles reprennent leur taille normale en rejoignant la grille.
 const HOME_CARD_SCALE = 1.4
@@ -210,9 +199,10 @@ const Project = forwardRef(function Project(
   const lockedOppositeMapRef = useRef(null)
   const [overlayPage, setOverlayPage] = useState(0)
   const gridConfig = useGridConfig()
-  // Tuile vide transparente : rien ne cache le texte posé sur sa face arrière tant qu'elle n'est pas retournée,
-  // on ne l'affiche donc que quand la face de la page courante est tournée vers la caméra.
+  // Tuile vide : on n'affiche son texte que quand la face de la page courante est tournée vers la caméra.
   const [isFillerFaceUp, setIsFillerFaceUp] = useState(false)
+  // Vrai quand la couleur du projet est appliquée aux deux faces : avant, la tuile vide serait blanche une image
+  const [isFillerReady, setIsFillerReady] = useState(false)
   const emptyTexture = useMemo(() => {
     const data = new Uint8Array([255, 255, 255, 255])
     const placeholder = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat)
@@ -445,28 +435,7 @@ const Project = forwardRef(function Project(
     previousPage,
     previousFace,
   )
-  const { contentText: currentPageText } = useContentText(gridPosition, currentPage || null)
-  const { contentText: previousPageText } = useContentText(gridPosition, previousPage)
   const maxPage = selectedProject?.contents?.length || 0
-
-  // Une tuile vide reste transparente, sauf si elle porte du texte sur cette page (le texte serait illisible
-  // sur le fond blanc de la scène) : les images et les icônes de navigation ont déjà leur propre fond.
-  const hasOverlayOnPage = (page, text) => {
-    if (!page || !selectedProject) return false
-    if (text) return true
-    if (page !== 1) return false
-    const rolePosition = gridConfig.isMobile ? 5 : 8
-    return (
-      gridPosition <= 3 ||
-      (gridPosition === 4 && !!selectedProject.link) ||
-      (gridPosition === rolePosition && !!selectedProject.role)
-    )
-  }
-  const getEmptyFaceMap = (page, text, filledMap) => {
-    if (!isFiller) return filledMap
-    return hasOverlayOnPage(page, text) ? filledMap : getTransparentTexture()
-  }
-
   const navigationCurrentIconType = useMemo(() => {
     return getNavigationIconTypeForPage({
       selectedProject,
@@ -533,6 +502,7 @@ const Project = forwardRef(function Project(
   useEffect(() => {
     if (isFiller && !isProjectsArranged) {
       setIsFillerFaceUp(false)
+      setIsFillerReady(false)
     }
   }, [isFiller, isProjectsArranged])
 
@@ -589,8 +559,8 @@ const Project = forwardRef(function Project(
     const fallbackContentMap = backgroundFallbackTexture || emptyTexture
     const nextColor = 'white'
     // Une tuile vide n'a pas de couverture : sa face de départ est transparente
-    const baseMap = isFiller ? getTransparentTexture() : (texture || emptyTexture)
-    const coverOrFallbackMap = isFiller ? getTransparentTexture() : (texture || fallbackContentMap)
+    const baseMap = isFiller ? fallbackContentMap : (texture || emptyTexture)
+    const coverOrFallbackMap = isFiller ? fallbackContentMap : (texture || fallbackContentMap)
     const previousPageValue = previousCurrentPageRef.current
     const pageChanged = currentPage !== previousPageValue
     let nextFrontMap = baseMap
@@ -603,11 +573,11 @@ const Project = forwardRef(function Project(
 
     if (shouldUseNavigationMap) {
       if (shouldUseBackOnlyNavigation) {
-        nextFrontMap = getEmptyFaceMap(0, null, fallbackContentMap)
-        nextBackMap = navigationCurrentTexture || getEmptyFaceMap(currentPage, currentPageText, fallbackContentMap)
+        nextFrontMap = fallbackContentMap
+        nextBackMap = navigationCurrentTexture || fallbackContentMap
       } else {
-        const currentMap = navigationCurrentTexture || getEmptyFaceMap(currentPage, currentPageText, fallbackContentMap)
-        const settledOppositeMap = navigationPreviousTexture || getEmptyFaceMap(previousPage, previousPageText, fallbackContentMap)
+        const currentMap = navigationCurrentTexture || fallbackContentMap
+        const settledOppositeMap = navigationPreviousTexture || fallbackContentMap
         const transitionOppositeMap = lockedOppositeMapRef.current || settledOppositeMap
         const shouldUseTransitionOpposite = !!lockedOppositeMapRef.current || pageChanged || isPageFlipAnimatingRef.current
         const oppositeMap = shouldUseTransitionOpposite
@@ -623,11 +593,11 @@ const Project = forwardRef(function Project(
         }
       }
 
-      lastVisiblePageMapRef.current = navigationCurrentTexture || getEmptyFaceMap(currentPage, currentPageText, fallbackContentMap)
+      lastVisiblePageMapRef.current = navigationCurrentTexture || fallbackContentMap
     } else if (shouldUseContentMaps) {
-      const currentMap = currentPageTexture || getEmptyFaceMap(currentPage, currentPageText, fallbackContentMap)
+      const currentMap = currentPageTexture || fallbackContentMap
       const settledOppositeMap = previousPage
-        ? (previousPageTexture || getEmptyFaceMap(previousPage, previousPageText, fallbackContentMap))
+        ? (previousPageTexture || fallbackContentMap)
         : coverOrFallbackMap
       const transitionOppositeMap = lockedOppositeMapRef.current || settledOppositeMap
       const shouldUseTransitionOpposite = !!lockedOppositeMapRef.current || pageChanged || isPageFlipAnimatingRef.current
@@ -700,6 +670,10 @@ const Project = forwardRef(function Project(
 
     material.color.set(nextColor)
 
+    if (isFiller && isProjectsArranged) {
+      setIsFillerReady(true)
+    }
+
 
     if (!shouldUseContentMaps && !shouldUseNavigationMap) {
       lastVisiblePageMapRef.current = coverOrFallbackMap
@@ -721,9 +695,6 @@ const Project = forwardRef(function Project(
     gridConfig,
     rippleUniforms,
     isFiller,
-    currentPageText,
-    previousPageText,
-    selectedProject,
   ])
 
   useEffect(() => {
@@ -732,12 +703,8 @@ const Project = forwardRef(function Project(
     }
   }, [backgroundFallbackTexture])
 
-  // Tuile vide : son contour reste affiché tant qu'elle est transparente ; on le retire quand la tuile
-  // porte du contenu (image, icône de navigation ou texte), pour ne pas rayer ce contenu.
-  const isFillerFilled = isFiller
-    && isProjectsArranged
-    && isArrangementAnimationComplete
-    && !!(currentPageTexture || navigationCurrentTexture || hasOverlayOnPage(currentPage, currentPageText))
+  // Tuile vide : contour sur l'accueil ; une fois le projet ouvert elle prend la couleur du projet, comme les bordures
+  const isFillerFilled = isFiller && isProjectsArranged && isFillerReady
   const fillerOutlineGeometry = useMemo(() => {
     if (!isFiller) return null
     const halfWidth = projectSize.width / 2
@@ -782,6 +749,7 @@ const Project = forwardRef(function Project(
       <animated.group
         ref={pageGroupRef}
         rotation-x={pageRotationX}
+        visible={!isFiller || isFillerFilled}
       >
         <AnimatedMesh
           projectId={gridPosition}
