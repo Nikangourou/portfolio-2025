@@ -85,38 +85,25 @@ const ProjectInfoFloating = memo(function ProjectInfoFloating({ project, isVisib
         </animated.h2>
         
         <animated.p 
-          className={styles.meta}
-          style={{
-            opacity: contentSprings.opacity,
-            transform: contentSprings.y.to(y => `translateY(${y}px)`)
-          }}
-        >
-          {project.year} — {project.context}
-        </animated.p>
-        
-        <animated.p 
           className={styles.description}
           style={{
             opacity: contentSprings.opacity,
             transform: contentSprings.y.to(y => `translateY(${y}px)`)
           }}
         >
-          {project.description}
+          {project.tagline || project.description}
         </animated.p>
         
-        <animated.div 
-          className={styles.techList}
+        <animated.p 
+          className={styles.meta}
           style={{
             opacity: contentSprings.opacity,
             transform: contentSprings.y.to(y => `translateY(${y}px)`)
           }}
         >
-          {project.technologies?.map(tech => (
-            <span key={tech} className={styles.tech}>
-              {tech}
-            </span>
-          ))}
-        </animated.div>
+          {project.year} · {project.context}
+          {project.technologies?.length > 0 && ` · ${project.technologies.join(' / ')}`}
+        </animated.p>
       </animated.div>
     </Html>
   );
