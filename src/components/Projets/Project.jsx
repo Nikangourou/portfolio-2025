@@ -755,7 +755,7 @@ const Project = forwardRef(function Project(
                           data-overlay-interactive="true"
                         >
                           <span className={styles.linkButtonLabel} data-overlay-interactive="true">
-                            {selectedProject.linkLabel || 'Visit'} ↗
+                            {selectedProject.linkLabel || 'Visit'}
                           </span>
                         </a>
                       </div>
