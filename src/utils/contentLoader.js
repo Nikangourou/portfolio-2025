@@ -413,6 +413,8 @@ export const useContentText = (gridPosition, pageNumber = undefined) => {
       if (textPosition === gridPosition) {
         return {
           text: text.text,
+          label: text.label,
+          lead: !!text.lead,
           position: text.position
         }
       }

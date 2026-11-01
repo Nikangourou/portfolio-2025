@@ -331,12 +331,13 @@
       "title": "Bonne Sobri Yearte",
       "year": "2023",
       "context": "Havas Factory",
-      "description": "Greeting card",
+      "tagline": "A greeting card you play: shooting and click-speed games.",
       "technologies": [
         "React Three Fiber",
         "JS"
       ],
       "link": "https://nox-front.fr/cdv2023/",
+      "linkLabel": "Open the site",
       "cover": "/images/Bonne_Sobriyearte/bonne_sobriyearte.webp",
       "color": {
         "background": "#2B2B58",
@@ -356,18 +357,20 @@
           ],
           "texts": [
             {
-              "text": "Greeting card based on the government's Turn Off",
+              "text": "A greeting card you play: shooting and click-speed games.",
               "position": {
                 "desktop": 10,
                 "mobile": 11
-              }
+              },
+              "lead": true
             },
             {
               "text": "Site of the Day.",
               "position": {
                 "desktop": 8,
                 "mobile": 8
-              }
+              },
+              "label": "Award"
             }
           ]
         },
@@ -388,7 +391,8 @@
               "position": {
                 "desktop": 13,
                 "mobile": 10
-              }
+              },
+              "label": "Game 1"
             }
           ]
         },
@@ -417,7 +421,8 @@
               "position": {
                 "desktop": 11,
                 "mobile": 6
-              }
+              },
+              "label": "Game 2"
             }
           ]
         },
@@ -442,11 +447,12 @@
           ],
           "texts": [
             {
-              "text": "Responsive.",
+              "text": "Responsive, on mobile and desktop.",
               "position": {
                 "desktop": 11,
                 "mobile": 6
-              }
+              },
+              "label": "Devices"
             }
           ]
         }
@@ -456,14 +462,16 @@
       "id": 5,
       "title": "Dallonses",
       "year": "2026",
-      "context": "Dallonses",
-      "description": "Website for the Dallonses agency",
+      "role": "Front-end development of custom modules.",
+      "context": "Dallonses agency",
+      "tagline": "Custom modules for the agency's own website.",
       "technologies": [
         "Next.JS",
         "TailwindCSS",
         "Framer"
       ],
       "link": "https://www.dallonses.com/en/",
+      "linkLabel": "Visit the site",
       "cover": "/images/Dallonses/dallonses.webp",
       "color": {
         "background": "#242424",
@@ -483,11 +491,12 @@
           ],
           "texts": [
             {
-              "text": "Custom module development for the Dallonses agency website.",
+              "text": "Custom modules for the agency's own website.",
               "position": {
                 "desktop": 13,
                 "mobile": 12
-              }
+              },
+              "lead": true
             }
           ]
         },
@@ -505,11 +514,12 @@
           ],
           "texts": [
             {
-              "text": "Development of a custom slider module.",
+              "text": "A custom slider.",
               "position": {
                 "desktop": 11,
                 "mobile": 10
-              }
+              },
+              "label": "Module"
             }
           ]
         },
@@ -527,11 +537,12 @@
           ],
           "texts": [
             {
-              "text": "Development of a scrubbed animation.",
+              "text": "A scrubbed animation.",
               "position": {
                 "desktop": 7,
                 "mobile": 8
-              }
+              },
+              "label": "Animation"
             }
           ]
         }
@@ -718,8 +729,9 @@
       "id": 8,
       "title": "Wanderlost Whispers",
       "year": "2023",
+      "role": "3D design in Blender, development in Three.js.",
       "context": "School project",
-      "description": "What happens to postcards that don't arrive?",
+      "tagline": "What happens to postcards that never arrive?",
       "technologies": [
         "Three.js"
       ],
@@ -743,11 +755,12 @@
           ],
           "texts": [
             {
-              "text": "Poetic and interactive 3D experience.",
+              "text": "What happens to postcards that never arrive?",
               "position": {
                 "desktop": 13,
                 "mobile": 12
-              }
+              },
+              "lead": true
             }
           ]
         },
@@ -772,18 +785,20 @@
           ],
           "texts": [
             {
-              "text": "Creation of the 3D environment in Blender.",
+              "text": "The 3D environment, built in Blender.",
               "position": {
                 "desktop": 11,
                 "mobile": 11
-              }
+              },
+              "label": "Modeling"
             },
             {
-              "text": "Integration of the 3D scene into Three.js.",
+              "text": "The scene, integrated into Three.js.",
               "position": {
                 "desktop": 3,
                 "mobile": 6
-              }
+              },
+              "label": "Integration"
             }
           ]
         },
@@ -800,11 +815,12 @@
           ],
           "texts": [
             {
-              "text": "Particles creation in three.js.",
+              "text": "Created in Three.js.",
               "position": {
                 "desktop": 12,
                 "mobile": 1
-              }
+              },
+              "label": "Particles"
             }
           ]
         }
@@ -815,11 +831,12 @@
       "title": "KFC ORIGINS",
       "year": "2023",
       "context": "Havas Factory",
-      "description": "Landing page for KFC Origins collection",
+      "tagline": "A landing page for the KFC Origins collection.",
       "technologies": [
         "Javascript"
       ],
       "link": "https://www.kfc.fr/origins#",
+      "linkLabel": "Visit the site",
       "cover": "/images/KFC/KFC.webp",
       "color": {
         "background": "#332526",
@@ -839,11 +856,12 @@
           ],
           "texts": [
             {
-              "text": "Landing page for KFC Origins collection.",
+              "text": "A landing page for the KFC Origins collection.",
               "position": {
                 "desktop": 13,
                 "mobile": 12
-              }
+              },
+              "lead": true
             }
           ]
         },
@@ -868,11 +886,12 @@
           ],
           "texts": [
             {
-              "text": "Animation with GSAP and CSS sprite.",
+              "text": "Built with GSAP and CSS sprites.",
               "position": {
                 "desktop": 11,
                 "mobile": 6
-              }
+              },
+              "label": "Animation"
             }
           ]
         }
@@ -882,8 +901,9 @@
       "id": 10,
       "title": "Other Side",
       "year": "2025",
+      "role": "Design, fabrication and electronics.",
       "context": "School project",
-      "description": "Current project",
+      "tagline": "Two handmade interactive frames linked over Wi-Fi.",
       "technologies": [
         "Arduino"
       ],
@@ -907,11 +927,12 @@
           ],
           "texts": [
             {
-              "text": "Design of two remotely connected interactive frames.",
+              "text": "Two handmade interactive frames linked over Wi-Fi.",
               "position": {
                 "desktop": 12,
                 "mobile": 8
-              }
+              },
+              "lead": true
             }
           ]
         },
@@ -972,42 +993,48 @@
               "position": {
                 "desktop": 1,
                 "mobile": 1
-              }
+              },
+              "label": "Build"
             },
             {
               "text": "Drilling.",
               "position": {
                 "desktop": 5,
                 "mobile": 5
-              }
+              },
+              "label": "Build"
             },
             {
-              "text": "Cutting of optical fibers.",
+              "text": "Cutting the optical fibers.",
               "position": {
                 "desktop": 11,
                 "mobile": 11
-              }
+              },
+              "label": "Build"
             },
             {
               "text": "Mounting.",
               "position": {
                 "desktop": 3,
                 "mobile": 3
-              }
+              },
+              "label": "Build"
             },
             {
               "text": "Border mounting.",
               "position": {
                 "desktop": 7,
                 "mobile": 7
-              }
+              },
+              "label": "Build"
             },
             {
               "text": "Wiring.",
               "position": {
                 "desktop": 13,
                 "mobile": 9
-              }
+              },
+              "label": "Build"
             }
           ]
         },
@@ -1032,18 +1059,20 @@
           ],
           "texts": [
             {
-              "text": "Wi-Fi connection between the two frames.",
+              "text": "Wi-Fi link between the two frames.",
               "position": {
                 "desktop": 2,
                 "mobile": 2
-              }
+              },
+              "label": "Connection"
             },
             {
               "text": "Color test.",
               "position": {
                 "desktop": 11,
                 "mobile": 9
-              }
+              },
+              "label": "Test"
             }
           ]
         }
@@ -1054,7 +1083,7 @@
       "title": "Sizing",
       "year": "2024",
       "context": "Veepee",
-      "description": "Size recommendation project for Veepee",
+      "tagline": "Size advice for Veepee, built from each brand's size charts.",
       "technologies": [
         "React",
         "Strapi",
@@ -1080,11 +1109,12 @@
           ],
           "texts": [
             {
-              "text": "Size recommendation project for the Veepee e-commerce site.",
+              "text": "Size advice for Veepee, built from each brand's size charts.",
               "position": {
                 "desktop": 13,
                 "mobile": 12
-              }
+              },
+              "lead": true
             }
           ]
         },
@@ -1109,11 +1139,12 @@
           ],
           "texts": [
             {
-              "text": "Recommended size is calculated based on the brands' size charts.",
+              "text": "The recommended size is computed from each brand's size chart.",
               "position": {
                 "desktop": 2,
                 "mobile": 2
-              }
+              },
+              "label": "How it works"
             }
           ]
         },
@@ -1166,11 +1197,12 @@
           ],
           "texts": [
             {
-              "text": "Available on the iOS and Android app.",
+              "text": "Available in the iOS and Android apps.",
               "position": {
                 "desktop": 13,
                 "mobile": 8
-              }
+              },
+              "label": "Platforms"
             }
           ]
         }
@@ -1181,12 +1213,13 @@
       "title": "MARI-E",
       "year": "2023",
       "context": "School project",
-      "description": "AR experience in partnership with the Orangerie Museum",
+      "tagline": "An AR experience made with the Orangerie Museum.",
       "technologies": [
         "Three.js",
         "WebXR"
       ],
       "link": "https://www.youtube.com/shorts/yh_1zn_Y2OQ",
+      "linkLabel": "Watch the video",
       "cover": "/images/Orangerie/orangerie.webp",
       "color": {
         "background": "#315F64",
@@ -1214,11 +1247,12 @@
           ],
           "texts": [
             {
-              "text": "AR experience in partnership with the Orangerie Museum.",
+              "text": "An AR experience made with the Orangerie Museum.",
               "position": {
                 "desktop": 13,
                 "mobile": 12
-              }
+              },
+              "lead": true
             }
           ]
         },
@@ -1247,11 +1281,12 @@
       "title": "Presage",
       "year": "2023",
       "context": "School project",
-      "description": "Interactive road trip story",
+      "tagline": "A road trip where your past choices reshape the world.",
       "technologies": [
         "React Three Fiber"
       ],
       "link": "https://presage-game.netlify.app/",
+      "linkLabel": "Play the game",
       "cover": "/images/Presage/presage.webp",
       "color": {
         "background": "#332F2E",
@@ -1271,11 +1306,12 @@
           ],
           "texts": [
             {
-              "text": "Interactive road trip story.",
+              "text": "A road trip where your past choices reshape the world.",
               "position": {
                 "desktop": 13,
                 "mobile": 12
-              }
+              },
+              "lead": true
             }
           ]
         },
@@ -1308,11 +1344,12 @@
           ],
           "texts": [
             {
-              "text": "Map for navigating between scenes.",
+              "text": "A map to travel between scenes.",
               "position": {
                 "desktop": 11,
                 "mobile": 8
-              }
+              },
+              "label": "Navigation"
             }
           ]
         },
@@ -1335,11 +1372,12 @@
           ],
           "texts": [
             {
-              "text": "Puzzle to solve in the various scenes.",
+              "text": "A puzzle to solve in each scene.",
               "position": {
                 "desktop": 10,
                 "mobile": 10
-              }
+              },
+              "label": "Gameplay"
             }
           ]
         },
@@ -1362,11 +1400,12 @@
           ],
           "texts": [
             {
-              "text": "Environment changes based on players' previous actions.",
+              "text": "The environment changes with your previous actions.",
               "position": {
                 "desktop": 12,
                 "mobile": 10
-              }
+              },
+              "label": "Narrative"
             }
           ]
         }
@@ -1376,14 +1415,16 @@
       "id": 14,
       "title": "Vasava",
       "year": "2026",
-      "context": "Dallonses",
-      "description": "Website for the Vasava studio",
+      "role": "Front-end development of custom modules.",
+      "context": "Dallonses agency",
+      "tagline": "A studio website with a custom slider and image gallery.",
       "technologies": [
         "Next.JS",
         "TailwindCSS",
         "Framer"
       ],
       "link": "https://www.vasava.es/en",
+      "linkLabel": "Visit the site",
       "cover": "/images/Vasava/vasava.webp",
       "color": {
         "background": "#181818",
@@ -1403,11 +1444,12 @@
           ],
           "texts": [
             {
-              "text": "Custom module development for the Vasava agency website.",
+              "text": "A studio website with a custom slider and image gallery.",
               "position": {
                 "desktop": 13,
                 "mobile": 1
-              }
+              },
+              "lead": true
             }
           ]
         },
@@ -1424,11 +1466,12 @@
           ],
           "texts": [
             {
-              "text": "Development of a custom Embla slider module.",
+              "text": "A custom slider built with Embla.",
               "position": {
                 "desktop": 12,
                 "mobile": 7
-              }
+              },
+              "label": "Module"
             }
           ]
         },
@@ -1445,11 +1488,12 @@
           ],
           "texts": [
             {
-              "text": "Development of a pop-up image gallery.",
+              "text": "A pop-up image gallery.",
               "position": {
                 "desktop": 13,
                 "mobile": 10
-              }
+              },
+              "label": "Module"
             }
           ]
         }
@@ -1460,7 +1504,7 @@
       "title": "Vraiment",
       "year": "2024",
       "context": "School project",
-      "description": "A board game that blends physical and digital.",
+      "tagline": "A board game where AI invents false memories.",
       "technologies": [
         "Next.JS",
         "Three.js",
@@ -1469,6 +1513,7 @@
         "Express.js"
       ],
       "link": "https://vraiment.netlify.app/",
+      "linkLabel": "Visit the site",
       "cover": "/images/Vraiment/vraiment.webp",
       "color": {
         "background": "#131651",
@@ -1488,11 +1533,12 @@
           ],
           "texts": [
             {
-              "text": "A board game that blends physical and digital.",
+              "text": "A board game where AI invents false memories.",
               "position": {
                 "desktop": 13,
                 "mobile": 12
-              }
+              },
+              "lead": true
             }
           ]
         },
@@ -1513,7 +1559,8 @@
               "position": {
                 "desktop": 3,
                 "mobile": 6
-              }
+              },
+              "label": "Step 1"
             }
           ]
         },
@@ -1554,18 +1601,20 @@
           ],
           "texts": [
             {
-              "text": "A player isolates themselves and describes a memory.",
+              "text": "A player steps aside and describes a memory.",
               "position": {
                 "desktop": 10,
                 "mobile": 9
-              }
+              },
+              "label": "Step 2"
             },
             {
-              "text": "AI generates 2 images of the memory, one true and one false based on the true one.",
+              "text": "The AI generates two images of it: one true, one false.",
               "position": {
                 "desktop": 3,
                 "mobile": 2
-              }
+              },
+              "label": "Step 3"
             }
           ]
         },
@@ -1590,18 +1639,20 @@
           ],
           "texts": [
             {
-              "text": "Players ask questions to find the true memory.",
+              "text": "The others ask questions to find the true memory.",
               "position": {
                 "desktop": 3,
                 "mobile": 9
-              }
+              },
+              "label": "Step 4"
             },
             {
-              "text": "At the end of the allotted time, players vote for the true memory.",
+              "text": "When time runs out, everyone votes.",
               "position": {
                 "desktop": 11,
                 "mobile": 2
-              }
+              },
+              "label": "Step 5"
             }
           ]
         },
@@ -1626,11 +1677,12 @@
           ],
           "texts": [
             {
-              "text": "Scoreboard at the end of each turn.",
+              "text": "Scores are shown after each turn.",
               "position": {
                 "desktop": 10,
                 "mobile": 9
-              }
+              },
+              "label": "Step 6"
             }
           ]
         }
