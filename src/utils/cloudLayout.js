@@ -11,11 +11,12 @@
 //  - uniform    : répartition régulière sur toute la zone visible
 //  - grid       : grille régulière (rangées et colonnes) avec un peu de profondeur
 //  - spiral     : spirale du centre vers l'extérieur, les projets d'abord (donc au centre)
+//  - centered   : projets groupés au centre (comme main), tuiles vides et bordures réparties sur tout l'écran
 //  - original   : celle de main : tirage aléatoire dans un cube fixe de ±2, sans lien avec l'écran
 //  - arranged   : les tuiles partent de leur place finale (celle de la page projet) : voir projectPositionsStore
 // Les deux bandes posent les projets dans l'ordre de la liste, en alternant de part et d'autre de la ligne.
-export const CLOUD_LAYOUTS = ['diagonal', 'horizontal', 'uniform', 'grid', 'spiral', 'original', 'arranged']
-const DEFAULT_LAYOUT = 'original'
+export const CLOUD_LAYOUTS = ['centered', 'diagonal', 'horizontal', 'uniform', 'grid', 'spiral', 'original', 'arranged']
+const DEFAULT_LAYOUT = 'centered'
 
 export const getCloudLayout = () => {
   if (typeof window === 'undefined') return DEFAULT_LAYOUT
@@ -59,9 +60,55 @@ const generateOriginalPositions = (count) => {
   return positions
 }
 
+// Part de l'écran couverte par les tuiles vides et les bordures dans la disposition « centered »
+const FILL_COVERAGE = 0.95
+
+// Disposition « centered » : les projets sont placés comme sur main (groupés au centre), puis chaque tuile restante
+// est posée au point de l'écran visible le plus éloigné de tout ce qui est déjà placé (« best candidate »).
+const generateCenteredPositions = (count, camera, distance, projectCount) => {
+  const tanHalfFov = Math.tan((camera.fov * Math.PI) / 360)
+  const groupDepth = Math.abs(distance)
+  const positions = generateOriginalPositions(Math.min(projectCount, count))
+
+  for (let i = positions.length; i < count; i++) {
+    let best = null
+    let bestScore = -1
+
+    for (let attempt = 0; attempt < CANDIDATES_PER_POINT; attempt++) {
+      const z = (Math.random() * 2 - 1) * DEPTH_RANGE
+      const halfHeight = (groupDepth - z) * tanHalfFov * FILL_COVERAGE
+      const candidate = [
+        (Math.random() * 2 - 1) * halfHeight * camera.aspect,
+        (Math.random() * 2 - 1) * halfHeight,
+        z,
+      ]
+
+      let nearest = Infinity
+      for (const other of positions) {
+        const dx = candidate[0] - other[0]
+        const dy = candidate[1] - other[1]
+        const dz = (candidate[2] - other[2]) * DEPTH_WEIGHT
+        nearest = Math.min(nearest, dx * dx + dy * dy + dz * dz)
+      }
+      if (nearest > bestScore) {
+        bestScore = nearest
+        best = candidate
+      }
+    }
+
+    positions.push(best)
+  }
+
+  return positions
+}
+
 export const generateCloudPositions = (count, camera, distance, orderedCount = 0, layout = getCloudLayout()) => {
   if (layout === 'original') {
     return generateOriginalPositions(count)
+  }
+
+  if (layout === 'centered') {
+    return generateCenteredPositions(count, camera, distance, orderedCount)
   }
 
   const fov = camera.fov * (Math.PI / 180)
