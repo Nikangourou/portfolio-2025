@@ -90,7 +90,7 @@ export default function Projects() {
 
       const randomRotation = [
         (Math.random() - 0.5) * Math.PI * 0.4,
-        Math.random() * Math.PI * 2,
+        (Math.random() - 0.5) * Math.PI * 2,
         (Math.random() - 0.5) * Math.PI * 0.40
       ]
 

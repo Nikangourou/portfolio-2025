@@ -27,10 +27,6 @@ const PAGE_FLIP_STAGGER_MS = 100
 // elles reprennent leur taille normale en rejoignant la grille.
 const HOME_CARD_SCALE = 1.4
 
-// Facteur appliqué à la rotation de la molette, tiré par tuile
-const SPIN_FACTOR_MIN = 0.7
-const SPIN_FACTOR_MAX = 1.4
-
 // Contour d'une tuile vide sur l'accueil : un simple trait fin et discret, sans remplissage
 // (une tuile pleine masquerait les cartes qui sont derrière).
 const FILLER_OUTLINE_COLOR = '#000000'
@@ -313,9 +309,8 @@ const Project = forwardRef(function Project(
   // Obtenir les positions d'arrangement directement depuis le store
   const { predefinedPositions, projectSize } = useProjectPositionsStore()
 
-  // Vitesse de rotation propre à la tuile : toutes ne tournent pas exactement à la même vitesse
-  const spinFactor = useMemo(() => SPIN_FACTOR_MIN + Math.random() * (SPIN_FACTOR_MAX - SPIN_FACTOR_MIN), [])
-  const spinAngle = useMemo(() => spin.to((angle) => angle * spinFactor), [spin, spinFactor])
+  // Toutes les tuiles tournent du même angle : ça permet de le ramener à un équivalent court (voir ProjectList)
+  const spinAngle = spin
 
   // Position cible pour l'arrangement (memoized)
   const targetArrangedPosition = useMemo(() => {

@@ -13,9 +13,6 @@ import { applyBorderRippleShader as applySharedBorderRippleShader } from '@/util
 // Délai d'arrivée maximal : les projets arrivent avec 50 ms d'écart, soit ~700 ms pour 15 tuiles
 const MAX_ARRIVAL_DELAY_MS = 700
 // Contour d'une bordure sur l'accueil : un trait fin et discret, sans remplissage
-// Facteur appliqué à la rotation de la molette, tiré par tuile
-const SPIN_FACTOR_MIN = 0.7
-const SPIN_FACTOR_MAX = 1.4
 const OUTLINE_COLOR = '#000000'
 const OUTLINE_OPACITY = 0.2
 
@@ -40,8 +37,7 @@ const BorderTile = ({
   outlineMaterial,
   spin,
 }) => {
-  const spinFactor = useMemo(() => SPIN_FACTOR_MIN + Math.random() * (SPIN_FACTOR_MAX - SPIN_FACTOR_MIN), [])
-  const spinAngle = useMemo(() => spin.to((angle) => angle * spinFactor), [spin, spinFactor])
+  const spinAngle = spin
 
   const meshRef = useRef(null)
   const materialRef = useRef(null)

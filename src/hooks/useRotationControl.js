@@ -21,8 +21,12 @@ export function useRotationControl() {
 
       wasArrangedRef.current = true
 
-      // Chaque tuile applique son propre facteur à cet angle : seul zéro exact les remet toutes à plat
-      // (un multiple de 2π, équivalent pour un groupe entier, ne l'est plus tuile par tuile).
+      // Angle sauvegardé ramené entre -π et π : à la fermeture, les tuiles ne rejouent pas tous les tours cumulés
+      const wrapped = lastFreeRotationRef.current - 2 * Math.PI * Math.round(lastFreeRotationRef.current / (2 * Math.PI))
+      lastFreeRotationRef.current = wrapped
+      setRotationY(wrapped)
+
+      // Zéro exact : toutes les tuiles se remettent à plat
       setTargetRotationY(0)
       return
     }

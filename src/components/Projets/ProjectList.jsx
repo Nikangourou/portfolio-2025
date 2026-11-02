@@ -1,9 +1,10 @@
-import { memo } from 'react'
+import { memo, useEffect, useRef } from 'react'
 import Project from './Project'
 import ProjectBorders from './ProjectBorders'
 import { useSpring } from '@react-spring/three'
 import { useRotationControl } from '@/hooks/useRotationControl'
 import { getSpringConfig } from '@/utils/springConfig'
+import { useStore } from '@/stores/store'
 
 // Image 1x1 blanche des tuiles vides (pas de projet derrière : elles ne servent qu'à la page projet)
 const FILLER_IMAGE = (() => {
@@ -24,10 +25,24 @@ const ProjectList = memo(({
 }) => {
   const { rotationY } = useRotationControl() // Rotation cible déjà calculée dans le hook
   
-  const { rotationY: animatedRotationY } = useSpring({
-    rotationY,
+  const isProjectsArranged = useStore((state) => state.isProjectsArranged)
+  const [{ rotationY: animatedRotationY }, spinApi] = useSpring(() => ({
+    rotationY: 0,
     config: getSpringConfig('globalRotation')
-  })
+  }))
+
+  // La molette cumule l'angle (parfois plusieurs tours). À l'ouverture d'un projet, on remplace l'angle courant par
+  // son équivalent entre -π et π (visuellement identique) avant de revenir à 0 : au lieu de dérouler tous les tours,
+  // les tuiles font au plus un demi-tour. Même chose à la fermeture, où l'angle sauvegardé est déjà ramené court.
+  const wasArrangedRef = useRef(false)
+  useEffect(() => {
+    if (isProjectsArranged && !wasArrangedRef.current) {
+      const current = animatedRotationY.get()
+      spinApi.set({ rotationY: current - 2 * Math.PI * Math.round(current / (2 * Math.PI)) })
+    }
+    wasArrangedRef.current = isProjectsArranged
+    spinApi.start({ rotationY: isProjectsArranged ? 0 : rotationY })
+  }, [rotationY, isProjectsArranged, spinApi, animatedRotationY])
 
   return (
     // Le groupe ne tourne pas : la molette fait tourner chaque tuile sur elle-même (valeur `spin`)
