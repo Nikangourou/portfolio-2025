@@ -77,6 +77,12 @@ const BorderTile = ({
     },
   })
 
+  // À la fermeture, la bordure repart de son côté transparent : l'état « retourné » ne doit pas rester d'une
+  // ouverture à la suivante, sinon la tuile pleine s'afficherait dès le clic.
+  useEffect(() => {
+    if (!isProjectsArranged) setIsFlipped(false)
+  }, [isProjectsArranged])
+
   const isTileShown = isProjectsArranged && isFlipped
 
   useGlobalRipple({

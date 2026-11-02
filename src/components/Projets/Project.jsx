@@ -199,6 +199,8 @@ const Project = forwardRef(function Project(
   const [isFillerFaceUp, setIsFillerFaceUp] = useState(false)
   // Vrai quand la couleur du projet est appliquée aux deux faces : avant, la tuile vide serait blanche une image
   const [isFillerReady, setIsFillerReady] = useState(false)
+  // Tuile vide : elle n'est affichée pleine qu'une fois son retournement passé la moitié (comme les bordures)
+  const [isFillerFlipped, setIsFillerFlipped] = useState(false)
   const emptyTexture = useMemo(() => {
     const data = new Uint8Array([255, 255, 255, 255])
     const placeholder = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat)
@@ -369,6 +371,8 @@ const Project = forwardRef(function Project(
       if (!isFiller) return
       const isFaceUp = Math.abs(result.value.pageRotationX - overlayPage * Math.PI) < Math.PI / 2
       setIsFillerFaceUp((previous) => (previous === isFaceUp ? previous : isFaceUp))
+      const isFlipped = result.value.pageRotationX > Math.PI / 2
+      setIsFillerFlipped((previous) => (previous === isFlipped ? previous : isFlipped))
     },
     onStart: () => {
       isPageFlipAnimatingRef.current = true
@@ -498,6 +502,7 @@ const Project = forwardRef(function Project(
     if (isFiller && !isProjectsArranged) {
       setIsFillerFaceUp(false)
       setIsFillerReady(false)
+      setIsFillerFlipped(false)
     }
   }, [isFiller, isProjectsArranged])
 
@@ -699,7 +704,7 @@ const Project = forwardRef(function Project(
   }, [backgroundFallbackTexture])
 
   // Tuile vide : contour sur l'accueil ; une fois le projet ouvert elle prend la couleur du projet, comme les bordures
-  const isFillerFilled = isFiller && isProjectsArranged && isFillerReady
+  const isFillerFilled = isFiller && isProjectsArranged && isFillerReady && isFillerFlipped
   const fillerOutlineGeometry = useMemo(() => {
     if (!isFiller) return null
     const halfWidth = projectSize.width / 2
