@@ -804,6 +804,258 @@
           ]
         }
       ]
+    },
+    {
+      "id": 7,
+      "title": "Other Side",
+      "year": "2025",
+      "role": "Design, fabrication and electronics.",
+      "context": "School project",
+      "tagline": "Two handmade interactive frames linked over Wi-Fi.",
+      "technologies": [
+        "Arduino"
+      ],
+      "link": "",
+      "cover": "/images/OtherSide/otherSide.webp",
+      "color": {
+        "background": "#3C282E",
+        "text": "#D7255A"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/OtherSide/intro.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 5,
+                "mobile": 6
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Two handmade interactive frames linked over Wi-Fi.",
+              "position": {
+                "desktop": 12,
+                "mobile": 8
+              },
+              "lead": true
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/OtherSide/gabarit.webp",
+              "span": "1-1",
+              "position": {
+                "desktop": 0,
+                "mobile": 0
+              }
+            },
+            {
+              "url": "/images/OtherSide/percage.webp",
+              "span": "1-1",
+              "position": {
+                "desktop": 6,
+                "mobile": 2
+              }
+            },
+            {
+              "url": "/images/OtherSide/cut.webp",
+              "span": "1-1",
+              "position": {
+                "desktop": 10,
+                "mobile": 8
+              }
+            },
+            {
+              "url": "/images/OtherSide/fixation.webp",
+              "span": "1-1",
+              "position": {
+                "desktop": 2,
+                "mobile": 4
+              }
+            },
+            {
+              "url": "/images/OtherSide/border.webp",
+              "span": "1-1",
+              "position": {
+                "desktop": 8,
+                "mobile": 6
+              }
+            },
+            {
+              "url": "/images/OtherSide/cablage.webp",
+              "span": "1-1",
+              "position": {
+                "desktop": 12,
+                "mobile": 10
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Drilling template.",
+              "position": {
+                "desktop": 1,
+                "mobile": 1
+              },
+              "label": "Build"
+            },
+            {
+              "text": "Drilling.",
+              "position": {
+                "desktop": 5,
+                "mobile": 5
+              },
+              "label": "Build"
+            },
+            {
+              "text": "Cutting the optical fibers.",
+              "position": {
+                "desktop": 11,
+                "mobile": 11
+              },
+              "label": "Build"
+            },
+            {
+              "text": "Mounting.",
+              "position": {
+                "desktop": 3,
+                "mobile": 3
+              },
+              "label": "Build"
+            },
+            {
+              "text": "Border mounting.",
+              "position": {
+                "desktop": 7,
+                "mobile": 7
+              },
+              "label": "Build"
+            },
+            {
+              "text": "Wiring.",
+              "position": {
+                "desktop": 13,
+                "mobile": 9
+              },
+              "label": "Build"
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/OtherSide/duo.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 0,
+                "mobile": 0
+              }
+            },
+            {
+              "url": "/images/OtherSide/test.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 7,
+                "mobile": 7
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Wi-Fi link between the two frames.",
+              "position": {
+                "desktop": 2,
+                "mobile": 2
+              },
+              "label": "Connection"
+            },
+            {
+              "text": "Color test.",
+              "position": {
+                "desktop": 11,
+                "mobile": 9
+              },
+              "label": "Test"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "KFC ORIGINS",
+      "year": "2023",
+      "context": "Havas Factory",
+      "tagline": "A landing page for the KFC Origins collection.",
+      "technologies": [
+        "Javascript"
+      ],
+      "link": "https://www.kfc.fr/origins#",
+      "linkLabel": "Visit the site",
+      "cover": "/images/KFC/KFC.webp",
+      "color": {
+        "background": "#332526",
+        "text": "#D23542"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/KFC/intro.webp",
+              "span": "3-2",
+              "position": {
+                "desktop": 5,
+                "mobile": 6
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "A landing page for the KFC Origins collection.",
+              "position": {
+                "desktop": 13,
+                "mobile": 12
+              },
+              "lead": true
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/KFC/c1.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 0,
+                "mobile": 0
+              }
+            },
+            {
+              "url": "/images/KFC/c2.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 7,
+                "mobile": 7
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Built with GSAP and CSS sprites.",
+              "position": {
+                "desktop": 11,
+                "mobile": 6
+              },
+              "label": "Animation"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
