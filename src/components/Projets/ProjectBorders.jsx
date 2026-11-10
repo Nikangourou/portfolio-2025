@@ -16,16 +16,18 @@ const MAX_ARRIVAL_DELAY_MS = 700
 const OUTLINE_COLOR = '#000000'
 const OUTLINE_OPACITY = 0.2
 
-// Départ côté transparent (x proche de 0) : la tuile se retourne en x jusqu'à π pour montrer sa face pleine.
-// Les autres axes restent modérés pour que le retournement se lise bien.
+// Départ côté transparent, de travers comme les projets du nuage
 const randomCloudRotation = () => [
   (Math.random() - 0.5) * 0.6,
   (Math.random() - 0.5) * 1.6,
   (Math.random() - 0.5) * 0.6,
 ]
 
-// Rotation d'arrivée : retournée, la face pleine est face à la caméra
-const FLIPPED_ROTATION = [Math.PI, 0, 0]
+// La bordure rejoint d'abord sa place à plat, puis se retourne sur place (comme les projets) :
+// ce délai court après son arrivée laisse le temps au ressort de se poser.
+const FLIP_AFTER_ARRIVAL_MS = 650
+const FLIP_JITTER_MS = 250
+const noRaycast = () => null
 
 const BorderTile = ({
   state,
@@ -57,22 +59,21 @@ const BorderTile = ({
   // se retourne en rejoignant sa place, et le côté plein apparaît quand le retournement passe la moitié.
   const [isFlipped, setIsFlipped] = useState(false)
 
-  // Comme un projet : la bordure vit dans le nuage de l'accueil, rejoint sa place à l'ouverture
-  // d'un projet avec le même ressort, et retourne dans le nuage à la fermeture.
-  const { position, rotation } = useSpring({
-    from: { position: state.initialPosition, rotation: state.initialRotation },
-    to: {
-      position: isProjectsArranged ? state.position : state.initialPosition,
-      rotation: isProjectsArranged ? FLIPPED_ROTATION : state.initialRotation,
-    },
+  // La bordure vit dans le nuage de l'accueil et rejoint sa place à l'ouverture d'un projet avec le même ressort
+  // que les projets (position et inclinaison), puis se retourne sur place (`flip` de 0 à π).
+  const { position, tilt } = useSpring({
+    position: isProjectsArranged ? state.position : state.initialPosition,
+    tilt: isProjectsArranged ? [0, 0, 0] : state.initialRotation,
     delay: isProjectsArranged ? state.arrivalDelay : 0,
-    config: (key) => {
-      // Le retournement a le même ressort que celui des pages des projets
-      if (key === 'rotation') return getSpringConfig('projectRotation')
-      return isProjectsArranged ? getSpringConfig('arrangement') : getSpringConfig('smooth')
-    },
+    config: isProjectsArranged ? getSpringConfig('arrangement') : getSpringConfig('smooth'),
+  })
+
+  const { flip } = useSpring({
+    flip: isProjectsArranged ? Math.PI : 0,
+    delay: isProjectsArranged ? state.arrivalDelay + FLIP_AFTER_ARRIVAL_MS + state.flipJitter : 0,
+    config: getSpringConfig('projectRotation'),
     onChange: (values) => {
-      const flipped = values.value.rotation[0] > Math.PI / 2
+      const flipped = values.value.flip > Math.PI / 2
       setIsFlipped((previous) => (previous === flipped ? previous : flipped))
     },
   })
@@ -104,7 +105,8 @@ const BorderTile = ({
       position={position}
       rotation-y={spinAngle}
     >
-    <animated.group rotation={rotation}>
+    <animated.group rotation={tilt}>
+    <animated.group rotation-x={flip}>
       {/* Sur l'accueil : un simple contour (une tuile pleine masquerait les cartes derrière) */}
       {!isTileShown && (
         <lineLoop geometry={outlineGeometry} material={outlineMaterial} />
@@ -112,9 +114,18 @@ const BorderTile = ({
       <AnimatedMesh
         projectId={`border-${index}`}
       >
-        <mesh ref={meshRef} geometry={getCachedGeometry()} dispose={null} visible={isTileShown}>
+        {/* Reste dans la scène mais n'écrit rien tant que la tuile n'est pas retournée : le shader est déjà compilé
+            au moment du flip. */}
+        <mesh
+          ref={meshRef}
+          geometry={getCachedGeometry()}
+          dispose={null}
+          raycast={isTileShown ? THREE.Mesh.prototype.raycast : noRaycast}
+        >
           <meshBasicMaterial
             ref={materialRef}
+            colorWrite={isTileShown}
+            depthWrite={isTileShown}
             side={THREE.DoubleSide}
             color={currentTheme.background}
             onUpdate={(material) => {
@@ -126,6 +137,7 @@ const BorderTile = ({
           />
         </mesh>
       </AnimatedMesh>
+    </animated.group>
     </animated.group>
     </animated.group>
   )
@@ -147,6 +159,7 @@ const ProjectBorders = ({ spin }) => {
       initialPosition: cloudPositions[tileCount + index] || [0, 0, 0],
       initialRotation: randomCloudRotation(),
       arrivalDelay: Math.random() * MAX_ARRIVAL_DELAY_MS,
+      flipJitter: Math.random() * FLIP_JITTER_MS,
     }))
   }, [borderPositions, cloudPositions, tileCount])
 

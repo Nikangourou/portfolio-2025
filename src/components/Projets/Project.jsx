@@ -23,6 +23,9 @@ const TILE_POSITION = new THREE.Vector3()
 
 // Décalage (ms) entre le flip de deux tuiles voisines
 const PAGE_FLIP_STAGGER_MS = 100
+const FILLER_FLIP_AFTER_ARRIVAL_MS = 650
+const FILLER_FLIP_JITTER_MS = 250
+const noRaycast = () => null
 
 // Les cartes de projet sont affichées plus grandes sur l'accueil (moins de projets, donc plus de poids chacun) ;
 // elles reprennent leur taille normale en rejoignant la grille.
@@ -199,6 +202,8 @@ const Project = forwardRef(function Project(
   const [isFillerFaceUp, setIsFillerFaceUp] = useState(false)
   // Vrai quand la couleur du projet est appliquée aux deux faces : avant, la tuile vide serait blanche une image
   const [isFillerReady, setIsFillerReady] = useState(false)
+  // Vrai une fois le premier retournement de l'ouverture terminé (les suivants sont des changements de page)
+  const hasOpenedRef = useRef(false)
   // Tuile vide : elle n'est affichée pleine qu'une fois son retournement passé la moitié (comme les bordures)
   const [isFillerFlipped, setIsFillerFlipped] = useState(false)
   const emptyTexture = useMemo(() => {
@@ -336,7 +341,10 @@ const Project = forwardRef(function Project(
   // Delays précalculés pour éviter les recalculs
   const animationDelays = useMemo(() => ({
     arrangement: isProjectsArranged ? gridPosition * 50 : Math.random() * 500,
-    pageRotation: gridPosition * PAGE_FLIP_STAGGER_MS
+    pageRotation: gridPosition * PAGE_FLIP_STAGGER_MS,
+    // Ouverture d'un projet : une tuile vide se retourne comme une bordure, sur place un court instant après son
+    // arrivée, sans attendre la cascade des projets (celles des dernières cases attendaient plus d'une seconde).
+    fillerOpeningFlip: gridPosition * 50 + FILLER_FLIP_AFTER_ARRIVAL_MS + Math.random() * FILLER_FLIP_JITTER_MS,
   }), [gridPosition, isProjectsArranged])
 
   // Gestion des positions et rotations avec springs - OPTIMISÉE
@@ -363,8 +371,14 @@ const Project = forwardRef(function Project(
 
   // Spring pour la rotation de page individuelle - OPTIMISÉE
   const { pageRotationX } = useSpring({
-    pageRotationX: isProjectsArranged ? currentPage * Math.PI : 0,
-    delay: isProjectsArranged ? animationDelays.pageRotation : 0,
+    // Une tuile vide se retourne dès l'ouverture : currentPage ne passe à 1 qu'une fois toutes les tuiles arrivées,
+    // ce qui retardait leur coloration d'environ une seconde.
+    pageRotationX: isProjectsArranged ? (isFiller ? Math.max(currentPage, 1) : currentPage) * Math.PI : 0,
+    // Les changements de page suivent la même cascade pour les tuiles vides et les projets : sinon les tuiles vides
+    // se retournaient après les projets, en deux temps.
+    delay: isProjectsArranged
+      ? (isFiller && !hasOpenedRef.current ? animationDelays.fillerOpeningFlip : animationDelays.pageRotation)
+      : 0,
     immediate: !isProjectsArranged,
     config: getSpringConfig('projectRotation'),
     onChange: (result) => {
@@ -378,6 +392,7 @@ const Project = forwardRef(function Project(
       isPageFlipAnimatingRef.current = true
     },
     onRest: () => {
+      hasOpenedRef.current = isProjectsArranged
       isPageFlipAnimatingRef.current = false
       // Resynchroniser sur l'angle réel (et non sur la page cible, qui peut déjà avoir changé si on a
       // cliqué pendant que cette animation finissait de se stabiliser).
@@ -736,30 +751,38 @@ const Project = forwardRef(function Project(
       scale={scale}
     >
     <animated.group rotation={rotation}>
-      {isFiller && !isFillerFilled && (
-        <lineLoop geometry={fillerOutlineGeometry}>
-          <lineBasicMaterial
-            color={FILLER_OUTLINE_COLOR}
-            transparent
-            opacity={FILLER_OUTLINE_OPACITY}
-            depthWrite={false}
-          />
-        </lineLoop>
-      )}
       <animated.group
         ref={pageGroupRef}
         rotation-x={pageRotationX}
-        visible={!isFiller || isFillerFilled}
       >
+        {/* Le contour tourne avec la tuile : on voit le flip, puis la face colorée apparaît de l'autre côté */}
+        {isFiller && !isFillerFilled && (
+          <lineLoop geometry={fillerOutlineGeometry}>
+            <lineBasicMaterial
+              color={FILLER_OUTLINE_COLOR}
+              transparent
+              opacity={FILLER_OUTLINE_OPACITY}
+              depthWrite={false}
+            />
+          </lineLoop>
+        )}
         <AnimatedMesh
           projectId={gridPosition}
           onClick={handleMeshClick}
         >
           {/* Géométrie partagée (jamais clonée au rendu : un clone par rendu fuyait côté GPU) */}
-          <mesh geometry={getCachedGeometry()} dispose={null}>
+          {/* Une tuile vide reste dans la scène mais n'écrit rien tant qu'elle n'est pas retournée : son shader et sa
+              texture sont alors déjà prêts au moment du flip, au lieu de se compiler à cet instant. */}
+          <mesh
+            geometry={getCachedGeometry()}
+            dispose={null}
+            raycast={isFiller && !isFillerFilled ? noRaycast : THREE.Mesh.prototype.raycast}
+          >
             <meshBasicMaterial
               ref={pageMaterialRef}
               map={emptyTexture}
+              colorWrite={!isFiller || isFillerFilled}
+              depthWrite={!isFiller || isFillerFilled}
               side={THREE.DoubleSide}
               toneMapped={true}
               onUpdate={(material) => {
