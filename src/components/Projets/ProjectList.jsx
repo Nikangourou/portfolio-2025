@@ -5,6 +5,7 @@ import { useSpring } from '@react-spring/three'
 import { useRotationControl } from '@/hooks/useRotationControl'
 import { getSpringConfig } from '@/utils/springConfig'
 import { useStore } from '@/stores/store'
+import { useGridConfig } from '@/hooks/useGridConfig'
 
 // Image 1x1 blanche des tuiles vides (pas de projet derrière : elles ne servent qu'à la page projet)
 const FILLER_IMAGE = (() => {
@@ -23,6 +24,7 @@ const ProjectList = memo(({
   groupRef,
   distance
 }) => {
+  const { tileSlots } = useGridConfig()
   const { rotationY } = useRotationControl() // Rotation cible déjà calculée dans le hook
   
   const isProjectsArranged = useStore((state) => state.isProjectsArranged)
@@ -57,6 +59,7 @@ const ProjectList = memo(({
               projectGroupsRef.current[i] = state.project ? el : null
             }}
             gridPosition={i}
+            slot={tileSlots[i] ?? i}
             isFiller={!state.project}
             image={state.project?.cover ?? FILLER_IMAGE}
             initialPosition={state.initialPosition}

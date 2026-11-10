@@ -159,14 +159,14 @@ const getNavigationIconTypeForPage = ({
   selectedProject,
   page,
   maxPage,
-  gridPosition,
+  slot,
   gridConfig,
 }) => {
   if (!selectedProject || !page || page < 1) {
     return null
   }
 
-  if (gridPosition === gridConfig.crossPosition) {
+  if (slot === gridConfig.crossPosition) {
     return 'cross'
   }
 
@@ -174,11 +174,11 @@ const getNavigationIconTypeForPage = ({
     return null
   }
 
-  if (gridPosition === gridConfig.arrowUpPosition && page > 1) {
+  if (slot === gridConfig.arrowUpPosition && page > 1) {
     return 'arrow-up'
   }
 
-  if (gridPosition === gridConfig.arrowDownPosition && page < maxPage) {
+  if (slot === gridConfig.arrowDownPosition && page < maxPage) {
     return 'arrow-down'
   }
 
@@ -186,7 +186,7 @@ const getNavigationIconTypeForPage = ({
 }
 
 const Project = forwardRef(function Project(
-  { gridPosition, image, initialPosition, initialRotation, isFiller = false, spin },
+  { gridPosition, slot, image, initialPosition, initialRotation, isFiller = false, spin },
   ref,
 ) {
   const pageMaterialRef = useRef(null)
@@ -321,8 +321,8 @@ const Project = forwardRef(function Project(
 
   // Position cible pour l'arrangement (memoized)
   const targetArrangedPosition = useMemo(() => {
-    return predefinedPositions[gridPosition] || [0, 0, 0]
-  }, [predefinedPositions, gridPosition])
+    return predefinedPositions[slot] || [0, 0, 0]
+  }, [predefinedPositions, slot])
 
   const applyPressureRippleShader = useCallback((material) => {
     applyProjectRippleShader(material, rippleUniforms)
@@ -340,12 +340,12 @@ const Project = forwardRef(function Project(
 
   // Delays précalculés pour éviter les recalculs
   const animationDelays = useMemo(() => ({
-    arrangement: isProjectsArranged ? gridPosition * 50 : Math.random() * 500,
-    pageRotation: gridPosition * PAGE_FLIP_STAGGER_MS,
+    arrangement: isProjectsArranged ? slot * 50 : Math.random() * 500,
+    pageRotation: slot * PAGE_FLIP_STAGGER_MS,
     // Ouverture d'un projet : une tuile vide se retourne comme une bordure, sur place un court instant après son
     // arrivée, sans attendre la cascade des projets (celles des dernières cases attendaient plus d'une seconde).
-    fillerOpeningFlip: gridPosition * 50 + FILLER_FLIP_AFTER_ARRIVAL_MS + Math.random() * FILLER_FLIP_JITTER_MS,
-  }), [gridPosition, isProjectsArranged])
+    fillerOpeningFlip: slot * 50 + FILLER_FLIP_AFTER_ARRIVAL_MS + Math.random() * FILLER_FLIP_JITTER_MS,
+  }), [slot, isProjectsArranged])
 
   // Gestion des positions et rotations avec springs - OPTIMISÉE
   const homeScale = isFiller ? 1 : HOME_CARD_SCALE
@@ -360,7 +360,7 @@ const Project = forwardRef(function Project(
     config: isProjectsArranged ? getSpringConfig('arrangement') : getSpringConfig('smooth'),
     onChange: (values) => {
       // Marquer l'animation comme terminée à la moitié pour le dernier projet - OPTIMISÉ
-      if (isProjectsArranged && gridPosition === completionTileIndex && targetArrangedPosition[0] !== 0) {
+      if (isProjectsArranged && slot === completionTileIndex && targetArrangedPosition[0] !== 0) {
         const progress = Math.abs(values.value.position[0] / targetArrangedPosition[0]);
         if (progress >= 0.7 && !isArrangementAnimationComplete) {
           setArrangementAnimationComplete(true);
@@ -439,13 +439,13 @@ const Project = forwardRef(function Project(
     contentTexture: currentPageTexture,
     targetFace,
   } = useContentTexture(
-    gridPosition,
+    slot,
     currentPage || null,
   )
   const previousPage = currentPage > 1 ? currentPage - 1 : null
   const previousFace = targetFace === 'front' ? 'back' : 'front'
   const { contentTexture: previousPageTexture } = useContentTexture(
-    gridPosition,
+    slot,
     previousPage,
     previousFace,
   )
@@ -455,10 +455,10 @@ const Project = forwardRef(function Project(
       selectedProject,
       page: currentPage,
       maxPage,
-      gridPosition,
+      slot,
       gridConfig,
     })
-  }, [selectedProject, currentPage, maxPage, gridPosition, gridConfig])
+  }, [selectedProject, currentPage, maxPage, slot, gridConfig])
   const navigationCurrentTexture = useMemo(() => {
     if (!navigationCurrentIconType) {
       return null
@@ -477,10 +477,10 @@ const Project = forwardRef(function Project(
       selectedProject,
       page: previousPage,
       maxPage,
-      gridPosition,
+      slot,
       gridConfig,
     })
-  }, [selectedProject, previousPage, maxPage, gridPosition, gridConfig])
+  }, [selectedProject, previousPage, maxPage, slot, gridConfig])
   const navigationPreviousTexture = useMemo(() => {
     if (!navigationPreviousIconType) {
       return null
@@ -498,7 +498,7 @@ const Project = forwardRef(function Project(
     }
   }, [navigationCurrentTexture, navigationPreviousTexture])
 
-  const { contentText } = useContentText(gridPosition, overlayPage || null)
+  const { contentText } = useContentText(slot, overlayPage || null)
 
   useEffect(() => {
     if (pageMaterialRef.current) {
@@ -524,19 +524,19 @@ const Project = forwardRef(function Project(
   const handleMeshClick = () => {
 
     // Navigation - Cross
-    if (gridPosition === gridConfig.crossPosition && selectedProject) {
+    if (slot === gridConfig.crossPosition && selectedProject) {
       resetProjectState()
       return
     }
 
     // Navigation - Arrow Up
-    if (gridPosition === gridConfig.arrowUpPosition && selectedProject && currentPage > 1) {
+    if (slot === gridConfig.arrowUpPosition && selectedProject && currentPage > 1) {
       setCurrentPage(currentPage - 1)
       return
     }
 
     // Navigation - Arrow Down
-    if (gridPosition === gridConfig.arrowDownPosition && selectedProject && currentPage < maxPage) {
+    if (slot === gridConfig.arrowDownPosition && selectedProject && currentPage < maxPage) {
       setCurrentPage(currentPage + 1)
       return
     }
@@ -562,9 +562,9 @@ const Project = forwardRef(function Project(
       currentPage > 0
     )
     const isNavigationTile = (
-      gridPosition === gridConfig.crossPosition ||
-      gridPosition === gridConfig.arrowUpPosition ||
-      gridPosition === gridConfig.arrowDownPosition
+      slot === gridConfig.crossPosition ||
+      slot === gridConfig.arrowUpPosition ||
+      slot === gridConfig.arrowDownPosition
     )
     const shouldUseNavigationMap = shouldUseContentMaps && isNavigationTile
     const shouldUseBackOnlyNavigation = (
@@ -706,7 +706,7 @@ const Project = forwardRef(function Project(
     backgroundFallbackTexture,
     navigationCurrentTexture,
     navigationPreviousTexture,
-    gridPosition,
+    slot,
     gridConfig,
     rippleUniforms,
     isFiller,
@@ -767,7 +767,7 @@ const Project = forwardRef(function Project(
           </lineLoop>
         )}
         <AnimatedMesh
-          projectId={gridPosition}
+          projectId={slot}
           onClick={handleMeshClick}
         >
           {/* Géométrie partagée (jamais clonée au rendu : un clone par rendu fuyait côté GPU) */}
@@ -799,7 +799,7 @@ const Project = forwardRef(function Project(
                 {overlayPage === 1 && selectedProject && (
                   <>
                     <ProjectOverlay
-                      condition={gridPosition === 0 && selectedProject.title}
+                      condition={slot === 0 && selectedProject.title}
                       projectSize={projectSize}
                       page={overlayPage}
                     >
@@ -814,7 +814,7 @@ const Project = forwardRef(function Project(
                       </div>
                     </ProjectOverlay>
                     <ProjectOverlay
-                      condition={gridPosition === 1 && selectedProject.context}
+                      condition={slot === 1 && selectedProject.context}
                       projectSize={projectSize}
                       page={overlayPage}
                     >
@@ -824,7 +824,7 @@ const Project = forwardRef(function Project(
                       </div>
                     </ProjectOverlay>
                     <ProjectOverlay
-                      condition={gridPosition === 2 && selectedProject.year}
+                      condition={slot === 2 && selectedProject.year}
                       projectSize={projectSize}
                       page={overlayPage}
                     >
@@ -834,7 +834,7 @@ const Project = forwardRef(function Project(
                       </div>
                     </ProjectOverlay>
                     <ProjectOverlay
-                      condition={gridPosition === 3 && selectedProject.technologies}
+                      condition={slot === 3 && selectedProject.technologies}
                       projectSize={projectSize}
                       page={overlayPage}
                     >
@@ -855,7 +855,7 @@ const Project = forwardRef(function Project(
                       </div>
                     </ProjectOverlay>
                     <ProjectOverlay
-                      condition={gridPosition === 4 && selectedProject.link}
+                      condition={slot === 4 && selectedProject.link}
                       projectSize={projectSize}
                       page={overlayPage}
                     >
@@ -875,7 +875,7 @@ const Project = forwardRef(function Project(
                       </div>
                     </ProjectOverlay>
                     <ProjectOverlay
-                      condition={gridPosition === (gridConfig.isMobile ? 5 : 8) && selectedProject.role}
+                      condition={slot === (gridConfig.isMobile ? 5 : 8) && selectedProject.role}
                       projectSize={projectSize}
                       page={overlayPage}
                     >
