@@ -15,7 +15,6 @@ import { preloadFirstPages, preloadProjectContents, releaseProjectContents } fro
 const MAX_YAW_FROM_FACE = Math.PI / 3
 
 export default function Projects() {
-  // console.log('Projects rendered')
 
   const { camera } = useThree()
   const gridConfig = useGridConfig()
