@@ -223,30 +223,6 @@
           ],
           "texts": [
             {
-              "label": "Role",
-              "text": "[À renseigner : ton rôle exact]",
-              "position": {
-                "desktop": 7,
-                "mobile": -1
-              }
-            },
-            {
-              "label": "Challenge",
-              "text": "[À renseigner : ce qui était difficile]",
-              "position": {
-                "desktop": 8,
-                "mobile": -1
-              }
-            },
-            {
-              "label": "Result",
-              "text": "[À renseigner : un résultat concret]",
-              "position": {
-                "desktop": 12,
-                "mobile": 5
-              }
-            },
-            {
               "text": "A road trip where your past choices reshape the world.",
               "position": {
                 "desktop": 13,

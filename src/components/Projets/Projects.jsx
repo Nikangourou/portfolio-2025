@@ -11,6 +11,9 @@ import { useProjectInteraction } from '@/hooks/useProjectInteraction'
 import { useSceneRippleField } from '@/hooks/useGlobalRipple'
 import { preloadFirstPages, preloadProjectContents, releaseProjectContents } from '@/utils/contentLoader'
 
+// Inclinaison maximale (rad) d'une carte de l'accueil par rapport à la face ou au dos : 60°
+const MAX_YAW_FROM_FACE = Math.PI / 3
+
 export default function Projects() {
   // console.log('Projects rendered')
 
@@ -88,9 +91,12 @@ export default function Projects() {
     return Array.from({ length: gridConfig.tileCount }, (_, index) => {
       const project = projectsData.projects[index] || null
 
+      // Le tirage évite la tranche : la carte est de face ou de dos, inclinée de 60° au plus (au-delà, on ne
+      // verrait plus qu'un trait).
+      const faceAngle = (Math.random() < 0.5 ? 0 : Math.PI) + (Math.random() - 0.5) * 2 * MAX_YAW_FROM_FACE
       const randomRotation = [
         (Math.random() - 0.5) * Math.PI * 0.4,
-        (Math.random() - 0.5) * Math.PI * 2,
+        faceAngle,
         (Math.random() - 0.5) * Math.PI * 0.40
       ]
 

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { generateCloudPositions, getCloudLayout } from '../utils/cloudLayout'
+import { generateCloudPositions } from '../utils/cloudLayout'
 import projectsData from '../data/projects.json'
 
 export const useProjectPositionsStore = create((set, get) => ({
@@ -137,10 +137,7 @@ export const useProjectPositionsStore = create((set, get) => ({
     calculateBorderPositions(camera, gridConfig)
 
     const total = gridConfig.tileCount + get().borderPositions.length
-    // Disposition « arranged » : chaque tuile part de sa place finale, seule sa rotation change à l'ouverture
-    const cloudPositions = getCloudLayout() === 'arranged'
-      ? [...get().predefinedPositions, ...get().borderPositions]
-      : generateCloudPositions(total, camera, gridConfig.distance, projectsData.projects.length, undefined, get().projectSize)
+    const cloudPositions = generateCloudPositions(total, camera, gridConfig.distance, projectsData.projects.length, get().projectSize)
     set({ cloudPositions })
   }
 }))
