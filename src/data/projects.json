@@ -706,25 +706,26 @@
     },
     {
       "id": 6,
-      "title": "Wanderlost Whispers",
-      "year": "2023",
-      "role": "3D design in Blender, development in Three.js.",
-      "context": "School project",
-      "tagline": "What happens to postcards that never arrive?",
+      "title": "Vasava",
+      "year": "2026",
+      "context": "Dallonses agency",
+      "tagline": "Custom modules for the Vasava studio website.",
       "technologies": [
-        "Three.js"
+        "Next.JS",
+        "TailwindCSS",
+        "Framer"
       ],
-      "link": "",
-      "cover": "/images/Wanderlost/wanderlost.webp",
+      "link": "https://www.vasava.es/en",
+      "cover": "/images/Vasava/vasava.webp",
       "color": {
-        "background": "#071A33",
-        "text": "#B2C5DD"
+        "background": "#181818",
+        "text": "#FFFFFF"
       },
       "contents": [
         {
           "images": [
             {
-              "url": "/images/Wanderlost/intro.webp",
+              "url": "/images/Vasava/intro.webp",
               "span": "3-2",
               "position": {
                 "desktop": 5,
@@ -734,28 +735,19 @@
           ],
           "texts": [
             {
-              "text": "What happens to postcards that never arrive?",
+              "text": "Custom module development for the Vasava agency website.",
               "position": {
                 "desktop": 13,
-                "mobile": 12
-              },
-              "lead": true
+                "mobile": 1
+              }
             }
           ]
         },
         {
           "images": [
             {
-              "url": "/images/Wanderlost/coridor2.webp",
-              "span": "2-1",
-              "position": {
-                "desktop": 12,
-                "mobile": 9
-              }
-            },
-            {
-              "url": "/images/Wanderlost/coridor1.webp",
-              "span": "3-2",
+              "url": "/images/Vasava/slider.webp",
+              "span": "4-2",
               "position": {
                 "desktop": 0,
                 "mobile": 0
@@ -764,42 +756,32 @@
           ],
           "texts": [
             {
-              "text": "The 3D environment, built in Blender.",
+              "text": "Development of a custom Embla slider module.",
               "position": {
-                "desktop": 11,
-                "mobile": 11
-              },
-              "label": "Modeling"
-            },
-            {
-              "text": "The scene, integrated into Three.js.",
-              "position": {
-                "desktop": 3,
-                "mobile": 6
-              },
-              "label": "Integration"
+                "desktop": 12,
+                "mobile": 7
+              }
             }
           ]
         },
         {
           "images": [
             {
-              "url": "/images/Wanderlost/end.webp",
-              "span": "4-2",
+              "url": "/images/Vasava/popup.webp",
+              "span": "3-3",
               "position": {
                 "desktop": 0,
-                "mobile": 3
+                "mobile": 0
               }
             }
           ],
           "texts": [
             {
-              "text": "Created in Three.js.",
+              "text": "Development of a pop-up image gallery.",
               "position": {
-                "desktop": 12,
-                "mobile": 1
-              },
-              "label": "Particles"
+                "desktop": 13,
+                "mobile": 10
+              }
             }
           ]
         }

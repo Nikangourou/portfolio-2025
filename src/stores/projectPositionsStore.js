@@ -140,7 +140,7 @@ export const useProjectPositionsStore = create((set, get) => ({
     // Disposition « arranged » : chaque tuile part de sa place finale, seule sa rotation change à l'ouverture
     const cloudPositions = getCloudLayout() === 'arranged'
       ? [...get().predefinedPositions, ...get().borderPositions]
-      : generateCloudPositions(total, camera, gridConfig.distance, projectsData.projects.length)
+      : generateCloudPositions(total, camera, gridConfig.distance, projectsData.projects.length, undefined, get().projectSize)
     set({ cloudPositions })
   }
 }))

@@ -15,6 +15,7 @@ import { getSpringConfig } from '@/utils/springConfig'
 import { useGridConfig } from '@/hooks/useGridConfig'
 import { useGlobalRipple } from '@/hooks/useGlobalRipple'
 import { applyProjectRippleShader } from '@/utils/rippleShader'
+import { HOME_CARD_SCALE } from '@/utils/cloudLayout'
 
 const TILE_NORMAL = new THREE.Vector3()
 const TILE_TO_CAMERA = new THREE.Vector3()
@@ -25,7 +26,6 @@ const PAGE_FLIP_STAGGER_MS = 100
 
 // Les cartes de projet sont affichées plus grandes sur l'accueil (moins de projets, donc plus de poids chacun) ;
 // elles reprennent leur taille normale en rejoignant la grille.
-const HOME_CARD_SCALE = 1.4
 
 // Contour d'une tuile vide sur l'accueil : un simple trait fin et discret, sans remplissage
 // (une tuile pleine masquerait les cartes qui sont derrière).
