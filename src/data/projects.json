@@ -684,14 +684,16 @@
       "id": 6,
       "title": "Vasava",
       "year": "2026",
+      "role": "Front-end development of custom modules.",
       "context": "Dallonses agency",
-      "tagline": "Custom modules for the Vasava studio website.",
+      "tagline": "A studio website with a custom slider and image gallery.",
       "technologies": [
         "Next.JS",
         "TailwindCSS",
         "Framer"
       ],
       "link": "https://www.vasava.es/en",
+      "linkLabel": "Visit the site",
       "cover": "/images/Vasava/vasava.webp",
       "color": {
         "background": "#181818",
@@ -711,11 +713,12 @@
           ],
           "texts": [
             {
-              "text": "Custom module development for the Vasava agency website.",
+              "text": "A studio website with a custom slider and image gallery.",
               "position": {
                 "desktop": 13,
                 "mobile": 12
-              }
+              },
+              "lead": true
             }
           ]
         },
@@ -732,11 +735,12 @@
           ],
           "texts": [
             {
-              "text": "Development of a custom Embla slider module.",
+              "text": "A custom slider built with Embla.",
               "position": {
                 "desktop": 12,
                 "mobile": 7
-              }
+              },
+              "label": "Module"
             }
           ]
         },
@@ -753,11 +757,12 @@
           ],
           "texts": [
             {
-              "text": "Development of a pop-up image gallery.",
+              "text": "A pop-up image gallery.",
               "position": {
                 "desktop": 13,
                 "mobile": 10
-              }
+              },
+              "label": "Module"
             }
           ]
         }
