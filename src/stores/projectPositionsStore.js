@@ -9,6 +9,9 @@ export const useProjectPositionsStore = create((set, get) => ({
   borderPositions: [],
   // Positions de départ dans le nuage de l'accueil : d'abord les tuiles des projets, puis celles des bordures
   cloudPositions: [],
+  // Graine des tirages du nuage : change seulement si le nombre de tuiles change, pas au redimensionnement
+  cloudSeed: 1,
+  cloudSeedTileCount: 0,
   projectSize: { width: 1, height: 1 },
   gridConfig: null,
   
@@ -137,7 +140,12 @@ export const useProjectPositionsStore = create((set, get) => ({
     calculateBorderPositions(camera, gridConfig)
 
     const total = gridConfig.tileCount + get().borderPositions.length
-    const cloudPositions = generateCloudPositions(total, camera, gridConfig.distance, projectsData.projects.length, get().projectSize)
-    set({ cloudPositions })
+    let { cloudSeed, cloudSeedTileCount } = get()
+    if (cloudSeedTileCount !== total) {
+      cloudSeed = Math.floor(Math.random() * 0xFFFFFFFF)
+      cloudSeedTileCount = total
+    }
+    const cloudPositions = generateCloudPositions(total, camera, gridConfig.distance, projectsData.projects.length, get().projectSize, cloudSeed)
+    set({ cloudPositions, cloudSeed, cloudSeedTileCount })
   }
 }))

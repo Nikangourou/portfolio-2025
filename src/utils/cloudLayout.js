@@ -8,6 +8,21 @@ const DEPTH_RANGE = 1.5
 // Poids de la profondeur dans la distance entre deux points (les écarts en profondeur comptent moins)
 const DEPTH_WEIGHT = 0.5
 const CANDIDATES_PER_POINT = 24
+// Plafond de tirages pour placer les cartes : filet de sécurité si l'écran n'a pas encore de taille valide
+const MAX_PLACEMENT_ATTEMPTS = 200000
+
+// Générateur pseudo-aléatoire à graine (mulberry32) : avec la même graine, un redimensionnement de la fenêtre
+// reprend la même suite de tirages au lieu de redistribuer toute la scène.
+export const createSeededRandom = (seed) => {
+  let state = seed >>> 0
+  return () => {
+    state = (state + 0x6D2B79F5) >>> 0
+    let t = state
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
 
 // Échelle des cartes projets sur l'accueil (utilisée aussi par Project.jsx)
 export const HOME_CARD_SCALE = 1.4
@@ -18,7 +33,7 @@ const CARD_GAP = 0.08
 // Projets de l'accueil : posés comme sur main (groupés au centre), mais sans qu'une carte en recouvre une autre
 // *à l'écran*. Le test se fait sur les rectangles projetés (la perspective grossit les cartes proches). Si une
 // carte ne trouve pas de place, la zone de tirage s'élargit au lieu de tolérer un recouvrement.
-const generateProjectPositions = (count, camera, distance, cardSize) => {
+const generateProjectPositions = (count, camera, distance, cardSize, random) => {
   const tanHalfFov = Math.tan((camera.fov * Math.PI) / 360)
   const groupDepth = Math.abs(distance)
   // Réduit si l'écran est trop étroit (mobile) pour loger toutes les cartes sans recouvrement
@@ -38,12 +53,23 @@ const generateProjectPositions = (count, camera, distance, cardSize) => {
   const screenRects = []
   let spread = 1
   let attempts = 0
+  let totalAttempts = 0
+
+  // Écran sans taille valide (ratio nul ou non numérique) : rien ne peut être placé
+  if (!Number.isFinite(camera.aspect) || camera.aspect <= 0) {
+    return Array.from({ length: count }, () => [0, 0, 0])
+  }
 
   while (positions.length < count) {
+    if (++totalAttempts > MAX_PLACEMENT_ATTEMPTS) {
+      while (positions.length < count) positions.push([0, 0, 0])
+      break
+    }
+
     const candidate = [
-      (Math.random() * 4 - 2) * spread,
-      (Math.random() * 4 - 2) * spread,
-      Math.random() * 4 - 2,
+      (random() * 4 - 2) * spread,
+      (random() * 4 - 2) * spread,
+      random() * 4 - 2,
     ]
     const rect = project(candidate)
     // Reste dans l'écran
@@ -73,21 +99,22 @@ const FILL_COVERAGE = 0.95
 
 // Les projets sont placés comme sur main (groupés au centre), puis chaque tuile restante
 // est posée au point de l'écran visible le plus éloigné de tout ce qui est déjà placé (« best candidate »).
-export const generateCloudPositions = (count, camera, distance, projectCount, cardSize) => {
+export const generateCloudPositions = (count, camera, distance, projectCount, cardSize, seed = 1) => {
+  const random = createSeededRandom(seed)
   const tanHalfFov = Math.tan((camera.fov * Math.PI) / 360)
   const groupDepth = Math.abs(distance)
-  const positions = generateProjectPositions(Math.min(projectCount, count), camera, distance, cardSize)
+  const positions = generateProjectPositions(Math.min(projectCount, count), camera, distance, cardSize, random)
 
   for (let i = positions.length; i < count; i++) {
     let best = null
     let bestScore = -1
 
     for (let attempt = 0; attempt < CANDIDATES_PER_POINT; attempt++) {
-      const z = (Math.random() * 2 - 1) * DEPTH_RANGE
+      const z = (random() * 2 - 1) * DEPTH_RANGE
       const halfHeight = (groupDepth - z) * tanHalfFov * FILL_COVERAGE
       const candidate = [
-        (Math.random() * 2 - 1) * halfHeight * camera.aspect,
-        (Math.random() * 2 - 1) * halfHeight,
+        (random() * 2 - 1) * halfHeight * camera.aspect,
+        (random() * 2 - 1) * halfHeight,
         z,
       ]
 

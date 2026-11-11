@@ -3,6 +3,7 @@ import {
     clearGlobalVisualPointerState,
     setGlobalVisualPointerState,
 } from '@/utils/globalPointerTracker'
+import * as THREE from 'three'
 import useThemeStore from '@/stores/themeStore'
 
 // Serpent en trait fin (façon tatouage line-art) : une colonne vertébrale qui suit le curseur,
@@ -16,6 +17,8 @@ const LINE_WIDTH = 1.2
 const WAVE_AMPLITUDE = 26
 const VERTEX_STEP = 2
 const CHEVRON_DEPTH = 1.1
+// Vitesse (1/s) à laquelle la couleur rejoint celle du thème : le serpent change de teinte en douceur
+const COLOR_FOLLOW_RATE = 4
 
 // Tête : un losange dont le sommet arrière touche la ligne centrale.
 // Formes en repère local (x vers l'avant, y sur le côté), multipliées par HEAD_SIZE.
@@ -48,6 +51,9 @@ export default function SceneMouseTrail() {
         const points = Array.from({ length: SEGMENT_COUNT }, () => ({ x: startX, y: startY }))
         const pointer = { x: startX, y: startY }
         let speed = 0
+        const currentColor = new THREE.Color(useThemeStore.getState().currentTheme.text || 'black')
+        const targetColor = new THREE.Color()
+        let lastTime = null
         let animationFrame = null
 
         const resize = () => {
@@ -101,7 +107,12 @@ export default function SceneMouseTrail() {
             update()
             setGlobalVisualPointerState(points[0].x, points[0].y)
 
-            const color = useThemeStore.getState().currentTheme.text || 'black'
+            // Couleur : glisse vers celle du thème (noir sur l'accueil, couleur du projet quand il est ouvert)
+            const elapsed = lastTime === null ? 0 : Math.min((time - lastTime) / 1000, 0.1)
+            lastTime = time
+            targetColor.set(useThemeStore.getState().currentTheme.text || 'black')
+            currentColor.lerp(targetColor, 1 - Math.exp(-elapsed * COLOR_FOLLOW_RATE))
+            const color = `#${currentColor.getHexString()}`
             const last = points.length - 1
             // Le serpent ondule quand le curseur bouge, et se redresse quand il s'arrête
             const wave = WAVE_AMPLITUDE * (0.35 + 0.65 * Math.min(speed / 6, 1))

@@ -152,16 +152,24 @@ const ProjectBorders = ({ spin }) => {
   const { borderPositions, projectSize, cloudPositions } = useProjectPositionsStore()
   const { tileCount } = useGridConfig()
 
+  // Tirages aléatoires des bordures (inclinaison, délais) : gardés tant que leur nombre ne change pas
+  const randomBorderData = useMemo(() => {
+    return borderPositions.map(() => ({
+      initialRotation: randomCloudRotation(),
+      arrivalDelay: Math.random() * MAX_ARRIVAL_DELAY_MS,
+      flipJitter: Math.random() * FLIP_JITTER_MS,
+    }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [borderPositions.length])
+
   // Positions de départ dans le nuage : après celles des tuiles des projets, dans la même répartition
   const borderStates = useMemo(() => {
     return borderPositions.map((pos, index) => ({
       position: pos,
       initialPosition: cloudPositions[tileCount + index] || [0, 0, 0],
-      initialRotation: randomCloudRotation(),
-      arrivalDelay: Math.random() * MAX_ARRIVAL_DELAY_MS,
-      flipJitter: Math.random() * FLIP_JITTER_MS,
+      ...randomBorderData[index],
     }))
-  }, [borderPositions, cloudPositions, tileCount])
+  }, [borderPositions, cloudPositions, tileCount, randomBorderData])
 
   // Contour et matériau partagés par toutes les bordures
   const outlineGeometry = useMemo(() => {

@@ -85,28 +85,32 @@ export default function Projects() {
 
   useSceneRippleField()
 
-  // Créer les données des projets : position de départ dans le nuage (répartie sur l'écran) et rotation aléatoire
-  const projectData = useMemo(() => {
-    return Array.from({ length: gridConfig.tileCount }, (_, index) => {
-      const project = projectsData.projects[index] || null
-
+  // Tirages aléatoires des tuiles (inclinaison de départ, délai) : gardés tant que le nombre de tuiles ne change pas,
+  // pour qu'un redimensionnement ne les redistribue pas.
+  const randomTileData = useMemo(() => {
+    return Array.from({ length: gridConfig.tileCount }, () => {
       // Le tirage évite la tranche : la carte est de face ou de dos, inclinée de 60° au plus (au-delà, on ne
       // verrait plus qu'un trait).
       const faceAngle = (Math.random() < 0.5 ? 0 : Math.PI) + (Math.random() - 0.5) * 2 * MAX_YAW_FROM_FACE
-      const randomRotation = [
-        (Math.random() - 0.5) * Math.PI * 0.4,
-        faceAngle,
-        (Math.random() - 0.5) * Math.PI * 0.40
-      ]
-
       return {
-        project,
-        initialPosition: cloudPositions[index] || [0, 0, 0],
-        initialRotation: randomRotation,
+        initialRotation: [
+          (Math.random() - 0.5) * Math.PI * 0.4,
+          faceAngle,
+          (Math.random() - 0.5) * Math.PI * 0.40,
+        ],
         pageRotationDelay: Math.random() * 0.5,
       }
     })
-  }, [gridConfig.tileCount, cloudPositions])
+  }, [gridConfig.tileCount])
+
+  // Données des projets : position de départ dans le nuage (répartie sur l'écran) et rotation aléatoire
+  const projectData = useMemo(() => {
+    return randomTileData.map((random, index) => ({
+      project: projectsData.projects[index] || null,
+      initialPosition: cloudPositions[index] || [0, 0, 0],
+      ...random,
+    }))
+  }, [randomTileData, cloudPositions])
 
   // Mettre à jour la ref pour le raycasting
   useEffect(() => {
