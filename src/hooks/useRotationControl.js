@@ -1,66 +1,30 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useStore } from '@/stores/store'
 
+// Rotation cible des tuiles de l'accueil, pilotée par la molette et le toucher.
+// L'angle vit dans une ref : un cran de molette ne déclenche aucun rendu React (sinon toute la scène serait
+// recalculée à chaque événement). C'est ProjectList qui, à chaque image, rapproche la rotation affichée de cette cible.
 export function useRotationControl() {
-  const [rotationY, setRotationY] = useState(Math.PI)
-  const [targetRotationY, setTargetRotationY] = useState(Math.PI)
+  const targetRef = useRef(0)
   const isProjectsArranged = useStore((state) => state.isProjectsArranged)
   const isProjectsArrangedRef = useRef(isProjectsArranged)
-  const lastFreeRotationRef = useRef(Math.PI)
-  const wasArrangedRef = useRef(false)
 
   useEffect(() => {
     isProjectsArrangedRef.current = isProjectsArranged
   }, [isProjectsArranged])
 
   useEffect(() => {
-    if (isProjectsArranged) {
-      if (wasArrangedRef.current) {
-        return
-      }
-
-      wasArrangedRef.current = true
-
-      const currentRotation = lastFreeRotationRef.current
-      const targetRotation = 0
-
-      // Normaliser les rotations entre -π et π pour prendre le chemin le plus court.
-      const normalizedCurrent = ((currentRotation + Math.PI) % (2 * Math.PI)) - Math.PI
-      const normalizedTarget = ((targetRotation + Math.PI) % (2 * Math.PI)) - Math.PI
-
-      let shortestPath = normalizedTarget - normalizedCurrent
-      if (Math.abs(shortestPath) > Math.PI) {
-        shortestPath = shortestPath > 0
-          ? shortestPath - 2 * Math.PI
-          : shortestPath + 2 * Math.PI
-      }
-
-      setTargetRotationY(currentRotation + shortestPath)
-      return
+    const addToTarget = (delta) => {
+      targetRef.current += delta
     }
 
-    wasArrangedRef.current = false
-    setTargetRotationY(lastFreeRotationRef.current)
-  }, [isProjectsArranged])
-
-  useEffect(() => {
-    if (isProjectsArranged) {
-      return
-    }
-
-    lastFreeRotationRef.current = rotationY
-    setTargetRotationY(rotationY)
-  }, [rotationY, isProjectsArranged])
-
-  useEffect(() => {
     const handleWheel = (event) => {
       if (isProjectsArrangedRef.current) {
         return
       }
 
       const screenFactor = Math.min(window.innerWidth / 1920, 1)
-      const delta = event.deltaY * 0.0007 * screenFactor
-      setRotationY((prev) => prev + delta)
+      addToTarget(event.deltaY * 0.0007 * screenFactor)
     }
 
     // Gestion du touch pour mobile
@@ -98,33 +62,23 @@ export function useRotationControl() {
       }
 
       const screenFactor = Math.min(window.innerWidth / 1920, 1)
-      setRotationY((prev) => prev + finalDelta * screenFactor)
+      addToTarget(finalDelta * screenFactor)
 
       touchStartX = touchCurrentX
       touchStartY = touchCurrentY
       touchStartTime = Date.now()
     }
 
-    const handleTouchEnd = () => {
-      // Cleanup si nécessaire
-    }
-
-    window.addEventListener('wheel', handleWheel, { passive: false })
+    window.addEventListener('wheel', handleWheel, { passive: true })
     window.addEventListener('touchstart', handleTouchStart, { passive: true })
     window.addEventListener('touchmove', handleTouchMove, { passive: false })
-    window.addEventListener('touchend', handleTouchEnd, { passive: true })
 
     return () => {
       window.removeEventListener('wheel', handleWheel)
       window.removeEventListener('touchstart', handleTouchStart)
       window.removeEventListener('touchmove', handleTouchMove)
-      window.removeEventListener('touchend', handleTouchEnd)
     }
   }, [])
 
-  return {
-    rotationY: targetRotationY,
-    rawRotationY: rotationY, // Rotation brute si besoin
-    setRotationY,
-  }
-} 
+  return { targetRef }
+}

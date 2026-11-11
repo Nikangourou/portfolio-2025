@@ -1,5 +1,6 @@
 import { useMemo, useSyncExternalStore } from 'react'
 import { isMobile } from '@/utils/deviceUtils'
+import projectsData from '@/data/projects.json'
 
 let isMobileDevice = typeof window !== 'undefined' ? isMobile() : false
 let isListening = false
@@ -50,6 +51,21 @@ const subscribe = (callback) => {
 const getSnapshot = () => isMobileDevice
 const getServerSnapshot = () => false
 
+// Répartit les projets à intervalles réguliers parmi les cases libres (hors croix et flèches) ;
+// les tuiles vides prennent les cases restantes, dans l'ordre.
+const getTileSlots = (tileCount, projectCount, reservedSlots) => {
+  const free = Array.from({ length: tileCount }, (_, slot) => slot).filter((slot) => !reservedSlots.includes(slot))
+  if (projectCount > free.length) {
+    return Array.from({ length: tileCount }, (_, slot) => slot)
+  }
+
+  const projectSlots = Array.from({ length: projectCount }, (_, k) => (
+    free[projectCount === 1 ? 0 : Math.round((k * (free.length - 1)) / (projectCount - 1))]
+  ))
+  const otherSlots = Array.from({ length: tileCount }, (_, slot) => slot).filter((slot) => !projectSlots.includes(slot))
+  return [...projectSlots, ...otherSlots]
+}
+
 /**
  * Hook centralisé pour la configuration de la grille selon le type d'appareil
  * Évite la duplication de logique mobile/desktop dans plusieurs composants
@@ -64,23 +80,26 @@ export const useGridConfig = () => {
   return useMemo(() => {
     const cols = currentIsMobile ? 3 : 5
     const rows = currentIsMobile ? 5 : 3
+    const tileCount = Math.max(cols * rows, projectsData.projects.length)
+    const arrowUpPosition = currentIsMobile ? 12 : 4
+    const arrowDownPosition = (cols * rows) - 1
+    const crossPosition = currentIsMobile ? 13 : 9
 
     return {
       // Configuration de base
       isMobile: currentIsMobile,
       cols,
       rows,
-
-      // Configuration des bordures
-      borderColsLeft: currentIsMobile ? 4 : 3,
-      borderColsRight: currentIsMobile ? 4 : 3,
-      borderRowsTop: currentIsMobile ? 6 : 4,
-      borderRowsBottom: currentIsMobile ? 6 : 4,
+      // Nombre de tuiles de la page projet : une tuile par projet, complétée par des tuiles vides
+      // (invisibles sur l'accueil) pour que la grille et ses flèches de navigation existent toujours.
+      tileCount,
+      // Case d'arrivée de chaque tuile (index de tuile -> case de la grille) : les projets sont éparpillés
+      tileSlots: getTileSlots(tileCount, projectsData.projects.length, [arrowUpPosition, arrowDownPosition, crossPosition]),
 
       // Positions adaptatives pour la navigation
-      arrowUpPosition: currentIsMobile ? 12 : 4,
-      arrowDownPosition: (cols * rows) - 1,
-      crossPosition: currentIsMobile ? 13 : 9,
+      arrowUpPosition,
+      arrowDownPosition,
+      crossPosition,
 
       // Configuration de la grille
       projectSize: 1,

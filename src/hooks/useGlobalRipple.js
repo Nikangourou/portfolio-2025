@@ -98,6 +98,7 @@ export const useGlobalRipple = ({
     rippleUniforms,
     screenFalloff = 0.72,
     localFalloff = 0.9,
+    enabled = true,
 }) => {
     const worldPlaneRef = useRef(new THREE.Plane())
     const planeOriginRef = useRef(new THREE.Vector3())
@@ -134,6 +135,11 @@ export const useGlobalRipple = ({
     }, [gl])
 
     useFrame((state, delta) => {
+        // Tuile masquée (bordure sur l'accueil) : inutile de calculer l'ondulation
+        if (!enabled) {
+            return
+        }
+
         if (DISABLE_RIPPLE_ON_MOBILE) {
             rippleUniforms.uTime.value = state.clock.elapsedTime
             return

@@ -350,7 +350,7 @@ export const getTextureCacheStats = () => {
  * @param {Object} validPositions - Positions valides avec offsets
  * @param {string} targetFace - Face cible ('front' ou 'back')
  */
-export const configureTexture = (texture, span, validPositions, _targetFace) => {
+export const configureTexture = (texture, span, validPositions, _targetFace, fit = 'stretch') => {
   // En mode mono-plan, l'orientation des faces est gérée dans le shader.
   // On garde ici une matrice de texture neutre pour éviter les décalages UV.
   texture.rotation = 0
@@ -362,10 +362,24 @@ export const configureTexture = (texture, span, validPositions, _targetFace) => 
   // Important: avec rotation 0, un center a 0.5 introduit un biais UV
   // (c * (1 - repeat)) qui pousse les tuiles de droite hors [0,1] et les etire.
   texture.center.set(0, 0)
-  texture.repeat.set(1 / spanWidth, 1 / spanHeight)
+
+  // fit « cover » : au lieu d'étirer l'image sur toute la zone, on en garde la partie centrale qui a le ratio
+  // de la zone (les tuiles sont carrées). Fraction de l'image visible sur chaque axe :
+  let visibleX = 1
+  let visibleY = 1
+  const imageWidth = texture.image?.width
+  const imageHeight = texture.image?.height
+  if (fit === 'cover' && imageWidth && imageHeight) {
+    const imageRatio = imageWidth / imageHeight
+    const spanRatio = spanWidth / spanHeight
+    if (imageRatio > spanRatio) visibleX = spanRatio / imageRatio
+    else visibleY = imageRatio / spanRatio
+  }
+
+  texture.repeat.set(visibleX / spanWidth, visibleY / spanHeight)
   texture.offset.set(
-    validPositions.offsetX,
-    validPositions.offsetY
+    validPositions.offsetX * visibleX + (1 - visibleX) / 2,
+    validPositions.offsetY * visibleY + (1 - visibleY) / 2
   )
 
   texture.updateMatrix()

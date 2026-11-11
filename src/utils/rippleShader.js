@@ -90,6 +90,7 @@ export const applyProjectRippleShader = (material, rippleUniforms) => {
             shader.uniforms.uBackFlipY = rippleUniforms.uBackFlipY
             shader.uniforms.uFrontMapTransform = rippleUniforms.uFrontMapTransform
             shader.uniforms.uBackMapTransform = rippleUniforms.uBackMapTransform
+            shader.uniforms.uDiscardTransparent = rippleUniforms.uDiscardTransparent
 
             material.userData.shader = shader
 
@@ -118,6 +119,7 @@ export const applyProjectRippleShader = (material, rippleUniforms) => {
                 uniform float uBackMapIsVideo;
                 uniform float uBackFlipX;
                 uniform float uBackFlipY;
+                uniform float uDiscardTransparent;
                 varying vec2 vFrontUv;
                 varying vec2 vBackUv;
             ${shader.fragmentShader}`
@@ -138,11 +140,14 @@ export const applyProjectRippleShader = (material, rippleUniforms) => {
                 }
 
                 diffuseColor *= sampledDiffuseColor;
+
+                // Tuiles vides : les faces sans contenu sont transparentes (on voit alors le fond de la scène)
+                if (uDiscardTransparent > 0.5 && diffuseColor.a < 0.02) discard;
             `,
             )
         }
 
-        material.customProgramCacheKey = () => 'pressure-ripple-disabled-mobile-v3'
+        material.customProgramCacheKey = () => 'pressure-ripple-disabled-mobile-v4'
         material.needsUpdate = true
         return
     }
@@ -159,6 +164,7 @@ export const applyProjectRippleShader = (material, rippleUniforms) => {
         shader.uniforms.uBackFlipY = rippleUniforms.uBackFlipY
         shader.uniforms.uFrontMapTransform = rippleUniforms.uFrontMapTransform
         shader.uniforms.uBackMapTransform = rippleUniforms.uBackMapTransform
+        shader.uniforms.uDiscardTransparent = rippleUniforms.uDiscardTransparent
         shader.uniforms.uTime = rippleUniforms.uTime
 
         material.userData.shader = shader
@@ -197,6 +203,7 @@ export const applyProjectRippleShader = (material, rippleUniforms) => {
         uniform float uBackMapIsVideo;
         uniform float uBackFlipX;
         uniform float uBackFlipY;
+        uniform float uDiscardTransparent;
         uniform vec3 uRippleTint;
         uniform float uTime;
         varying vec2 vFrontUv;
@@ -219,6 +226,9 @@ export const applyProjectRippleShader = (material, rippleUniforms) => {
                 }
 
         diffuseColor *= sampledDiffuseColor;
+
+        // Tuiles vides : les faces sans contenu sont transparentes (on voit alors le fond de la scène)
+        if (uDiscardTransparent > 0.5 && diffuseColor.a < 0.02) discard;
       `,
             tintStrength: '0.16',
             shimmerStrength: '0.08',
@@ -228,7 +238,7 @@ export const applyProjectRippleShader = (material, rippleUniforms) => {
         })
     }
 
-    material.customProgramCacheKey = () => 'pressure-ripple-v3'
+    material.customProgramCacheKey = () => 'pressure-ripple-v4'
     material.needsUpdate = true
 }
 

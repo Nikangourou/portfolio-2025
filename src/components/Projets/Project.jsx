@@ -15,6 +15,7 @@ import { getSpringConfig } from '@/utils/springConfig'
 import { useGridConfig } from '@/hooks/useGridConfig'
 import { useGlobalRipple } from '@/hooks/useGlobalRipple'
 import { applyProjectRippleShader } from '@/utils/rippleShader'
+import { HOME_CARD_SCALE } from '@/utils/cloudLayout'
 
 const TILE_NORMAL = new THREE.Vector3()
 const TILE_TO_CAMERA = new THREE.Vector3()
@@ -22,6 +23,17 @@ const TILE_POSITION = new THREE.Vector3()
 
 // Décalage (ms) entre le flip de deux tuiles voisines
 const PAGE_FLIP_STAGGER_MS = 100
+const FILLER_FLIP_AFTER_ARRIVAL_MS = 650
+const FILLER_FLIP_JITTER_MS = 250
+const noRaycast = () => null
+
+// Les cartes de projet sont affichées plus grandes sur l'accueil (moins de projets, donc plus de poids chacun) ;
+// elles reprennent leur taille normale en rejoignant la grille.
+
+// Contour d'une tuile vide sur l'accueil : un simple trait fin et discret, sans remplissage
+// (une tuile pleine masquerait les cartes qui sont derrière).
+const FILLER_OUTLINE_COLOR = '#000000'
+const FILLER_OUTLINE_OPACITY = 0.2
 
 const ARRANGED_BACK_FACE_FLIP = { x: 0.0, y: 0.0 }
 const FREE_BACK_FACE_FLIP = { x: 1.0, y: 1.0 }
@@ -147,14 +159,14 @@ const getNavigationIconTypeForPage = ({
   selectedProject,
   page,
   maxPage,
-  gridPosition,
+  slot,
   gridConfig,
 }) => {
   if (!selectedProject || !page || page < 1) {
     return null
   }
 
-  if (gridPosition === gridConfig.crossPosition) {
+  if (slot === gridConfig.crossPosition) {
     return 'cross'
   }
 
@@ -162,11 +174,11 @@ const getNavigationIconTypeForPage = ({
     return null
   }
 
-  if (gridPosition === gridConfig.arrowUpPosition && page > 1) {
+  if (slot === gridConfig.arrowUpPosition && page > 1) {
     return 'arrow-up'
   }
 
-  if (gridPosition === gridConfig.arrowDownPosition && page < maxPage) {
+  if (slot === gridConfig.arrowDownPosition && page < maxPage) {
     return 'arrow-down'
   }
 
@@ -174,7 +186,7 @@ const getNavigationIconTypeForPage = ({
 }
 
 const Project = forwardRef(function Project(
-  { gridPosition, image, initialPosition, initialRotation },
+  { gridPosition, slot, image, initialPosition, initialRotation, isFiller = false, spin },
   ref,
 ) {
   const pageMaterialRef = useRef(null)
@@ -185,7 +197,15 @@ const Project = forwardRef(function Project(
   const isPageFlipAnimatingRef = useRef(false)
   const lockedOppositeMapRef = useRef(null)
   const [overlayPage, setOverlayPage] = useState(0)
-
+  const gridConfig = useGridConfig()
+  // Tuile vide : on n'affiche son texte que quand la face de la page courante est tournée vers la caméra.
+  const [isFillerFaceUp, setIsFillerFaceUp] = useState(false)
+  // Vrai quand la couleur du projet est appliquée aux deux faces : avant, la tuile vide serait blanche une image
+  const [isFillerReady, setIsFillerReady] = useState(false)
+  // Vrai une fois le premier retournement de l'ouverture terminé (les suivants sont des changements de page)
+  const hasOpenedRef = useRef(false)
+  // Tuile vide : elle n'est affichée pleine qu'une fois son retournement passé la moitié (comme les bordures)
+  const [isFillerFlipped, setIsFillerFlipped] = useState(false)
   const emptyTexture = useMemo(() => {
     const data = new Uint8Array([255, 255, 255, 255])
     const placeholder = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat)
@@ -208,12 +228,13 @@ const Project = forwardRef(function Project(
     uBackMap: { value: emptyTexture },
     uFrontMapIsVideo: { value: 0 },
     uBackMapIsVideo: { value: 0 },
+    uDiscardTransparent: { value: isFiller ? 1 : 0 },
     uBackFlipX: { value: 1.0 },
     uBackFlipY: { value: 0.0 },
     uFrontMapTransform: { value: new THREE.Matrix3() },
     uBackMapTransform: { value: new THREE.Matrix3() },
     uTime: { value: 0 },
-  }), [emptyTexture])
+  }), [emptyTexture, isFiller])
 
   // Exposer la ref du groupe principal pour le raycasting
   useImperativeHandle(ref, () => projectRef.current, [])
@@ -295,33 +316,51 @@ const Project = forwardRef(function Project(
   // Obtenir les positions d'arrangement directement depuis le store
   const { predefinedPositions, projectSize } = useProjectPositionsStore()
 
+  // Toutes les tuiles tournent du même angle : ça permet de le ramener à un équivalent court (voir ProjectList)
+  const spinAngle = spin
+
   // Position cible pour l'arrangement (memoized)
   const targetArrangedPosition = useMemo(() => {
-    return predefinedPositions[gridPosition] || [0, 0, 0]
-  }, [predefinedPositions, gridPosition])
+    return predefinedPositions[slot] || [0, 0, 0]
+  }, [predefinedPositions, slot])
 
   const applyPressureRippleShader = useCallback((material) => {
     applyProjectRippleShader(material, rippleUniforms)
   }, [rippleUniforms])
 
+  // Tuile dont l'arrivée signale la fin du rangement : la dernière, hors colonne centrale
+  // (sa position x vaut 0, ce qui empêcherait de mesurer la progression)
+  const completionTileIndex = useMemo(() => {
+    const centerCol = gridConfig.cols % 2 === 1 ? (gridConfig.cols - 1) / 2 : -1
+    for (let i = gridConfig.tileCount - 1; i >= 0; i--) {
+      if (i % gridConfig.cols !== centerCol) return i
+    }
+    return 0
+  }, [gridConfig.cols, gridConfig.tileCount])
+
   // Delays précalculés pour éviter les recalculs
   const animationDelays = useMemo(() => ({
-    arrangement: isProjectsArranged ? gridPosition * 50 : Math.random() * 500,
-    pageRotation: gridPosition * PAGE_FLIP_STAGGER_MS
-  }), [gridPosition, isProjectsArranged])
+    arrangement: isProjectsArranged ? slot * 50 : Math.random() * 500,
+    pageRotation: slot * PAGE_FLIP_STAGGER_MS,
+    // Ouverture d'un projet : une tuile vide se retourne comme une bordure, sur place un court instant après son
+    // arrivée, sans attendre la cascade des projets (celles des dernières cases attendaient plus d'une seconde).
+    fillerOpeningFlip: slot * 50 + FILLER_FLIP_AFTER_ARRIVAL_MS + Math.random() * FILLER_FLIP_JITTER_MS,
+  }), [slot, isProjectsArranged])
 
   // Gestion des positions et rotations avec springs - OPTIMISÉE
-  const { position, rotation } = useSpring({
-    from: { position: [0, 0, 20], rotation: [0, 0, 0] }, // Commencer à l'origine pour tous les projets
+  const homeScale = isFiller ? 1 : HOME_CARD_SCALE
+  const { position, rotation, scale } = useSpring({
+    from: { position: [0, 0, -20], rotation: [0, 0, 0], scale: homeScale }, // Arriver du fond de la scène
     to: {
       position: isProjectsArranged ? targetArrangedPosition : (initialPosition || [0, 0, 0]),
-      rotation: isProjectsArranged ? [0, 0, 0] : (initialRotation || [0, 0, 0])
+      rotation: isProjectsArranged ? [0, 0, 0] : (initialRotation || [0, 0, 0]),
+      scale: isProjectsArranged ? 1 : homeScale,
     },
     delay: animationDelays.arrangement,
     config: isProjectsArranged ? getSpringConfig('arrangement') : getSpringConfig('smooth'),
     onChange: (values) => {
       // Marquer l'animation comme terminée à la moitié pour le dernier projet - OPTIMISÉ
-      if (isProjectsArranged && gridPosition === projectsData.projects.length - 1 && targetArrangedPosition[0] !== 0) {
+      if (isProjectsArranged && slot === completionTileIndex && targetArrangedPosition[0] !== 0) {
         const progress = Math.abs(values.value.position[0] / targetArrangedPosition[0]);
         if (progress >= 0.7 && !isArrangementAnimationComplete) {
           setArrangementAnimationComplete(true);
@@ -332,14 +371,28 @@ const Project = forwardRef(function Project(
 
   // Spring pour la rotation de page individuelle - OPTIMISÉE
   const { pageRotationX } = useSpring({
-    pageRotationX: isProjectsArranged ? currentPage * Math.PI : 0,
-    delay: isProjectsArranged ? animationDelays.pageRotation : 0,
+    // Une tuile vide se retourne dès l'ouverture : currentPage ne passe à 1 qu'une fois toutes les tuiles arrivées,
+    // ce qui retardait leur coloration d'environ une seconde.
+    pageRotationX: isProjectsArranged ? (isFiller ? Math.max(currentPage, 1) : currentPage) * Math.PI : 0,
+    // Les changements de page suivent la même cascade pour les tuiles vides et les projets : sinon les tuiles vides
+    // se retournaient après les projets, en deux temps.
+    delay: isProjectsArranged
+      ? (isFiller && !hasOpenedRef.current ? animationDelays.fillerOpeningFlip : animationDelays.pageRotation)
+      : 0,
     immediate: !isProjectsArranged,
     config: getSpringConfig('projectRotation'),
+    onChange: (result) => {
+      if (!isFiller) return
+      const isFaceUp = Math.abs(result.value.pageRotationX - overlayPage * Math.PI) < Math.PI / 2
+      setIsFillerFaceUp((previous) => (previous === isFaceUp ? previous : isFaceUp))
+      const isFlipped = result.value.pageRotationX > Math.PI / 2
+      setIsFillerFlipped((previous) => (previous === isFlipped ? previous : isFlipped))
+    },
     onStart: () => {
       isPageFlipAnimatingRef.current = true
     },
     onRest: () => {
+      hasOpenedRef.current = isProjectsArranged
       isPageFlipAnimatingRef.current = false
       // Resynchroniser sur l'angle réel (et non sur la page cible, qui peut déjà avoir changé si on a
       // cliqué pendant que cette animation finissait de se stabiliser).
@@ -386,27 +439,26 @@ const Project = forwardRef(function Project(
     contentTexture: currentPageTexture,
     targetFace,
   } = useContentTexture(
-    gridPosition,
+    slot,
     currentPage || null,
   )
   const previousPage = currentPage > 1 ? currentPage - 1 : null
   const previousFace = targetFace === 'front' ? 'back' : 'front'
   const { contentTexture: previousPageTexture } = useContentTexture(
-    gridPosition,
+    slot,
     previousPage,
     previousFace,
   )
-  const gridConfig = useGridConfig()
   const maxPage = selectedProject?.contents?.length || 0
   const navigationCurrentIconType = useMemo(() => {
     return getNavigationIconTypeForPage({
       selectedProject,
       page: currentPage,
       maxPage,
-      gridPosition,
+      slot,
       gridConfig,
     })
-  }, [selectedProject, currentPage, maxPage, gridPosition, gridConfig])
+  }, [selectedProject, currentPage, maxPage, slot, gridConfig])
   const navigationCurrentTexture = useMemo(() => {
     if (!navigationCurrentIconType) {
       return null
@@ -425,10 +477,10 @@ const Project = forwardRef(function Project(
       selectedProject,
       page: previousPage,
       maxPage,
-      gridPosition,
+      slot,
       gridConfig,
     })
-  }, [selectedProject, previousPage, maxPage, gridPosition, gridConfig])
+  }, [selectedProject, previousPage, maxPage, slot, gridConfig])
   const navigationPreviousTexture = useMemo(() => {
     if (!navigationPreviousIconType) {
       return null
@@ -446,7 +498,7 @@ const Project = forwardRef(function Project(
     }
   }, [navigationCurrentTexture, navigationPreviousTexture])
 
-  const { contentText } = useContentText(gridPosition, overlayPage || null)
+  const { contentText } = useContentText(slot, overlayPage || null)
 
   useEffect(() => {
     if (pageMaterialRef.current) {
@@ -460,30 +512,40 @@ const Project = forwardRef(function Project(
     rippleUniforms,
   })
 
+  // À la fermeture, la tuile revient à plat : son texte ne doit pas rester marqué comme visible
+  useEffect(() => {
+    if (isFiller && !isProjectsArranged) {
+      setIsFillerFaceUp(false)
+      setIsFillerReady(false)
+      setIsFillerFlipped(false)
+    }
+  }, [isFiller, isProjectsArranged])
+
   const handleMeshClick = () => {
 
     // Navigation - Cross
-    if (gridPosition === gridConfig.crossPosition && selectedProject) {
+    if (slot === gridConfig.crossPosition && selectedProject) {
       resetProjectState()
       return
     }
 
     // Navigation - Arrow Up
-    if (gridPosition === gridConfig.arrowUpPosition && selectedProject && currentPage > 1) {
+    if (slot === gridConfig.arrowUpPosition && selectedProject && currentPage > 1) {
       setCurrentPage(currentPage - 1)
       return
     }
 
     // Navigation - Arrow Down
-    if (gridPosition === gridConfig.arrowDownPosition && selectedProject && currentPage < maxPage) {
+    if (slot === gridConfig.arrowDownPosition && selectedProject && currentPage < maxPage) {
       setCurrentPage(currentPage + 1)
       return
     }
 
     // Logique de sélection du projet (pour toutes les autres positions)
-    if (!isProjectsArranged) {
+    const project = projectsData.projects[gridPosition]
+    if (!isProjectsArranged && project) {
       setProjectsArranged(true)
-      setSelectedProject(projectsData.projects[gridPosition])
+      setSelectedProject(project)
     }
   }
 
@@ -500,9 +562,9 @@ const Project = forwardRef(function Project(
       currentPage > 0
     )
     const isNavigationTile = (
-      gridPosition === gridConfig.crossPosition ||
-      gridPosition === gridConfig.arrowUpPosition ||
-      gridPosition === gridConfig.arrowDownPosition
+      slot === gridConfig.crossPosition ||
+      slot === gridConfig.arrowUpPosition ||
+      slot === gridConfig.arrowDownPosition
     )
     const shouldUseNavigationMap = shouldUseContentMaps && isNavigationTile
     const shouldUseBackOnlyNavigation = (
@@ -511,8 +573,9 @@ const Project = forwardRef(function Project(
     )
     const fallbackContentMap = backgroundFallbackTexture || emptyTexture
     const nextColor = 'white'
-    const baseMap = texture || emptyTexture
-    const coverOrFallbackMap = texture || fallbackContentMap
+    // Une tuile vide n'a pas de couverture : sa face de départ est transparente
+    const baseMap = isFiller ? fallbackContentMap : (texture || emptyTexture)
+    const coverOrFallbackMap = isFiller ? fallbackContentMap : (texture || fallbackContentMap)
     const previousPageValue = previousCurrentPageRef.current
     const pageChanged = currentPage !== previousPageValue
     let nextFrontMap = baseMap
@@ -622,8 +685,13 @@ const Project = forwardRef(function Project(
 
     material.color.set(nextColor)
 
+    if (isFiller && isProjectsArranged) {
+      setIsFillerReady(true)
+    }
+
+
     if (!shouldUseContentMaps && !shouldUseNavigationMap) {
-      lastVisiblePageMapRef.current = texture || coverOrFallbackMap
+      lastVisiblePageMapRef.current = coverOrFallbackMap
     }
   }, [
     isArrangementAnimationComplete,
@@ -638,9 +706,10 @@ const Project = forwardRef(function Project(
     backgroundFallbackTexture,
     navigationCurrentTexture,
     navigationPreviousTexture,
-    gridPosition,
+    slot,
     gridConfig,
     rippleUniforms,
+    isFiller,
   ])
 
   useEffect(() => {
@@ -649,26 +718,71 @@ const Project = forwardRef(function Project(
     }
   }, [backgroundFallbackTexture])
 
+  // Tuile vide : contour sur l'accueil ; une fois le projet ouvert elle prend la couleur du projet, comme les bordures
+  const isFillerFilled = isFiller && isProjectsArranged && isFillerReady && isFillerFlipped
+  const fillerOutlineGeometry = useMemo(() => {
+    if (!isFiller) return null
+    const halfWidth = projectSize.width / 2
+    const halfHeight = projectSize.height / 2
+    // Légèrement en avant du plan de la tuile, pour ne pas scintiller contre elle
+    const z = 0.002
+    return new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-halfWidth, -halfHeight, z),
+      new THREE.Vector3(halfWidth, -halfHeight, z),
+      new THREE.Vector3(halfWidth, halfHeight, z),
+      new THREE.Vector3(-halfWidth, halfHeight, z),
+    ])
+  }, [isFiller, projectSize.width, projectSize.height])
+
+  useEffect(() => {
+    return () => {
+      fillerOutlineGeometry?.dispose()
+    }
+  }, [fillerOutlineGeometry])
+
 
   return (
+    // Le groupe extérieur porte la position et la rotation de la molette (la tuile tourne sur elle-même, plus
+    // ou moins vite selon la tuile) ; l'intérieur porte la rotation propre de la tuile.
     <animated.group
       ref={projectRef}
       position={position}
-      rotation={rotation}
+      rotation-y={spinAngle}
+      scale={scale}
     >
+    <animated.group rotation={rotation}>
       <animated.group
         ref={pageGroupRef}
         rotation-x={pageRotationX}
       >
+        {/* Le contour tourne avec la tuile : on voit le flip, puis la face colorée apparaît de l'autre côté */}
+        {isFiller && !isFillerFilled && (
+          <lineLoop geometry={fillerOutlineGeometry}>
+            <lineBasicMaterial
+              color={FILLER_OUTLINE_COLOR}
+              transparent
+              opacity={FILLER_OUTLINE_OPACITY}
+              depthWrite={false}
+            />
+          </lineLoop>
+        )}
         <AnimatedMesh
-          projectId={gridPosition}
+          projectId={slot}
           onClick={handleMeshClick}
         >
           {/* Géométrie partagée (jamais clonée au rendu : un clone par rendu fuyait côté GPU) */}
-          <mesh geometry={getCachedGeometry()} dispose={null}>
+          {/* Une tuile vide reste dans la scène mais n'écrit rien tant qu'elle n'est pas retournée : son shader et sa
+              texture sont alors déjà prêts au moment du flip, au lieu de se compiler à cet instant. */}
+          <mesh
+            geometry={getCachedGeometry()}
+            dispose={null}
+            raycast={isFiller && !isFillerFilled ? noRaycast : THREE.Mesh.prototype.raycast}
+          >
             <meshBasicMaterial
               ref={pageMaterialRef}
               map={emptyTexture}
+              colorWrite={!isFiller || isFillerFilled}
+              depthWrite={!isFiller || isFillerFilled}
               side={THREE.DoubleSide}
               toneMapped={true}
               onUpdate={(material) => {
@@ -680,12 +794,12 @@ const Project = forwardRef(function Project(
             />
           </mesh>
           <group>
-            {isArrangementAnimationComplete && (
+            {isArrangementAnimationComplete && (!isFiller || isFillerFaceUp) && (
               <>
                 {overlayPage === 1 && selectedProject && (
                   <>
                     <ProjectOverlay
-                      condition={gridPosition === 0 && selectedProject.title}
+                      condition={slot === 0 && selectedProject.title}
                       projectSize={projectSize}
                       page={overlayPage}
                     >
@@ -700,7 +814,7 @@ const Project = forwardRef(function Project(
                       </div>
                     </ProjectOverlay>
                     <ProjectOverlay
-                      condition={gridPosition === 1 && selectedProject.context}
+                      condition={slot === 1 && selectedProject.context}
                       projectSize={projectSize}
                       page={overlayPage}
                     >
@@ -710,7 +824,7 @@ const Project = forwardRef(function Project(
                       </div>
                     </ProjectOverlay>
                     <ProjectOverlay
-                      condition={gridPosition === 2 && selectedProject.year}
+                      condition={slot === 2 && selectedProject.year}
                       projectSize={projectSize}
                       page={overlayPage}
                     >
@@ -720,7 +834,7 @@ const Project = forwardRef(function Project(
                       </div>
                     </ProjectOverlay>
                     <ProjectOverlay
-                      condition={gridPosition === 3 && selectedProject.technologies}
+                      condition={slot === 3 && selectedProject.technologies}
                       projectSize={projectSize}
                       page={overlayPage}
                     >
@@ -741,7 +855,7 @@ const Project = forwardRef(function Project(
                       </div>
                     </ProjectOverlay>
                     <ProjectOverlay
-                      condition={gridPosition === 4 && selectedProject.link}
+                      condition={slot === 4 && selectedProject.link}
                       projectSize={projectSize}
                       page={overlayPage}
                     >
@@ -761,7 +875,7 @@ const Project = forwardRef(function Project(
                       </div>
                     </ProjectOverlay>
                     <ProjectOverlay
-                      condition={gridPosition === (gridConfig.isMobile ? 5 : 8) && selectedProject.role}
+                      condition={slot === (gridConfig.isMobile ? 5 : 8) && selectedProject.role}
                       projectSize={projectSize}
                       page={overlayPage}
                     >
@@ -794,6 +908,7 @@ const Project = forwardRef(function Project(
           </group>
         </AnimatedMesh>
       </animated.group>
+    </animated.group>
     </animated.group>
   )
 })

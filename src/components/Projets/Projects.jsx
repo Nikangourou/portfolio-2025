@@ -1,11 +1,9 @@
-import React, { useMemo, useRef, useState, useEffect } from 'react'
+import React, { useMemo, useRef, useEffect } from 'react'
 import ProjectList from './ProjectList'
-import ProjectBorders from './ProjectBorders'
 import projectsData from '../../data/projects.json'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useStore } from '@/stores/store'
 import { useShallow } from 'zustand/react/shallow'
-import useThemeStore from '@/stores/themeStore'
 import ProjectInfoFloating from '../Interface/ProjectInfoFloating'
 import { useProjectPositionsStore } from '@/stores/projectPositionsStore'
 import { useGridConfig } from '@/hooks/useGridConfig'
@@ -13,8 +11,10 @@ import { useProjectInteraction } from '@/hooks/useProjectInteraction'
 import { useSceneRippleField } from '@/hooks/useGlobalRipple'
 import { preloadFirstPages, preloadProjectContents, releaseProjectContents } from '@/utils/contentLoader'
 
+// Inclinaison maximale (rad) d'une carte de l'accueil par rapport à la face ou au dos : 60°
+const MAX_YAW_FROM_FACE = Math.PI / 3
+
 export default function Projects() {
-  // console.log('Projects rendered')
 
   const { camera } = useThree()
   const gridConfig = useGridConfig()
@@ -39,11 +39,9 @@ export default function Projects() {
   const projectDataRef = useRef([])
 
   // Garder quelques states pour les interactions et l'interface
-  const [minDistance, setMinDistance] = useState(2.0)
-  const currentTheme = useThemeStore((state) => state.currentTheme)
 
   // Utiliser directement le store pour les positions
-  const { projectSize, recalculateAll } = useProjectPositionsStore()
+  const { recalculateAll, cloudPositions } = useProjectPositionsStore()
 
   // Calculer les positions une seule fois au niveau parent
   useEffect(() => {
@@ -57,10 +55,6 @@ export default function Projects() {
     gridConfig.gap,
     gridConfig.margin,
     gridConfig.distance,
-    gridConfig.borderColsLeft,
-    gridConfig.borderColsRight,
-    gridConfig.borderRowsTop,
-    gridConfig.borderRowsBottom,
     recalculateAll
   ])
 
@@ -91,62 +85,32 @@ export default function Projects() {
 
   useSceneRippleField()
 
-  const findValidPosition = (positions = [], maxAttempts = 100) => {
-    const xRange = [-2, 2]
-    const yRange = [-2, 2]
-    const zRange = [-2, 2]
-
-    let attempts = 0
-    let position
-    let currentMinDistance = minDistance
-
-    do {
-      position = [
-        Math.random() * (xRange[1] - xRange[0]) + xRange[0],
-        Math.random() * (yRange[1] - yRange[0]) + yRange[0],
-        Math.random() * (zRange[1] - zRange[0]) + zRange[0],
-      ]
-      attempts++
-
-      if (attempts > maxAttempts) {
-        currentMinDistance *= 0.9
-        setMinDistance(currentMinDistance)
-        attempts = 0
-      }
-    } while (
-      positions.length > 0 && positions.some((existingPos) => {
-        const dx = position[0] - existingPos[0]
-        const dy = position[1] - existingPos[1]
-        const dz = position[2] - existingPos[2]
-        return Math.sqrt(dx * dx + dy * dy + dz * dz) < currentMinDistance
-      })
-    )
-
-    return position
-  }
-
-  // Créer les données des projets avec positions initiales aléatoires
-  const projectData = useMemo(() => {
-    const usedPositions = []
-
-    return projectsData.projects.map((project, index) => {
-      const randomPosition = findValidPosition(usedPositions)
-      usedPositions.push(randomPosition)
-
-      const randomRotation = [
-        (Math.random() - 0.5) * Math.PI * 0.4,
-        Math.random() * Math.PI * 2,
-        (Math.random() - 0.5) * Math.PI * 0.40
-      ]
-
+  // Tirages aléatoires des tuiles (inclinaison de départ, délai) : gardés tant que le nombre de tuiles ne change pas,
+  // pour qu'un redimensionnement ne les redistribue pas.
+  const randomTileData = useMemo(() => {
+    return Array.from({ length: gridConfig.tileCount }, () => {
+      // Le tirage évite la tranche : la carte est de face ou de dos, inclinée de 60° au plus (au-delà, on ne
+      // verrait plus qu'un trait).
+      const faceAngle = (Math.random() < 0.5 ? 0 : Math.PI) + (Math.random() - 0.5) * 2 * MAX_YAW_FROM_FACE
       return {
-        project,
-        initialPosition: randomPosition,
-        initialRotation: randomRotation,
+        initialRotation: [
+          (Math.random() - 0.5) * Math.PI * 0.4,
+          faceAngle,
+          (Math.random() - 0.5) * Math.PI * 0.40,
+        ],
         pageRotationDelay: Math.random() * 0.5,
       }
     })
-  }, [])
+  }, [gridConfig.tileCount])
+
+  // Données des projets : position de départ dans le nuage (répartie sur l'écran) et rotation aléatoire
+  const projectData = useMemo(() => {
+    return randomTileData.map((random, index) => ({
+      project: projectsData.projects[index] || null,
+      initialPosition: cloudPositions[index] || [0, 0, 0],
+      ...random,
+    }))
+  }, [randomTileData, cloudPositions])
 
   // Mettre à jour la ref pour le raycasting
   useEffect(() => {
@@ -263,13 +227,6 @@ export default function Projects() {
 
   return (
     <>
-      <ProjectBorders
-        isProjectsArranged={isProjectsArranged}
-        projectSize={projectSize}
-        currentTheme={currentTheme}
-        distance={gridConfig.distance}
-      />
-
       {!isProjectsArranged && displayedProject && (
         <ProjectInfoFloating
           project={displayedProject}

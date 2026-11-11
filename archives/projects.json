@@ -1,0 +1,669 @@
+{
+  "projects": [
+    {
+      "id": 1,
+      "title": "Espace 22",
+      "year": "2021",
+      "context": "Pando Studio",
+      "description": "Creation of an e-commerce for a stylist",
+      "technologies": [
+        "Wordpress",
+        "Woocommerce"
+      ],
+      "link": "",
+      "cover": "/images/Espace22/espace22.webp",
+      "color": {
+        "background": "#1E244D",
+        "text": "#E2E6FF"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/Espace22/space2.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 5,
+                "mobile": 6
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Development of an e-commerce site for a fashion designer.",
+              "position": {
+                "desktop": 12,
+                "mobile": 8
+              }
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Espace22/space5.webp",
+              "span": "3-2",
+              "position": {
+                "desktop": 0,
+                "mobile": 3
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Shop page.",
+              "position": {
+                "desktop": 12,
+                "mobile": 10
+              }
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Espace22/space6.webp",
+              "span": "3-2",
+              "position": {
+                "desktop": 5,
+                "mobile": 6
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Cart page.",
+              "position": {
+                "desktop": 3,
+                "mobile": 3
+              }
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Espace22/space4.webp",
+              "span": "2-1",
+              "position": {
+                "desktop": 0,
+                "mobile": 0
+              }
+            },
+            {
+              "url": "/images/Espace22/space3.webp",
+              "span": "3-2",
+              "position": {
+                "desktop": 6,
+                "mobile": 6
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "100% editable.",
+              "position": {
+                "desktop": 10,
+                "mobile": 4
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Alizora",
+      "year": "2021",
+      "context": "Personal project",
+      "description": "Creation of a tote bag brand",
+      "technologies": [
+        "Wordpress",
+        "Woocommerce"
+      ],
+      "link": "https://alizora.nicolasneveu.fr/",
+      "cover": "/images/Alizora/alizora.webp",
+      "color": {
+        "background": "#7C788B",
+        "text": "#1D1633"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/Alizora/alizora3.webp",
+              "span": "3-2",
+              "position": {
+                "desktop": 5,
+                "mobile": 6
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Creation of a tote bags brand with a designer friend.",
+              "position": {
+                "desktop": 13,
+                "mobile": 12
+              }
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Alizora/alizora1.webp",
+              "span": "1-2",
+              "position": {
+                "desktop": 1,
+                "mobile": 0
+              }
+            },
+            {
+              "url": "/images/Alizora/alizora2.webp",
+              "span": "1-2",
+              "position": {
+                "desktop": 8,
+                "mobile": 7
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Shooting.",
+              "position": {
+                "desktop": 5,
+                "mobile": 4
+              }
+            },
+            {
+              "text": "Mock-up.",
+              "position": {
+                "desktop": 12,
+                "mobile": 11
+              }
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Alizora/carte1.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 0,
+                "mobile": 0
+              }
+            },
+            {
+              "url": "/images/Alizora/carte2.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 7,
+                "mobile": 7
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Branding.",
+              "position": {
+                "desktop": 10,
+                "mobile": 10
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Totoro's Veggie Feast",
+      "year": "2024",
+      "context": "School project",
+      "description": "Creation of an arcade game",
+      "technologies": [
+        "React Three Fiber"
+      ],
+      "link": "",
+      "cover": "/images/Totoro/totoro.webp",
+      "color": {
+        "background": "#332922",
+        "text": "#BB9274"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/Totoro/born1.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 5,
+                "mobile": 6
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Creation of an arcade game.",
+              "position": {
+                "desktop": 12,
+                "mobile": 11
+              }
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Totoro/player.webp",
+              "span": "2-1",
+              "position": {
+                "desktop": 0,
+                "mobile": 0
+              }
+            },
+            {
+              "url": "/images/Totoro/score.webp",
+              "span": "3-2",
+              "position": {
+                "desktop": 6,
+                "mobile": 6
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Variable number of players",
+              "position": {
+                "desktop": 2,
+                "mobile": 2
+              }
+            },
+            {
+              "text": "Leaderboard.",
+              "position": {
+                "desktop": 10,
+                "mobile": 5
+              }
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Totoro/born2.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 7,
+                "mobile": 7
+              }
+            },
+            {
+              "url": {
+                "desktop": "/images/Totoro/print.webp",
+                "mobile": "/images/Totoro/printMobile.webp"
+              },
+              "span": {
+                "desktop": "2-3",
+                "mobile": "2-2"
+              },
+              "position": {
+                "desktop": 0,
+                "mobile": 0
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Poster.",
+              "position": {
+                "desktop": 2,
+                "mobile": 2
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Histoires Et Nombres",
+      "year": "2022",
+      "context": "Studit",
+      "description": "Tool for learning reading and mathematics",
+      "technologies": [
+        "Next.JS",
+        "Symfony"
+      ],
+      "link": "https://histoires-et-nombres.editions-retz.com/",
+      "cover": "/images/HistoiresEtNombres/Histoires_Et_Nombres.webp",
+      "color": {
+        "background": "#3E4844",
+        "text": "#71FFBF"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/HistoiresEtNombres/menu.webp",
+              "span": "3-2",
+              "position": {
+                "desktop": 5,
+                "mobile": 6
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Web application for learning reading and arithmetic.",
+              "position": {
+                "desktop": 8,
+                "mobile": 12
+              }
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/HistoiresEtNombres/c1.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 0,
+                "mobile": 0
+              }
+            },
+            {
+              "url": "/images/HistoiresEtNombres/c2.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 7,
+                "mobile": 7
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Arithmetic.",
+              "position": {
+                "desktop": 3,
+                "mobile": 3
+              }
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/HistoiresEtNombres/s1.webp",
+              "span": "3-2",
+              "position": {
+                "desktop": 1,
+                "mobile": 0
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Create your own stories.",
+              "position": {
+                "desktop": 10,
+                "mobile": 7
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Hop Ma Liste",
+      "year": "2022",
+      "context": "Studit",
+      "description": "Mobile app to help people with suicidal thoughts.",
+      "technologies": [
+        "React Native"
+      ],
+      "link": "https://hopmaliste.fr/",
+      "cover": "/images/HopMaListe/hopMaListe.webp",
+      "color": {
+        "background": "#223336",
+        "text": "#79ADB6"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/HopMaListe/home.webp",
+              "span": "3-2",
+              "position": {
+                "desktop": 5,
+                "mobile": 6
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Mobile app to help people with suicidal thoughts.",
+              "position": {
+                "desktop": 13,
+                "mobile": 12
+              }
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": {
+                "desktop": "/images/HopMaListe/langue.webp",
+                "mobile": "/images/HopMaListe/langueThemeMobile.webp"
+              },
+              "span": {
+                "desktop": "2-3",
+                "mobile": "3-4"
+              },
+              "position": {
+                "desktop": 0,
+                "mobile": 0
+              }
+            },
+            {
+              "url": {
+                "desktop": "/images/HopMaListe/theme.webp",
+                "mobile": null
+              },
+              "span": {
+                "desktop": "2-3",
+                "mobile": "0-0"
+              },
+              "position": {
+                "desktop": 2,
+                "mobile": 1
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Language settings.",
+              "position": {
+                "desktop": 0,
+                "mobile": 0
+              }
+            },
+            {
+              "text": "Theme settings.",
+              "position": {
+                "desktop": 12,
+                "mobile": 11
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Wanderlost Whispers",
+      "year": "2023",
+      "context": "School project",
+      "description": "What happens to postcards that don't arrive?",
+      "technologies": [
+        "Three.js"
+      ],
+      "link": "",
+      "cover": "/images/Wanderlost/wanderlost.webp",
+      "color": {
+        "background": "#071A33",
+        "text": "#B2C5DD"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/Wanderlost/intro.webp",
+              "span": "3-2",
+              "position": {
+                "desktop": 5,
+                "mobile": 6
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Poetic and interactive 3D experience.",
+              "position": {
+                "desktop": 13,
+                "mobile": 12
+              }
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Wanderlost/coridor2.webp",
+              "span": "2-1",
+              "position": {
+                "desktop": 12,
+                "mobile": 9
+              }
+            },
+            {
+              "url": "/images/Wanderlost/coridor1.webp",
+              "span": "3-2",
+              "position": {
+                "desktop": 0,
+                "mobile": 0
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Creation of the 3D environment in Blender.",
+              "position": {
+                "desktop": 11,
+                "mobile": 11
+              }
+            },
+            {
+              "text": "Integration of the 3D scene into Three.js.",
+              "position": {
+                "desktop": 3,
+                "mobile": 6
+              }
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": "/images/Wanderlost/end.webp",
+              "span": "4-2",
+              "position": {
+                "desktop": 0,
+                "mobile": 3
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "Particles creation in three.js.",
+              "position": {
+                "desktop": 12,
+                "mobile": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "MARI-E",
+      "year": "2023",
+      "context": "School project",
+      "description": "AR experience in partnership with the Orangerie Museum",
+      "technologies": [
+        "Three.js",
+        "WebXR"
+      ],
+      "link": "https://www.youtube.com/shorts/yh_1zn_Y2OQ",
+      "cover": "/images/Orangerie/orangerie.webp",
+      "color": {
+        "background": "#315F64",
+        "text": "#CFFAFF"
+      },
+      "contents": [
+        {
+          "images": [
+            {
+              "url": "/images/Orangerie/intro.webp",
+              "span": "1-2",
+              "position": {
+                "desktop": 5,
+                "mobile": 6
+              }
+            },
+            {
+              "url": "/images/Orangerie/i4.webp",
+              "span": "2-2",
+              "position": {
+                "desktop": 6,
+                "mobile": 7
+              }
+            }
+          ],
+          "texts": [
+            {
+              "text": "AR experience in partnership with the Orangerie Museum.",
+              "position": {
+                "desktop": 13,
+                "mobile": 12
+              }
+            }
+          ]
+        },
+        {
+          "images": [
+            {
+              "url": {
+                "desktop": "/images/Orangerie/content.webp",
+                "mobile": "/images/Orangerie/contentMobile.webp"
+              },
+              "span": {
+                "desktop": "4-3",
+                "mobile": "3-4"
+              },
+              "position": {
+                "desktop": 0,
+                "mobile": 0
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
